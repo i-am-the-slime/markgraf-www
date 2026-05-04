@@ -9,11 +9,12 @@ import * as React_Basic_Hooks from "../React.Basic.Hooks/index.js";
 import * as React_Basic_Hooks_Internal from "../React.Basic.Hooks.Internal/index.js";
 import * as Type_Equality from "../Type.Equality/index.js";
 var p = /* #__PURE__ */ React_Basic_DOM_Generated.p();
+var h3 = /* #__PURE__ */ React_Basic_DOM_Generated.h3();
 var h2 = /* #__PURE__ */ React_Basic_DOM_Generated.h2();
 var bind = /* #__PURE__ */ React_Basic_Hooks_Internal.bind(React_Basic_Hooks_Internal.ixBindRender);
 var pure = /* #__PURE__ */ Control_Applicative.pure(/* #__PURE__ */ React_Basic_Hooks_Internal.applicativeRender(Type_Equality.refl));
 var div = /* #__PURE__ */ React_Basic_DOM_Generated.div();
-var code = /* #__PURE__ */ React_Basic_DOM_Generated.code();
+var code1 = /* #__PURE__ */ React_Basic_DOM_Generated.code();
 var button = /* #__PURE__ */ React_Basic_DOM_Generated.button();
 var rect = /* #__PURE__ */ React_Basic_DOM_SVG.rect();
 var a = /* #__PURE__ */ React_Basic_DOM_Generated.a();
@@ -24,17 +25,29 @@ var tagline = /* #__PURE__ */ p({
     className: "text-xl leading-relaxed mb-12 text-foreground",
     children: [ /* #__PURE__ */ React_Basic_DOM.text("Animated graph diagrams from a tiny declarative source language.") ]
 });
+var subhead = function (text) {
+    return h3({
+        className: "text-sm font-medium tracking-tight mt-8 mb-2",
+        children: [ React_Basic_DOM.text(text) ]
+    });
+};
 var sectionHeading = function (text) {
     return h2({
         className: "text-xs uppercase tracking-widest text-muted-foreground mb-3",
         children: [ React_Basic_DOM.text(text) ]
     });
 };
+var prose = function (children) {
+    return p({
+        className: "text-sm text-muted-foreground leading-relaxed mt-2 mb-2",
+        children: children
+    });
+};
 var mkCopyButton = /* #__PURE__ */ React_Basic_Hooks.component("Copyable")(function (v) {
     return bind(React_Basic_Hooks["useState$prime"](false))(function (v1) {
         return pure(div({
             className: "bg-foreground text-background rounded-md px-4 py-3 flex items-center justify-between gap-4 font-mono text-sm",
-            children: [ code({
+            children: [ code1({
                 className: "overflow-x-auto whitespace-nowrap",
                 children: [ React_Basic_DOM.text(v.value) ]
             }), button({
@@ -106,7 +119,7 @@ var install = function (copy) {
     return section({
         className: "mb-14",
         children: [ tagline, sectionHeading("Install"), copy({
-            value: "brew install --cask i-am-the-slime/tap/markgraf"
+            value: "brew install i-am-the-slime/tap/markgraf"
         }), p({
             className: "text-sm text-muted-foreground mt-2",
             children: [ React_Basic_DOM.text("macOS (Apple Silicon) only for now. Linux + Intel coming.") ]
@@ -124,18 +137,24 @@ var footer = /* #__PURE__ */ React_Basic_DOM_Generated.footer()({
     className: "pt-8 border-t border-border flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground",
     children: [ /* #__PURE__ */ link("https://github.com/i-am-the-slime/homebrew-tap")("tap"), /* #__PURE__ */ link("https://github.com/i-am-the-slime/homebrew-tap/tree/main/examples")("examples"), /* #__PURE__ */ link("https://github.com/i-am-the-slime/claude-plugins")("claude plugin") ]
 });
-var example = /* #__PURE__ */ section({
-    className: "mb-14",
-    children: [ /* #__PURE__ */ sectionHeading("Example"), /* #__PURE__ */ pre({
+var codeBlock = function (source) {
+    return pre({
         className: "bg-muted rounded-md px-4 py-3 text-sm overflow-x-auto leading-relaxed",
-        children: [ /* #__PURE__ */ React_Basic_DOM_Generated.code_([ /* #__PURE__ */ React_Basic_DOM.text("frame setup {\x0a  +node a \"A\"\x0a  +node b \"B\"\x0a  +edge a b\x0a}\x0a\x0aframe greet {\x0a  a -> b \"hello\"\x0a}") ]) ]
-    }), /* #__PURE__ */ p({
-        className: "text-sm text-muted-foreground mt-2",
-        children: [ /* #__PURE__ */ React_Basic_DOM.text("Pipe it: "), /* #__PURE__ */ code({
-            className: "font-mono text-foreground",
-            children: [ /* #__PURE__ */ React_Basic_DOM.text("pbpaste | markgraf --play") ]
-        }) ]
-    }) ]
+        children: [ React_Basic_DOM_Generated.code_([ React_Basic_DOM.text(source) ]) ]
+    });
+};
+var code = function (text) {
+    return code1({
+        className: "font-mono text-foreground bg-muted px-1.5 py-0.5 rounded",
+        children: [ React_Basic_DOM.text(text) ]
+    });
+};
+var language = /* #__PURE__ */ section({
+    className: "mb-14",
+    children: [ /* #__PURE__ */ sectionHeading("Language"), /* #__PURE__ */ p({
+        className: "text-foreground leading-relaxed mb-6",
+        children: [ /* #__PURE__ */ React_Basic_DOM.text("A "), /* #__PURE__ */ code("frame"), /* #__PURE__ */ React_Basic_DOM.text(" is one beat in the animation. Statements inside a frame either change the graph "), /* #__PURE__ */ React_Basic_DOM.text("shape (structural) or move data along it (flow).") ]
+    }), /* #__PURE__ */ subhead("Frames"), /* #__PURE__ */ codeBlock("frame setup { +node a \"A\" +node b \"B\" +edge a b }\x0aframe \"first request\" { a -> b \"hello\" }"), /* #__PURE__ */ prose([ /* #__PURE__ */ React_Basic_DOM.text("Names are unquoted identifiers or quoted strings (use quotes for spaces).") ]), /* #__PURE__ */ subhead("Adding and removing nodes"), /* #__PURE__ */ codeBlock("+node api \"API\"        # introduce node\x0a-node api               # remove node"), /* #__PURE__ */ subhead("Adding and removing edges"), /* #__PURE__ */ codeBlock("+edge api db \"writes\"   # label is optional\x0a-edge api db"), /* #__PURE__ */ prose([ /* #__PURE__ */ React_Basic_DOM.text("Edges are directional. "), /* #__PURE__ */ code("+edge a b"), /* #__PURE__ */ React_Basic_DOM.text(" \u2260 "), /* #__PURE__ */ code("+edge b a"), /* #__PURE__ */ React_Basic_DOM.text(".") ]), /* #__PURE__ */ subhead("Tokens (data flow)"), /* #__PURE__ */ codeBlock("client -> api \"GET /user\"\x0aapi -> db \"SELECT\""), /* #__PURE__ */ prose([ /* #__PURE__ */ React_Basic_DOM.text("Each statement renders a circle that morphs out of the source, slides along the edge, "), /* #__PURE__ */ React_Basic_DOM.text("and morphs into the target. Consecutive tokens that chain (the "), /* #__PURE__ */ code("to"), /* #__PURE__ */ React_Basic_DOM.text(" of one matches the "), /* #__PURE__ */ code("from"), /* #__PURE__ */ React_Basic_DOM.text(" of the next) render as ONE continuously travelling dot \u2014 that's how requests "), /* #__PURE__ */ React_Basic_DOM.text("feel like one motion through a stack.") ]), /* #__PURE__ */ subhead("Bubbles (commentary)"), /* #__PURE__ */ codeBlock("+bubble skip cache \"skipped DB!\"\x0a-bubble skip"), /* #__PURE__ */ prose([ /* #__PURE__ */ React_Basic_DOM.text("A bubble is anchored to a node and persists across frames until you remove it. "), /* #__PURE__ */ React_Basic_DOM.text("Use bubbles for things the topology can't say on its own \u2014 \"async\", \"cache hit\", "), /* #__PURE__ */ React_Basic_DOM.text("\"retry\". Use node/edge labels for everything else.") ]), /* #__PURE__ */ subhead("Concurrency: par and seq"), /* #__PURE__ */ codeBlock("frame \"cache hit\" {\x0a  client -> api \"GET\"\x0a  par {\x0a    api -> cache \"HIT\"\x0a    +bubble skip cache \"skipped DB!\"\x0a  }\x0a  -bubble skip\x0a}"), /* #__PURE__ */ prose([ /* #__PURE__ */ React_Basic_DOM.text("The frame body is implicitly "), /* #__PURE__ */ code("seq"), /* #__PURE__ */ React_Basic_DOM.text(" \u2014 children run one after another. Wrap children in "), /* #__PURE__ */ code("par { ... }"), /* #__PURE__ */ React_Basic_DOM.text(" to play them at the same time. Without "), /* #__PURE__ */ code("par"), /* #__PURE__ */ React_Basic_DOM.text(", a token AND its bubble would appear in series, which reads as two unrelated steps.") ]), /* #__PURE__ */ subhead("Top of file: seed"), /* #__PURE__ */ codeBlock("seed 1                  # optional, controls layout RNG (default 0)\x0aframe setup { ... }"), /* #__PURE__ */ subhead("Putting it together"), /* #__PURE__ */ codeBlock("frame setup {\x0a  +node client \"Client\"\x0a  +node api \"API\"\x0a  +node db \"Database\"\x0a  +edge client api\x0a  +edge api db\x0a}\x0a\x0aframe \"direct read\" {\x0a  client -> api \"GET /user/42\"\x0a  api -> db \"SELECT\"\x0a}\x0a\x0aframe \"introduce cache\" {\x0a  +node cache \"Cache\"\x0a  -edge api db\x0a  +edge api cache\x0a}\x0a\x0aframe \"cache hit\" {\x0a  client -> api \"GET /user/42\"\x0a  par {\x0a    api -> cache \"HIT\"\x0a    +bubble skip cache \"skipped DB!\"\x0a  }\x0a  -bubble skip\x0a}"), /* #__PURE__ */ prose([ /* #__PURE__ */ React_Basic_DOM.text("Pipe it: "), /* #__PURE__ */ code("pbpaste | markgraf --play") ]) ]
 });
 var bullet = function (text) {
     return React_Basic_DOM_Generated.li_([ React_Basic_DOM.text("\u2022 " + text) ]);
@@ -151,21 +170,18 @@ var ai = /* #__PURE__ */ section({
     className: "mb-14",
     children: [ /* #__PURE__ */ sectionHeading("AI authoring"), /* #__PURE__ */ p({
         className: "text-foreground leading-relaxed mb-3",
-        children: [ /* #__PURE__ */ React_Basic_DOM.text("Claude Code plugin teaches Claude the syntax and authoring rules \u2014 short labels, "), /* #__PURE__ */ code({
-            className: "font-mono",
-            children: [ /* #__PURE__ */ React_Basic_DOM.text("par") ]
-        }), /* #__PURE__ */ React_Basic_DOM.text(" blocks for simultaneity, one concept per frame.") ]
-    }), /* #__PURE__ */ pre({
-        className: "bg-muted rounded-md px-4 py-3 text-sm overflow-x-auto",
-        children: [ /* #__PURE__ */ React_Basic_DOM_Generated.code_([ /* #__PURE__ */ React_Basic_DOM.text("/plugin marketplace add i-am-the-slime/claude-plugins\x0a/plugin install markgraf@i-am-the-slime") ]) ]
-    }) ]
+        children: [ /* #__PURE__ */ React_Basic_DOM.text("Claude Code plugin teaches Claude the syntax and authoring rules \u2014 short labels, "), /* #__PURE__ */ code("par"), /* #__PURE__ */ React_Basic_DOM.text(" blocks for simultaneity, one concept per frame. Run these as two separate slash commands in Claude Code:") ]
+    }), /* #__PURE__ */ codeBlock("/plugin marketplace add i-am-the-slime/claude-plugins"), /* #__PURE__ */ div({
+        className: "h-2",
+        children: [  ]
+    }), /* #__PURE__ */ codeBlock("/plugin install markgraf@i-am-the-slime") ]
 });
 var mkHomePage = function __do() {
     var copy = mkCopyButton();
     return React_Basic_Hooks.component("HomePage")(function (v) {
         return pure(main({
             className: "min-h-screen px-6 py-16 sm:py-24 max-w-2xl mx-auto",
-            children: [ hero, install(copy), example, what, ai, footer ]
+            children: [ hero, install(copy), what, language, ai, footer ]
         }));
     })();
 };
