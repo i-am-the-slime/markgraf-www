@@ -1,0 +1,13 @@
+workspace:
+  packageSet:
+    registry: 75.9.1
+package:
+  name: markgraf-www
+  dependencies:
+    - prelude
+    - effect
+    - react-basic
+    - react-basic-hooks
+    - react-basic-dom
+  build:
+    censorProjectWarnings: all

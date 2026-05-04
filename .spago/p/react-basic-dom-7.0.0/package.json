@@ -1,0 +1,37 @@
+{
+  "name": "purescript-react-basic-dom",
+  "version": "0.0.0",
+  "description": "Dev deps for purescript-react-basic-dom",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lumihq/purescript-react-basic-dom.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/lumihq/purescript-react-basic-dom/issues"
+  },
+  "homepage": "https://github.com/lumihq/purescript-react-basic-dom#readme",
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "bower": "^1.8.12",
+    "npm-run-all": "^4.1.5",
+    "pulp": "^16.0.1",
+    "purescript": "^0.15.4",
+    "spago": "^0.20.9"
+  },
+  "scripts": {
+    "deps": "run-s deps:*",
+    "deps:spago": "spago install",
+    "deps:pulp": "bower install",
+    "build": "run-s build:*",
+    "build:spago": "spago build",
+    "build:pulp": "pulp build -o output-pulp",
+    "clean": "rm -rf .spago bower_components output output-pulp node_modules .pulp-cache .psci_modules",
+    "test": "spago -x test.dhall test"
+  }
+}

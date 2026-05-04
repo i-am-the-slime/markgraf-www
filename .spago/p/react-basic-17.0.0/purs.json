@@ -1,0 +1,15 @@
+{
+  "name": "react-basic",
+  "version": "17.0.0",
+  "license": "Apache-2.0",
+  "location": {
+    "githubOwner": "purescript-react",
+    "githubRepo": "purescript-react-basic"
+  },
+  "ref": "v17.0.0",
+  "dependencies": {
+    "effect": ">=4.0.0 <5.0.0",
+    "prelude": ">=6.0.0 <7.0.0",
+    "record": ">=4.0.0 <5.0.0"
+  }
+}

@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "spago build && next dev",
+    "build": "spago build && next build",
     "start": "next start"
   },
   "dependencies": {
@@ -14,11 +14,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.0",
-    "@types/node": "^22",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.2.0",
-    "typescript": "5.9.3"
+    "purescript": "^0.15.15",
+    "spago": "^1.0.3",
+    "tailwindcss": "^4.2.0"
   }
 }

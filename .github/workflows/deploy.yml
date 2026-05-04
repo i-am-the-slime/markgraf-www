@@ -22,10 +22,12 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      - name: Install
+      - name: Install npm deps (incl. purs + spago)
         run: bun install --frozen-lockfile
-      - name: Build
+      - name: Build PureScript + Next
         run: bun run build
+        env:
+          PATH: node_modules/.bin:${{ env.PATH }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

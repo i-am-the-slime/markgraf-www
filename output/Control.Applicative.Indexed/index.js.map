@@ -1,0 +1,1 @@
+{"file":"index.js","mappings":";;;AAaE,YAAA;IAAA,OAAA;;AAMF,cAAA;iBAEiB;WAFjB;eAAA;YACQ,KAAR;gBAAc,OAAd;;YACQ,IADR;gBACa;;iIADb,oBAAA;;;;AALA,YAAA;iBAEgB;WAFhB;eAAA;YACM,IAAN;gBAAW,OAAX;;YACM,KADN;gBACY;;iIADZ,oBAAA","names":[],"sources":["../../.spago/p/indexed-monad-3.0.0/src/Control/Applicative/Indexed.purs"],"version":3}
