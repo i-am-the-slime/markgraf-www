@@ -1,6 +1,9 @@
 node_modules/
 .next/
 out/
+output/
+.spago/
+spago.lock
+bun.lock
 *.tsbuildinfo
 .DS_Store
-bun.lock
