@@ -23,6 +23,7 @@ mkHomePage = do
             , install copy
             , what
             , language
+            , output
             , ai
             , footer
             ]
@@ -189,6 +190,30 @@ what =
 
 bullet :: String -> JSX
 bullet text = D.li_ [ D.text ("• " <> text) ]
+
+output :: JSX
+output =
+  D.section
+    { className: "mb-14"
+    , children:
+        [ sectionHeading "Render"
+        , prose [ D.text "Pipe a snippet straight from the clipboard, or pass a file path." ]
+        , subhead "Preview in a window"
+        , codeBlock "markgraf example.markgraf --play\npbpaste | markgraf --play"
+        , prose [ D.text "On macOS this opens the native Metal/AppKit player (glass backdrop, scrub bar, drag-and-drop reload)." ]
+        , subhead "Encode to mp4"
+        , codeBlock "markgraf example.markgraf -o out.mp4\nmarkgraf example.markgraf -o out.mp4 --fps 60 --scale 2"
+        , prose [ D.text "ffmpeg is embedded — no system dependency." ]
+        , subhead "Animated GIF (keyframes only)"
+        , codeBlock "markgraf example.markgraf --gif out.gif"
+        , subhead "Animated SVG (vector)"
+        , codeBlock "markgraf example.markgraf --svg out.svg"
+        , subhead "Static sequence diagram (PNG)"
+        , codeBlock "markgraf example.markgraf --sequence out.png"
+        , subhead "Typecheck without rendering"
+        , codeBlock "markgraf example.markgraf --check"
+        ]
+    }
 
 ai :: JSX
 ai =
