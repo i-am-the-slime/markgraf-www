@@ -100,7 +100,7 @@ language =
         , subhead "Adding and removing nodes"
         , codeBlock "+node api \"API\"        # introduce node\n-node api               # remove node"
         , subhead "Adding and removing edges"
-        , codeBlock "+edge api db \"writes\"   # label is optional\n-edge api db"
+        , codeBlock "+edge api db\n-edge api db"
         , prose [ D.text "Edges are directional. ", code "+edge a b", D.text " ≠ ", code "+edge b a", D.text "." ]
         , subhead "Tokens (data flow)"
         , codeBlock "client -> api \"GET /user\"\napi -> db \"SELECT\""
@@ -113,28 +113,27 @@ language =
             , D.text " of the next) render as ONE continuously travelling dot — that's how requests "
             , D.text "feel like one motion through a stack."
             ]
-        , subhead "Bubbles (commentary)"
-        , codeBlock "+bubble skip cache \"skipped DB!\"\n-bubble skip"
+        , subhead "Reverse-direction tokens"
+        , codeBlock "client -> api \"GET\"        # forward along +edge client api\nclient <- api \"200 OK\"     # reverse along the same edge"
         , prose
-            [ D.text "A bubble is anchored to a node and persists across frames until you remove it. "
-            , D.text "Use bubbles for things the topology can't say on its own — \"async\", \"cache hit\", "
-            , D.text "\"retry\". Use node/edge labels for everything else."
+            [ code "<-"
+            , D.text " says \"same edge, motion reversed\" — it does "
+            , D.em_ [ D.text "not" ]
+            , D.text " create a second edge. Use it for every response/reply that flows back."
             ]
         , subhead "Concurrency: par and seq"
-        , codeBlock "frame \"cache hit\" {\n  client -> api \"GET\"\n  par {\n    api -> cache \"HIT\"\n    +bubble skip cache \"skipped DB!\"\n  }\n  -bubble skip\n}"
+        , codeBlock "frame \"cache hit\" {\n  client -> api \"GET\"\n  par {\n    api -> cache \"HIT\"\n    api -> logger \"trace\"\n  }\n  client <- api \"value\"\n}"
         , prose
             [ D.text "The frame body is implicitly "
             , code "seq"
             , D.text " — children run one after another. Wrap children in "
             , code "par { ... }"
-            , D.text " to play them at the same time. Without "
-            , code "par"
-            , D.text ", a token AND its bubble would appear in series, which reads as two unrelated steps."
+            , D.text " to play them at the same time."
             ]
         , subhead "Top of file: seed"
         , codeBlock "seed 1                  # optional, controls layout RNG (default 0)\nframe setup { ... }"
         , subhead "Putting it together"
-        , codeBlock "frame setup {\n  +node client \"Client\"\n  +node api \"API\"\n  +node db \"Database\"\n  +edge client api\n  +edge api db\n}\n\nframe \"direct read\" {\n  client -> api \"GET /user/42\"\n  api -> db \"SELECT\"\n}\n\nframe \"introduce cache\" {\n  +node cache \"Cache\"\n  -edge api db\n  +edge api cache\n}\n\nframe \"cache hit\" {\n  client -> api \"GET /user/42\"\n  par {\n    api -> cache \"HIT\"\n    +bubble skip cache \"skipped DB!\"\n  }\n  -bubble skip\n}"
+        , codeBlock "frame setup {\n  +node client \"Client\"\n  +node api    \"API\"\n  +node db     \"Database\"\n  +node cache  \"Cache\"\n  +edge client api\n  +edge api db\n  +edge api cache\n}\n\nframe \"write request\" {\n  client -> api \"POST /user\"\n  api -> db \"INSERT\"\n}\n\nframe \"invalidate cache\" {\n  api -> cache \"DEL user:42\"\n}\n\nframe respond {\n  client <- api \"201\"\n}"
         , prose
             [ D.text "Pipe it: "
             , code "pbpaste | markgraf --play"
