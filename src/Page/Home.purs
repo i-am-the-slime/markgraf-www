@@ -240,7 +240,8 @@ footer =
   D.footer
     { className: "pt-8 border-t border-border flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground"
     , children:
-        [ link "https://github.com/i-am-the-slime/homebrew-tap" "tap"
+        [ link "https://discord.gg/tKfGrPYx" "discord"
+        , link "https://github.com/i-am-the-slime/homebrew-tap" "tap"
         , link "https://github.com/i-am-the-slime/homebrew-tap/tree/main/examples" "examples"
         , link "https://github.com/i-am-the-slime/claude-plugins" "claude plugin"
         ]
