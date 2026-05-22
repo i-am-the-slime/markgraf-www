@@ -135,7 +135,7 @@ var hero = /* #__PURE__ */ React_Basic_DOM_Generated.header()({
 });
 var footer = /* #__PURE__ */ React_Basic_DOM_Generated.footer()({
     className: "pt-8 border-t border-border flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground",
-    children: [ /* #__PURE__ */ link("https://github.com/i-am-the-slime/homebrew-tap")("tap"), /* #__PURE__ */ link("https://github.com/i-am-the-slime/homebrew-tap/tree/main/examples")("examples"), /* #__PURE__ */ link("https://github.com/i-am-the-slime/claude-plugins")("claude plugin") ]
+    children: [ /* #__PURE__ */ link("https://discord.gg/tKfGrPYx")("discord"), /* #__PURE__ */ link("https://github.com/i-am-the-slime/homebrew-tap")("tap"), /* #__PURE__ */ link("https://github.com/i-am-the-slime/homebrew-tap/tree/main/examples")("examples"), /* #__PURE__ */ link("https://github.com/i-am-the-slime/claude-plugins")("claude plugin") ]
 });
 var codeBlock = function (source) {
     return pre({

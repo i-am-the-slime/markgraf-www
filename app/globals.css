@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Sinistre";
+  src: url("/markgraf-www/fonts/sinistre/SinistreVF.woff2") format("woff2-variations"),
+       url("/markgraf-www/fonts/sinistre/SinistreVF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-background: hsl(40 25% 96%);
   --color-foreground: hsl(0 0% 7%);
@@ -11,6 +20,7 @@
 
   --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-display: "Sinistre", ui-serif, Georgia, serif;
 
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
