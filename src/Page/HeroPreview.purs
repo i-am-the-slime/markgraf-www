@@ -124,9 +124,9 @@ captionLayer progress =
   D.div
     { className: "absolute inset-0 flex items-center justify-center px-6 pointer-events-none"
     , children:
-        [ caption progress 0.32 0.58 "every frame is a state of your system"
-        , caption progress 0.58 0.82 "tokens carry data between nodes"
-        , caption progress 0.82 1.10 "now imagine yours."
+        [ caption progress 0.32 0.58 "Every Frame Is a State of Your System"
+        , caption progress 0.58 0.82 "Tokens Carry Data Between Nodes"
+        , caption progress 0.82 1.10 "Now Imagine Yours."
         ]
     }
 
@@ -177,7 +177,7 @@ installPill =
     { className: "inline-flex items-center gap-3 bg-[#11162280] backdrop-blur-md border border-[#2a3142] rounded-full pl-5 pr-2 py-2 font-mono text-sm pointer-events-auto"
     , children:
         [ D.span { style: D.css { color: "#ff3b1a" }, children: [ D.text "$" ] }
-        , D.span { className: "text-[#f5f1e8]", children: [ D.text "brew install i-am-the-slime/tap/markgraf" ] }
+        , D.span { className: "text-[#f5f1e8]", children: [ D.text "brew install markgrafhq/tap/markgraf" ] }
         , D.button
             { type: "button"
             , className: "ml-2 text-[10px] uppercase tracking-[0.2em] text-[#8a94a8] hover:text-[#f5f1e8] transition-colors px-3 py-1.5 rounded-full bg-[#0a0e1a] border border-[#2a3142] cursor-pointer"
@@ -227,7 +227,7 @@ languageSection =
                 , D.h2
                     { className: "text-5xl sm:text-7xl font-bold tracking-tight leading-[0.95] mb-8 max-w-3xl"
                     , style: D.css { fontFamily: "'Sinistre', serif" }
-                    , children: [ D.text "a frame is one beat. a token is one hop." ]
+                    , children: [ D.text "A Frame Is One Beat. A Token Is One Hop." ]
                     }
                 , D.p
                     { className: "text-lg text-[#8a94a8] max-w-2xl leading-relaxed mb-16"
@@ -289,7 +289,7 @@ renderSection =
                 , D.h2
                     { className: "text-5xl sm:text-7xl font-bold tracking-tight leading-[0.95] mb-8 max-w-3xl"
                     , style: D.css { fontFamily: "'Sinistre', serif" }
-                    , children: [ D.text "pipe in. ship anywhere." ]
+                    , children: [ D.text "Pipe In. Ship Anywhere." ]
                     }
                 , D.p
                     { className: "text-lg text-[#8a94a8] max-w-2xl leading-relaxed mb-16"
@@ -341,7 +341,7 @@ footerSection =
                         [ D.h2
                             { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95]"
                             , style: D.css { fontFamily: "'Sinistre', serif" }
-                            , children: [ D.text "now imagine yours." ]
+                            , children: [ D.text "Now Imagine Yours." ]
                             }
                         , D.div { children: [ installPill ] }
                         ]
@@ -349,8 +349,8 @@ footerSection =
                 , D.div
                     { className: "flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#8a94a8] font-mono pt-8 border-t border-[#1a1f2e]"
                     , children:
-                        [ footerLink "https://github.com/i-am-the-slime/homebrew-tap" "tap"
-                        , footerLink "https://github.com/i-am-the-slime/homebrew-tap/tree/main/examples" "examples"
+                        [ footerLink "https://github.com/markgrafhq/homebrew-tap" "tap"
+                        , footerLink "https://github.com/markgrafhq/homebrew-tap/tree/main/examples" "examples"
                         , footerLink "https://github.com/i-am-the-slime/claude-plugins" "claude plugin"
                         , footerLink "https://discord.gg/tKfGrPYx" "discord"
                         ]

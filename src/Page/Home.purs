@@ -43,7 +43,7 @@ install copy =
     , children:
         [ tagline
         , sectionHeading "Install"
-        , copy { value: "brew install i-am-the-slime/tap/markgraf" }
+        , copy { value: "brew install markgrafhq/tap/markgraf" }
         , D.p
             { className: "text-sm text-muted-foreground mt-2"
             , children: [ D.text "macOS (Apple Silicon) only for now. Linux + Intel coming." ]
@@ -241,8 +241,8 @@ footer =
     { className: "pt-8 border-t border-border flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground"
     , children:
         [ link "https://discord.gg/tKfGrPYx" "discord"
-        , link "https://github.com/i-am-the-slime/homebrew-tap" "tap"
-        , link "https://github.com/i-am-the-slime/homebrew-tap/tree/main/examples" "examples"
+        , link "https://github.com/markgrafhq/homebrew-tap" "tap"
+        , link "https://github.com/markgrafhq/homebrew-tap/tree/main/examples" "examples"
         , link "https://github.com/i-am-the-slime/claude-plugins" "claude plugin"
         ]
     }
