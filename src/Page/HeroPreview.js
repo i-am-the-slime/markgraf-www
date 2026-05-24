@@ -1,8 +1,8 @@
 import Scene from "../../src/components/Scene.jsx";
-import LiveEditor from "../../src/components/LiveEditor.jsx";
+import { MarkgrafPlayer } from "@markgrafhq/markgraf-react";
 
 export const sceneComponent = Scene;
-export const liveEditorComponent = LiveEditor;
+export const markgrafPlayerComponent = MarkgrafPlayer;
 
 // Updates --scene-progress on <html> based on how far the named element has
 // scrolled through its sticky window. Throttled to rAF.
