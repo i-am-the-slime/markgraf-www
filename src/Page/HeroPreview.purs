@@ -19,8 +19,8 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       { className: "bg-[#0a0e1a] text-[#f5f1e8] relative"
       , children:
           [ scrollStage progress
-          , languageSection
           , playgroundSection
+          , languageSection
           , renderSection
           , footerSection
           ]
@@ -33,7 +33,7 @@ scrollStage progress =
   D.div
     { id: "scroll-stage"
     , className: "relative"
-    , style: D.css { height: "420vh" }
+    , style: D.css { height: "220vh" }
     , children:
         [ D.div
             { className: "sticky top-0 h-screen w-full overflow-hidden"
@@ -224,7 +224,7 @@ languageSection =
         [ D.div
             { className: "max-w-5xl mx-auto"
             , children:
-                [ sectionLabel "01 / language"
+                [ sectionLabel "02 / language"
                 , D.h2
                     { className: "text-5xl sm:text-7xl font-bold tracking-tight leading-[0.95] mb-8 max-w-3xl"
                     , style: D.css { fontFamily: "'Sinistre', serif" }
@@ -281,20 +281,29 @@ playgroundSection :: JSX
 playgroundSection =
   D.section
     { id: "playground"
-    , className: "relative z-10 bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-32"
+    , className: "relative z-10 bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-12"
     , children:
         [ D.div
-            { className: "max-w-6xl mx-auto"
+            { className: "max-w-5xl mx-auto"
             , children:
-                [ sectionLabel "02 / playground"
-                , D.h2
-                    { className: "text-5xl sm:text-7xl font-bold tracking-tight leading-[0.95] mb-8 max-w-3xl"
-                    , style: D.css { fontFamily: "'Sinistre', serif" }
-                    , children: [ D.text "Type Left. Watch Right." ]
-                    }
-                , D.p
-                    { className: "text-lg text-[#8a94a8] max-w-2xl leading-relaxed mb-12"
-                    , children: [ D.text "Edit the source. The diagram replays on every save." ]
+                [ D.div
+                    { className: "flex items-baseline justify-between mb-6 gap-6 flex-wrap"
+                    , children:
+                        [ D.div
+                            { children:
+                                [ sectionLabel "01 / playground"
+                                , D.h2
+                                    { className: "text-3xl sm:text-4xl font-bold tracking-tight leading-none"
+                                    , style: D.css { fontFamily: "'Sinistre', serif" }
+                                    , children: [ D.text "Type Left. Watch Right." ]
+                                    }
+                                ]
+                            }
+                        , D.p
+                            { className: "text-sm text-[#8a94a8] max-w-xs leading-snug"
+                            , children: [ D.text "Edit the source. The diagram replays on every save." ]
+                            }
+                        ]
                     }
                 , element liveEditorComponent {}
                 ]

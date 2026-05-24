@@ -4,7 +4,44 @@ import React, { useState, useEffect } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
+import { StreamLanguage } from "@codemirror/language";
 import { MarkgrafPlayer } from "@markgrafhq/markgraf-react";
+
+// Minimal markgraf StreamLanguage. Recognized tokens:
+//   keywords:    seed, frame, par, chain, group, layout
+//   structurals: +node, +edge, +group
+//   arrows:      ->, <-, <->, -->, <-->
+//   strings:     "..."
+//   numbers:     12, 1.5
+//   comments:    //... and # ...
+//   labels:      bare identifiers at start of statement
+const KEYWORDS = new Set([
+  "seed", "frame", "par", "chain", "group", "layout",
+]);
+
+const markgrafLanguage = StreamLanguage.define({
+  name: "markgraf",
+  startState: () => ({}),
+  token(stream) {
+    if (stream.eatSpace()) return null;
+    if (stream.match(/^\/\/.*$/) || stream.match(/^#.*$/)) return "comment";
+    if (stream.match(/^"(?:[^"\\]|\\.)*"/)) return "string";
+    if (stream.match(/^\+(?:node|edge|group)\b/)) return "keyword";
+    if (stream.match(/^(?:<->|<-->|-->|->|<-)/)) return "operator";
+    if (stream.match(/^[{}]/)) return "bracket";
+    if (stream.match(/^[0-9]+(?:\.[0-9]+)?/)) return "number";
+    const word = stream.match(/^[A-Za-z_][A-Za-z0-9_-]*/);
+    if (word) {
+      if (KEYWORDS.has(word[0])) return "keyword";
+      return "variableName";
+    }
+    stream.next();
+    return null;
+  },
+  languageData: {
+    commentTokens: { line: "//" },
+  },
+});
 
 const DEFAULT_SRC = `seed 1
 
@@ -69,7 +106,8 @@ export default function LiveEditor() {
         border: "1px solid #1a1f2e",
         borderRadius: "12px",
         overflow: "hidden",
-        minHeight: "520px",
+        minHeight: "360px",
+        maxHeight: "440px",
       }}
     >
       <div
@@ -110,7 +148,7 @@ export default function LiveEditor() {
             value={src}
             onChange={setSrc}
             theme={oneDark}
-            extensions={[editorTheme]}
+            extensions={[markgrafLanguage, editorTheme]}
             basicSetup={{
               lineNumbers: true,
               foldGutter: false,
