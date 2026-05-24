@@ -210,6 +210,7 @@ previewPane src size =
                     [ element markgrafPlayerComponent
                         { src
                         , renderer: "svg"
+                        , theme: "dark"
                         , width: size.w
                         , height: size.h
                         }
