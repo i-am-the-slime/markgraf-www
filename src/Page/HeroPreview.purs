@@ -20,6 +20,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       , children:
           [ scrollStage progress
           , languageSection
+          , playgroundSection
           , renderSection
           , footerSection
           ]
@@ -276,6 +277,31 @@ codeExample name what source =
         ]
     }
 
+playgroundSection :: JSX
+playgroundSection =
+  D.section
+    { id: "playground"
+    , className: "relative z-10 bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-32"
+    , children:
+        [ D.div
+            { className: "max-w-6xl mx-auto"
+            , children:
+                [ sectionLabel "02 / playground"
+                , D.h2
+                    { className: "text-5xl sm:text-7xl font-bold tracking-tight leading-[0.95] mb-8 max-w-3xl"
+                    , style: D.css { fontFamily: "'Sinistre', serif" }
+                    , children: [ D.text "Type Left. Watch Right." ]
+                    }
+                , D.p
+                    { className: "text-lg text-[#8a94a8] max-w-2xl leading-relaxed mb-12"
+                    , children: [ D.text "Edit the source. The diagram replays on every save." ]
+                    }
+                , element liveEditorComponent {}
+                ]
+            }
+        ]
+    }
+
 renderSection :: JSX
 renderSection =
   D.section
@@ -285,7 +311,7 @@ renderSection =
         [ D.div
             { className: "max-w-5xl mx-auto"
             , children:
-                [ sectionLabel "02 / render"
+                [ sectionLabel "03 / render"
                 , D.h2
                     { className: "text-5xl sm:text-7xl font-bold tracking-tight leading-[0.95] mb-8 max-w-3xl"
                     , style: D.css { fontFamily: "'Sinistre', serif" }
@@ -376,4 +402,5 @@ sectionLabel text =
     }
 
 foreign import sceneComponent :: ReactComponent {}
+foreign import liveEditorComponent :: ReactComponent {}
 foreign import onScrollProgress :: String -> (Number -> Effect Unit) -> Effect (Effect Unit)
