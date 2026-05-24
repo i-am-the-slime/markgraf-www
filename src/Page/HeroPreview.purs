@@ -202,6 +202,7 @@ previewPane src size =
                 , minHeight: "0"
                 , position: "relative"
                 , overflow: "hidden"
+                , filter: "invert(0.92) hue-rotate(180deg)"
                 }
             , children:
                 if size.w <= 0.0 || size.h <= 0.0
