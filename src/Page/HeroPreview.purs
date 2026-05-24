@@ -62,15 +62,18 @@ mkPlayground :: Component {}
 mkPlayground = component "Playground" \_ -> Hooks.do
   src /\ setSrc <- useState' defaultSource
   debounced /\ setDebounced <- useState' defaultSource
+  size /\ setSize <- useState' { w: 0.0, h: 0.0 }
   useEffect src do
     launchAff_ do
       delay (Milliseconds 250.0)
       liftEffect (setDebounced src)
     pure (pure unit)
-  pure (playgroundView src setSrc debounced)
+  useEffect unit do
+    onElementResize "markgraf-preview" setSize
+  pure (playgroundView src setSrc debounced size)
 
-playgroundView :: String -> (String -> Effect Unit) -> String -> JSX
-playgroundView src setSrc rendered =
+playgroundView :: String -> (String -> Effect Unit) -> String -> { w :: Number, h :: Number } -> JSX
+playgroundView src setSrc rendered size =
   D.section
     { id: "playground"
     , className: "relative z-10 bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-12"
@@ -95,14 +98,14 @@ playgroundView src setSrc rendered =
                             }
                         ]
                     }
-                , editorAndPreview src setSrc rendered
+                , editorAndPreview src setSrc rendered size
                 ]
             }
         ]
     }
 
-editorAndPreview :: String -> (String -> Effect Unit) -> String -> JSX
-editorAndPreview src setSrc rendered =
+editorAndPreview :: String -> (String -> Effect Unit) -> String -> { w :: Number, h :: Number } -> JSX
+editorAndPreview src setSrc rendered size =
   D.div
     { style: D.css
         { display: "grid"
@@ -117,7 +120,7 @@ editorAndPreview src setSrc rendered =
         }
     , children:
         [ editorPane src setSrc
-        , previewPane rendered
+        , previewPane rendered size
         ]
     }
 
@@ -186,20 +189,31 @@ editorPane src setSrc =
         ]
     }
 
-previewPane :: String -> JSX
-previewPane src =
+previewPane :: String -> { w :: Number, h :: Number } -> JSX
+previewPane src size =
   D.div
     { className: "flex flex-col overflow-hidden bg-[#0a0e1a]"
     , children:
         [ paneHeader "#69dcaa" "live render"
         , D.div
-            { style: D.css
+            { id: "markgraf-preview"
+            , style: D.css
                 { flex: "1"
                 , minHeight: "0"
                 , position: "relative"
                 , overflow: "hidden"
                 }
-            , children: [ element markgrafPlayerComponent { src, renderer: "svg" } ]
+            , children:
+                if size.w <= 0.0 || size.h <= 0.0
+                  then []
+                  else
+                    [ element markgrafPlayerComponent
+                        { src
+                        , renderer: "svg"
+                        , width: size.w
+                        , height: size.h
+                        }
+                    ]
             }
         ]
     }
@@ -745,5 +759,12 @@ sectionLabel text =
     }
 
 foreign import sceneComponent :: ReactComponent {}
-foreign import markgrafPlayerComponent :: ReactComponent { src :: String, renderer :: String }
+foreign import markgrafPlayerComponent
+  :: ReactComponent
+       { src :: String
+       , renderer :: String
+       , width :: Number
+       , height :: Number
+       }
 foreign import onScrollProgress :: String -> (Number -> Effect Unit) -> Effect (Effect Unit)
+foreign import onElementResize :: String -> ({ w :: Number, h :: Number } -> Effect Unit) -> Effect (Effect Unit)

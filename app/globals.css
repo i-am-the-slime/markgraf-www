@@ -49,10 +49,6 @@
    and height attributes from the layout viewport.  Force it to scale to its
    container so it fits the playground pane instead of overflowing.  */
 .markgraf-player {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
   display: block;
 }
 

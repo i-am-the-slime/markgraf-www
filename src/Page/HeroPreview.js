@@ -34,6 +34,20 @@ export const onScrollProgress = (elemId) => (cb) => () => {
   };
 };
 
+export const onElementResize = (elemId) => (cb) => () => {
+  if (typeof window === "undefined") return () => {};
+  const el = document.getElementById(elemId);
+  if (!el) return () => {};
+  const fire = () => {
+    const r = el.getBoundingClientRect();
+    cb({ w: r.width, h: r.height })();
+  };
+  fire();
+  const ro = new ResizeObserver(fire);
+  ro.observe(el);
+  return () => ro.disconnect();
+};
+
 export const writeClipboard = (text) => () => {
   if (typeof navigator !== "undefined" && navigator.clipboard) {
     navigator.clipboard.writeText(text);
