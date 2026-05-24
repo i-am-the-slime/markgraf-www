@@ -204,7 +204,6 @@ function ContextNodes({ progressRef }) {
 function Scene3D({ progressRef }) {
   return (
     <>
-      <color attach="background" args={[INK]} />
       <fog attach="fog" args={[INK, 10, 28]} />
       <ambientLight intensity={0.25} />
       <pointLight position={[6, 6, 6]} intensity={0.6} color={BONE} />
@@ -261,8 +260,8 @@ export default function Scene({ progressId }) {
     <Canvas
       camera={{ position: [0, 1.5, 9], fov: 42 }}
       dpr={[1, 2]}
-      gl={{ antialias: true, alpha: false }}
-      style={{ position: "absolute", inset: 0 }}
+      gl={{ antialias: true, alpha: true }}
+      style={{ position: "absolute", inset: 0, background: "transparent" }}
     >
       <Suspense fallback={null}>
         <Scene3D progressRef={progressRef} />

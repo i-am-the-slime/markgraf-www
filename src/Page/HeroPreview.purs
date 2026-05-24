@@ -422,6 +422,10 @@ scrollStage progress =
             , children:
                 [ D.div
                     { className: "absolute inset-0"
+                    , children: [ element feltballsComponent {} ]
+                    }
+                , D.div
+                    { className: "absolute inset-0"
                     , children: [ element sceneComponent {} ]
                     }
                 , topBar
@@ -759,6 +763,7 @@ sectionLabel text =
     }
 
 foreign import sceneComponent :: ReactComponent {}
+foreign import feltballsComponent :: ReactComponent {}
 foreign import markgrafPlayerComponent
   :: ReactComponent
        { src :: String
