@@ -2,8 +2,8 @@ import Scene from "../../src/components/Scene.jsx";
 
 export const sceneComponent = Scene;
 
-// Updates a CSS custom property (--scene-progress) on <html> based on how
-// far the named element has scrolled through its sticky window.
+// Updates --scene-progress on <html> based on how far the named element has
+// scrolled through its sticky window. Throttled to rAF.
 export const onScrollProgress = (elemId) => (cb) => () => {
   if (typeof window === "undefined") return () => {};
   let raf = 0;

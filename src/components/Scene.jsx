@@ -115,19 +115,90 @@ function Token() {
   );
 }
 
+// Smoothstep + remap helpers
+const smooth = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+const remap = (v, a, b) => smooth(Math.max(0, Math.min(1, (v - a) / (b - a))));
+const mix = (a, b, t) => a + (b - a) * t;
+
+// Three distinct beats:
+//   Act 0 (0.00–0.30): hero close-up, gentle parallax.
+//   Act 1 (0.30–0.65): pull back + orbit ~120°.
+//   Act 2 (0.65–1.00): swing up to a near top-down architectural view.
+function cameraForProgress(p) {
+  const a1 = remap(p, 0.0, 0.30);
+  const a2 = remap(p, 0.30, 0.65);
+  const a3 = remap(p, 0.65, 1.0);
+
+  // Act 0: radius 7→9, angle 0, y 1.2→1.6 (subtle)
+  const r0 = mix(7, 9, a1);
+  const ang0 = mix(0, 0.15, a1);
+  const y0 = mix(1.2, 1.6, a1);
+
+  // Act 1: pull back radius 9→15, orbit angle 0.15→Math.PI*0.7, y 1.6→3
+  const r1 = mix(r0, 15, a2);
+  const ang1 = mix(ang0, Math.PI * 0.7, a2);
+  const y1 = mix(y0, 3, a2);
+
+  // Act 2: swing higher, near top-down; radius shrinks back, y climbs
+  const r2 = mix(r1, 11, a3);
+  const ang2 = mix(ang1, Math.PI * 0.9, a3);
+  const y2 = mix(y1, 9, a3);
+
+  return {
+    x: Math.sin(ang2) * r2,
+    z: Math.cos(ang2) * r2,
+    y: y2,
+  };
+}
+
 function ScrollRig({ progressRef }) {
   const { camera } = useThree();
+  const target = useRef(new THREE.Vector3(0, 0.6, 0));
   useFrame(() => {
     const p = progressRef.current ?? 0;
-    // 0 → close, looking head-on; 1 → orbited, pulled back, slight tilt
-    const angle = p * Math.PI * 0.6;
-    const radius = 9 + p * 6;
-    camera.position.x = Math.sin(angle) * radius;
-    camera.position.z = Math.cos(angle) * radius;
-    camera.position.y = 1.5 + p * 2.5;
-    camera.lookAt(0, 0.6, 0);
+    const c = cameraForProgress(p);
+    // Smooth-follow the target position so transitions feel buttery.
+    const k = 0.12;
+    camera.position.x += (c.x - camera.position.x) * k;
+    camera.position.y += (c.y - camera.position.y) * k;
+    camera.position.z += (c.z - camera.position.z) * k;
+    camera.lookAt(target.current);
   });
   return null;
+}
+
+// Extra nodes that only appear in Act 2 — the "this is part of a bigger
+// system" beat. They float in from outside the camera view.
+function ContextNodes({ progressRef }) {
+  const groupRef = useRef();
+  const positions = useMemo(
+    () => [
+      [-7,  2.5, -3],
+      [ 7,  2.0, -4],
+      [-5, -2.5,  3],
+      [ 6, -2.0,  4],
+      [ 0,  4.0, -6],
+      [ 0, -3.5, -5],
+    ],
+    []
+  );
+  useFrame(() => {
+    if (!groupRef.current) return;
+    const p = progressRef.current ?? 0;
+    const a = remap(p, 0.55, 0.95);
+    groupRef.current.scale.setScalar(a);
+    groupRef.current.visible = a > 0.001;
+  });
+  return (
+    <group ref={groupRef} scale={0}>
+      {positions.map((pos, i) => (
+        <mesh key={i} position={pos}>
+          <icosahedronGeometry args={[0.25, 1]} />
+          <meshBasicMaterial color={BONE} wireframe transparent opacity={0.35} />
+        </mesh>
+      ))}
+    </group>
+  );
 }
 
 function Scene3D({ progressRef }) {
@@ -155,6 +226,7 @@ function Scene3D({ progressRef }) {
           </React.Fragment>
         ))}
         <Token />
+        <ContextNodes progressRef={progressRef} />
       </group>
 
       <ScrollRig progressRef={progressRef} />
