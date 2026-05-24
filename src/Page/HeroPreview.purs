@@ -197,10 +197,7 @@ previewPane src =
                 { flex: "1"
                 , minHeight: "0"
                 , position: "relative"
-                , display: "flex"
-                , alignItems: "center"
-                , justifyContent: "center"
-                , padding: "16px"
+                , overflow: "hidden"
                 }
             , children: [ element markgrafPlayerComponent { src, renderer: "svg" } ]
             }
