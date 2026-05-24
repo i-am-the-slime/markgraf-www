@@ -5,7 +5,6 @@ import CodeMirror from "@uiw/react-codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import { MarkgrafPlayer } from "@markgrafhq/markgraf-react";
-import "@markgrafhq/markgraf-embed/css";
 
 const DEFAULT_SRC = `seed 1
 
@@ -34,7 +33,7 @@ const editorTheme = EditorView.theme(
     },
     ".cm-scroller": {
       fontFamily:
-        "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
+        "'Commit Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
       lineHeight: "1.7",
     },
     ".cm-gutters": {
@@ -85,7 +84,7 @@ export default function LiveEditor() {
         <div
           style={{
             padding: "10px 16px",
-            fontFamily: "ui-monospace, monospace",
+            fontFamily: "'Commit Mono', ui-monospace, monospace",
             fontSize: "11px",
             letterSpacing: "0.25em",
             textTransform: "uppercase",
@@ -134,7 +133,7 @@ export default function LiveEditor() {
         <div
           style={{
             padding: "10px 16px",
-            fontFamily: "ui-monospace, monospace",
+            fontFamily: "'Commit Mono', ui-monospace, monospace",
             fontSize: "11px",
             letterSpacing: "0.25em",
             textTransform: "uppercase",

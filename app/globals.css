@@ -9,6 +9,24 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Commit Mono";
+  src: url("/markgraf-www/fonts/CommitMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* markgraf-embed's published CSS still references "Ioskeley Mono" — alias it
+   to Commit Mono so labels inside the player pick up the right typeface. */
+@font-face {
+  font-family: "Ioskeley Mono";
+  src: url("/markgraf-www/fonts/CommitMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-background: hsl(40 25% 96%);
   --color-foreground: hsl(0 0% 7%);
@@ -19,7 +37,7 @@
   --color-accent-foreground: hsl(40 25% 96%);
 
   --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-mono: "Commit Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-display: "Sinistre", ui-serif, Georgia, serif;
 
   --radius-sm: 0.25rem;
