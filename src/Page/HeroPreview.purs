@@ -10,59 +10,341 @@ import Effect (Effect)
 import Effect.Aff (Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Unsafe (unsafePerformEffect)
-import React.Basic (JSX, ReactComponent, element)
+import React.Basic (JSX, ReactComponent, element, keyed)
 import React.Basic.DOM as D
+import React.Basic.DOM.SVG as S
 import React.Basic.DOM.Events (targetValue)
-import React.Basic.Events (handler)
+import React.Basic.Events (handler, handler_)
 import React.Basic.Hooks (Component, component, useEffect, useState')
 import React.Basic.Hooks as Hooks
 
 mkHeroPreview :: Component {}
 mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
-  progress /\ setProgress <- useState' 0.0
-  useEffect unit do
-    onScrollProgress "scroll-stage" setProgress
   pure $
     D.main
-      { className: "bg-[#0a0e1a] text-[#f5f1e8] relative"
+      { id: "magazine"
+      , className: "bg-[#0a0e1a] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
       , children:
-          [ scrollStage progress
+          [ topBar
+          , pageRail
+          , heroPage
           , playground {}
-          , languageSection
+          , playerSection
           , renderSection
+          , aiSection
+          , embedSection
           , footerSection
           ]
       }
 
 -- ---------------------------------------------------------------------------
+-- Page 0 — hero spread. One screen, no scroll-driven captions; the 3D scene
+-- only paints behind this page, not the ones that follow.
+-- ---------------------------------------------------------------------------
+
+heroPage :: JSX
+heroPage =
+  D.section
+    { id: "page-hero"
+    , className: "relative snap-start snap-always h-screen w-full overflow-hidden"
+    , children:
+        [ D.div { className: "absolute inset-0", children: [ element feltballsComponent {} ] }
+        , D.div { className: "absolute inset-0", children: [ element sceneComponent {} ] }
+        , heroLockup
+        , spreadFolio "00" "hero"
+        ]
+    }
+
+heroLockup :: JSX
+heroLockup =
+  D.div
+    { className: "absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none px-6"
+    , children:
+        [ D.div
+            { className: "flex flex-col items-center gap-8 max-w-3xl text-center"
+            , children:
+                [ kicker
+                , D.h1
+                    { className: "text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold text-[#f5f1e8]"
+                    , style: D.css
+                        { fontFamily: "'Sinistre', serif"
+                        , textShadow: "0 0 80px rgba(10,14,26,0.7)"
+                        }
+                    , children: [ D.text "markgraf" ]
+                    }
+                , D.p
+                    { className: "max-w-xl text-lg sm:text-xl leading-snug text-[#c8cdd9]"
+                    , style: D.css { fontFamily: "'Sinistre', serif", fontStyle: "italic" }
+                    , children:
+                        [ D.text "Animated graph diagrams from a tiny declarative source language. "
+                        , D.span
+                            { style: D.css { color: "#ff3b1a" }
+                            , children: [ D.text "Watch your architecture move." ]
+                            }
+                        ]
+                    }
+                , installPill
+                , coverLines
+                ]
+            }
+        ]
+    }
+
+kicker :: JSX
+kicker =
+  D.div
+    { className: "flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.4em] text-[#8a94a8]"
+    , children:
+        [ D.span { className: "h-px w-12 bg-[#2a3142]", children: [] }
+        , D.span_ [ D.text "The Quarterly · Software · MMXXVI" ]
+        , D.span { className: "h-px w-12 bg-[#2a3142]", children: [] }
+        ]
+    }
+
+coverLines :: JSX
+coverLines =
+  D.div
+    { className: "mt-4 flex flex-wrap justify-center items-center gap-x-3 gap-y-2 font-mono text-[10px] uppercase tracking-[0.35em] text-[#5a6478] max-w-2xl"
+    , children:
+        [ coverLine "A new syntax for systems"
+        , bullet
+        , coverLine "Live playground"
+        , bullet
+        , coverLine "Native macOS player"
+        , bullet
+        , coverLine "Claude writes it for you"
+        ]
+    }
+  where
+    bullet = D.span { style: D.css { color: "#ff3b1a" }, children: [ D.text "◆" ] }
+
+coverLine :: String -> JSX
+coverLine t = D.span_ [ D.text t ]
+
+-- ---------------------------------------------------------------------------
+-- Fixed chrome: top bar with brand + nav, side rail with page dots.
+-- ---------------------------------------------------------------------------
+
+topBar :: JSX
+topBar =
+  D.div
+    { className: "fixed top-0 inset-x-0 z-30 pointer-events-none"
+    , children:
+        [ D.div
+            { className: "grid grid-cols-3 items-center px-8 py-4 font-mono text-[10px] uppercase tracking-[0.32em] text-[#8a94a8]"
+            , children:
+                [ D.span
+                    { className: "justify-self-start pointer-events-auto"
+                    , children: [ D.text "Vol. I · Nº 01" ]
+                    }
+                , D.span
+                    { style: D.css { fontFamily: "'Sinistre', serif", letterSpacing: "0.04em", fontSize: "16px" }
+                    , className: "justify-self-center text-[#f5f1e8] normal-case pointer-events-auto"
+                    , children: [ D.text "markgraf" ]
+                    }
+                , D.div
+                    { className: "justify-self-end flex items-center gap-5 pointer-events-auto"
+                    , children:
+                        [ navLink "#playground" "playground"
+                        , navLink "#player" "player"
+                        , navLink "#render" "render"
+                        , navLink "#ai" "ai"
+                        , navLink "#embed" "embed"
+                        , navLink "#install" "install"
+                        ]
+                    }
+                ]
+            }
+        , D.div { className: "h-px bg-[#1a1f2e] mx-8", children: [] }
+        ]
+    }
+
+navLink :: String -> String -> JSX
+navLink href t =
+  D.a
+    { href
+    , className: "hover:text-[#f5f1e8] transition-colors"
+    , children: [ D.text t ]
+    }
+
+pageRail :: JSX
+pageRail =
+  D.nav
+    { className: "fixed right-6 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-4 pointer-events-auto"
+    , children: railDot <$>
+        [ "#page-hero"
+        , "#playground"
+        , "#player"
+        , "#render"
+        , "#ai"
+        , "#embed"
+        , "#install"
+        ]
+    }
+
+railDot :: String -> JSX
+railDot href =
+  D.a
+    { href
+    , className: "block w-[7px] h-[7px] rounded-full bg-[#2a3142] hover:bg-[#ff3b1a] transition-colors"
+    , children: []
+    }
+
+-- | Folio: magazine-style page label in the lower corners of each spread.
+spreadFolio :: String -> String -> JSX
+spreadFolio num label =
+  D.div
+    { className: "absolute bottom-0 inset-x-0 z-20 px-8 py-6 pointer-events-none flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.32em] text-[#5a6478]"
+    , children:
+        [ D.span_ [ D.text ("Page " <> num) ]
+        , D.span
+            { className: "flex items-center gap-3"
+            , children:
+                [ D.span { className: "h-px w-8 bg-[#2a3142]", children: [] }
+                , D.span_ [ D.text label ]
+                , D.span { className: "h-px w-8 bg-[#2a3142]", children: [] }
+                ]
+            }
+        , D.span_ [ D.text "Markgraf · Nº I" ]
+        ]
+    }
+
+-- ---------------------------------------------------------------------------
 -- Live playground: textarea + syntax-highlight overlay + markgraf preview.
 -- ---------------------------------------------------------------------------
 
+type Example = { name :: String, source :: String }
+
+examples :: Array Example
+examples =
+  [ { name: "request"
+    , source:
+        "seed 1\n\n"
+          <> "frame setup {\n"
+          <> "  +node client \"Client\"\n"
+          <> "  +node api    \"API\"\n"
+          <> "  +node db     \"Database\"\n"
+          <> "  +edge client api\n"
+          <> "  +edge api db\n"
+          <> "}\n\n"
+          <> "frame \"request\" {\n"
+          <> "  client -> api \"GET /user/42\"\n"
+          <> "  api    -> db  \"SELECT *\"\n"
+          <> "  api    <- db  \"row\"\n"
+          <> "  client <- api \"200 OK\"\n"
+          <> "}\n"
+    }
+  , { name: "cache hit"
+    , source:
+        "seed 2\n\n"
+          <> "frame setup {\n"
+          <> "  +node client \"Client\"\n"
+          <> "  +node api    \"API\"\n"
+          <> "  +node cache  \"Cache\"\n"
+          <> "  +node logger \"Logger\"\n"
+          <> "  +edge client api\n"
+          <> "  +edge api cache\n"
+          <> "  +edge api logger\n"
+          <> "}\n\n"
+          <> "frame \"hit\" {\n"
+          <> "  client -> api \"GET\"\n"
+          <> "  par {\n"
+          <> "    api -> cache  \"HIT\"\n"
+          <> "    api -> logger \"trace\"\n"
+          <> "  }\n"
+          <> "  client <- api \"200\"\n"
+          <> "}\n"
+    }
+  , { name: "pub/sub"
+    , source:
+        "seed 3\n\n"
+          <> "frame setup {\n"
+          <> "  +node pub  \"Publisher\"\n"
+          <> "  +node bus  \"Broker\"\n"
+          <> "  +node a    \"Worker A\"\n"
+          <> "  +node b    \"Worker B\"\n"
+          <> "  +node c    \"Worker C\"\n"
+          <> "  +edge pub bus\n"
+          <> "  +edge bus a\n"
+          <> "  +edge bus b\n"
+          <> "  +edge bus c\n"
+          <> "}\n\n"
+          <> "frame \"fanout\" {\n"
+          <> "  pub -> bus \"event\"\n"
+          <> "  par {\n"
+          <> "    bus -> a \"event\"\n"
+          <> "    bus -> b \"event\"\n"
+          <> "    bus -> c \"event\"\n"
+          <> "  }\n"
+          <> "}\n"
+    }
+  , { name: "auth"
+    , source:
+        "seed 4\n\n"
+          <> "frame setup {\n"
+          <> "  +node user \"User\"\n"
+          <> "  +node app  \"App\"\n"
+          <> "  +node idp  \"IdP\"\n"
+          <> "  +edge user app\n"
+          <> "  +edge app idp\n"
+          <> "  +edge user idp\n"
+          <> "}\n\n"
+          <> "frame \"sign in\" {\n"
+          <> "  user -> app \"open\"\n"
+          <> "  app  -> user \"redirect\"\n"
+          <> "  user -> idp \"login\"\n"
+          <> "  user <- idp \"code\"\n"
+          <> "  user -> app \"code\"\n"
+          <> "  app  -> idp \"exchange\"\n"
+          <> "  app  <- idp \"token\"\n"
+          <> "  user <- app \"signed in\"\n"
+          <> "}\n"
+    }
+  , { name: "queue"
+    , source:
+        "seed 5\n\n"
+          <> "frame setup {\n"
+          <> "  +node prod  \"Producer\"\n"
+          <> "  +node q     \"Queue\"\n"
+          <> "  +node w1    \"Worker 1\"\n"
+          <> "  +node w2    \"Worker 2\"\n"
+          <> "  +edge prod q\n"
+          <> "  +edge q w1\n"
+          <> "  +edge q w2\n"
+          <> "}\n\n"
+          <> "frame \"enqueue\" {\n"
+          <> "  prod -> q \"job 1\"\n"
+          <> "  prod -> q \"job 2\"\n"
+          <> "}\n\n"
+          <> "frame \"drain\" {\n"
+          <> "  par {\n"
+          <> "    q -> w1 \"job 1\"\n"
+          <> "    q -> w2 \"job 2\"\n"
+          <> "  }\n"
+          <> "}\n"
+    }
+  ]
+
 defaultSource :: String
-defaultSource =
-  "seed 1\n\n"
-    <> "frame setup {\n"
-    <> "  +node client \"Client\"\n"
-    <> "  +node api    \"API\"\n"
-    <> "  +node db     \"Database\"\n"
-    <> "  +edge client api\n"
-    <> "  +edge api db\n"
-    <> "}\n\n"
-    <> "frame \"request\" {\n"
-    <> "  client -> api \"GET /user/42\"\n"
-    <> "  api    -> db  \"SELECT *\"\n"
-    <> "  api    <- db  \"row\"\n"
-    <> "  client <- api \"200 OK\"\n"
-    <> "}\n"
+defaultSource = case Array.head examples of
+  Just e -> e.source
+  Nothing -> ""
 
 playground :: {} -> JSX
 playground = unsafePerformEffect mkPlayground
+
+data Pane = SourcePane | RenderPane
+
+derive instance Eq Pane
 
 mkPlayground :: Component {}
 mkPlayground = component "Playground" \_ -> Hooks.do
   src /\ setSrc <- useState' defaultSource
   debounced /\ setDebounced <- useState' defaultSource
   size /\ setSize <- useState' { w: 0.0, h: 0.0 }
+  visible /\ setVisible <- useState' false
+  active /\ setActive <- useState' RenderPane
+  gen /\ setGen <- useState' 0
   useEffect src do
     launchAff_ do
       delay (Milliseconds 250.0)
@@ -70,24 +352,45 @@ mkPlayground = component "Playground" \_ -> Hooks.do
     pure (pure unit)
   useEffect unit do
     onElementResize "markgraf-preview" setSize
-  pure (playgroundView src setSrc debounced size)
+  useEffect unit do
+    installScrollSync "mg-textarea" "mg-pre"
+  useEffect unit do
+    onIntersect "playground" setVisible
+  useEffect visible do
+    when visible (setGen (gen + 1))
+    pure (pure unit)
+  useEffect debounced do
+    setGen (gen + 1)
+    pure (pure unit)
+  pure (playgroundView { src, setSrc, rendered: debounced, size, visible, active, setActive, gen })
 
-playgroundView :: String -> (String -> Effect Unit) -> String -> { w :: Number, h :: Number } -> JSX
-playgroundView src setSrc rendered size =
+type PlaygroundProps =
+  { src :: String
+  , setSrc :: String -> Effect Unit
+  , rendered :: String
+  , size :: { w :: Number, h :: Number }
+  , visible :: Boolean
+  , active :: Pane
+  , setActive :: Pane -> Effect Unit
+  , gen :: Int
+  }
+
+playgroundView :: PlaygroundProps -> JSX
+playgroundView p =
   D.section
     { id: "playground"
-    , className: "relative z-10 bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-12"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
     , children:
         [ D.div
-            { className: "max-w-5xl mx-auto"
+            { className: "max-w-5xl mx-auto w-full"
             , children:
                 [ D.div
-                    { className: "flex items-baseline justify-between mb-6 gap-6 flex-wrap"
+                    { className: "flex items-baseline justify-between mb-8 gap-6 flex-wrap"
                     , children:
                         [ D.div_
                             [ sectionLabel "01 / playground"
                             , D.h2
-                                { className: "text-3xl sm:text-4xl font-bold tracking-tight leading-none"
+                                { className: "text-3xl sm:text-5xl font-bold tracking-tight leading-[0.95] max-w-2xl"
                                 , style: D.css { fontFamily: "'Sinistre', serif" }
                                 , children: [ D.text "Type Left. Watch Right." ]
                                 }
@@ -98,37 +401,99 @@ playgroundView src setSrc rendered size =
                             }
                         ]
                     }
-                , editorAndPreview src setSrc rendered size
+                , exampleStrip p.src p.setSrc
+                , paneTabs p.active p.setActive
+                , editorAndPreview p
                 ]
+            }
+        , spreadFolio "01" "playground"
+        ]
+    }
+
+exampleStrip :: String -> (String -> Effect Unit) -> JSX
+exampleStrip current setSrc =
+  D.div
+    { className: "flex items-end gap-6 sm:gap-10 mb-5 border-b border-[#1a1f2e] pb-4 overflow-x-auto"
+    , children: Array.mapWithIndex chip examples
+    }
+  where
+    chip i ex =
+      D.button
+        { type: "button"
+        , onClick: handler_ (setSrc ex.source)
+        , className: "group flex flex-col items-start gap-1.5 text-left cursor-pointer transition-opacity whitespace-nowrap"
+        , children:
+            [ D.div
+                { className:
+                    "font-mono text-[10px] tracking-[0.3em] transition-colors "
+                      <> if current == ex.source then "text-[#ff3b1a]" else "text-[#5a6478] group-hover:text-[#8a94a8]"
+                , children: [ D.text (padIndex (i + 1)) ]
+                }
+            , D.div
+                { className:
+                    "font-mono text-sm sm:text-base leading-none tracking-[0.12em] uppercase transition-colors "
+                      <> if current == ex.source then "text-[#f5f1e8]" else "text-[#5a6478] group-hover:text-[#c8cdd9]"
+                , children: [ D.text ex.name ]
+                }
+            ]
+        }
+
+    padIndex n = if n < 10 then "0" <> show n else show n
+
+-- Heroicons code-bracket (outline, 24×24, stroke 1.5).
+codeIcon :: JSX
+codeIcon =
+  S.svg
+    { width: "20"
+    , height: "20"
+    , viewBox: "0 0 24 24"
+    , fill: "none"
+    , stroke: "currentColor"
+    , strokeWidth: "1.5"
+    , children:
+        [ S.path
+            { strokeLinecap: "round"
+            , strokeLinejoin: "round"
+            , d: "M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"
             }
         ]
     }
 
-editorAndPreview :: String -> (String -> Effect Unit) -> String -> { w :: Number, h :: Number } -> JSX
-editorAndPreview src setSrc rendered size =
+paneTabs :: Pane -> (Pane -> Effect Unit) -> JSX
+paneTabs active setActive =
   D.div
-    { style: D.css
-        { display: "grid"
-        , gridTemplateColumns: "500px 500px"
-        , gap: "1px"
-        , backgroundColor: "#1a1f2e"
-        , border: "1px solid #1a1f2e"
-        , borderRadius: "12px"
-        , overflow: "hidden"
-        , height: "400px"
-        , width: "fit-content"
-        , marginInline: "auto"
-        }
+    { className: "sm:hidden flex justify-end mb-3"
     , children:
-        [ editorPane src setSrc
-        , previewPane rendered size
+        [ D.button
+            { type: "button"
+            , onClick: handler_ (setActive (if active == SourcePane then RenderPane else SourcePane))
+            , className:
+                "w-10 h-10 rounded-md border flex items-center justify-center transition-colors cursor-pointer "
+                  <> if active == SourcePane
+                       then "bg-[#ff3b1a] border-[#ff3b1a] text-[#0a0e1a]"
+                       else "bg-transparent border-[#2a3142] text-[#8a94a8] hover:border-[#ff3b1a] hover:text-[#f5f1e8]"
+            , children: [ codeIcon ]
+            }
         ]
     }
 
-editorPane :: String -> (String -> Effect Unit) -> JSX
-editorPane src setSrc =
+editorAndPreview :: PlaygroundProps -> JSX
+editorAndPreview p =
   D.div
-    { className: "flex flex-col overflow-hidden bg-[#0a0e1a]"
+    { className:
+        "grid grid-cols-1 sm:grid-cols-[500px_500px] gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[400px] w-full sm:w-fit sm:mx-auto"
+    , children:
+        [ editorPane p.src p.setSrc (p.active == SourcePane)
+        , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
+        ]
+    }
+
+editorPane :: String -> (String -> Effect Unit) -> Boolean -> JSX
+editorPane src setSrc activeOnMobile =
+  D.div
+    { className:
+        (if activeOnMobile then "flex " else "hidden ")
+          <> "sm:flex flex-col overflow-hidden bg-[#0a0e1a]"
     , children:
         [ paneHeader "#ff3b1a" "source.mg"
         , D.div
@@ -142,14 +507,15 @@ editorPane src setSrc =
                 }
             , children:
                 [ D.pre
-                    { style: D.css
+                    { id: "mg-pre"
+                    , style: D.css
                         { position: "absolute"
                         , inset: "0"
                         , margin: "0"
                         , padding: "14px 18px"
                         , whiteSpace: "pre-wrap"
                         , wordBreak: "break-word"
-                        , overflow: "auto"
+                        , overflow: "hidden"
                         , pointerEvents: "none"
                         , color: "#c8cdd9"
                         , fontFamily: "inherit"
@@ -159,7 +525,8 @@ editorPane src setSrc =
                     , children: highlight src <> [ D.text "\n" ]
                     }
                 , D.textarea
-                    { value: src
+                    { id: "mg-textarea"
+                    , value: src
                     , onChange: handler targetValue (fromMaybe "" >>> setSrc)
                     , spellCheck: false
                     , autoCorrect: "off"
@@ -180,6 +547,7 @@ editorPane src setSrc =
                         , whiteSpace: "pre-wrap"
                         , wordBreak: "break-word"
                         , overflow: "auto"
+                        , overscrollBehavior: "contain"
                         , fontFamily: "inherit"
                         , fontSize: "inherit"
                         , lineHeight: "inherit"
@@ -190,10 +558,12 @@ editorPane src setSrc =
         ]
     }
 
-previewPane :: String -> { w :: Number, h :: Number } -> JSX
-previewPane src size =
+previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> JSX
+previewPane src size visible gen activeOnMobile =
   D.div
-    { className: "flex flex-col overflow-hidden bg-[#0a0e1a]"
+    { className:
+        (if activeOnMobile then "flex " else "hidden ")
+          <> "sm:flex flex-col overflow-hidden bg-[#0a0e1a]"
     , children:
         [ paneHeader "#69dcaa" "live render"
         , D.div
@@ -205,10 +575,10 @@ previewPane src size =
                 , overflow: "hidden"
                 }
             , children:
-                if size.w <= 0.0 || size.h <= 0.0
+                if not visible || size.w <= 0.0 || size.h <= 0.0
                   then []
                   else
-                    [ element markgrafPlayerComponent
+                    [ keyed (show gen) $ element markgrafPlayerComponent
                         { src
                         , renderer: "svg"
                         , theme: "dark"
@@ -411,155 +781,9 @@ isIdentStart c =
 isIdentChar :: Char -> Boolean
 isIdentChar c = isIdentStart c || isDigit c || c == '-'
 
--- | A 4× viewport scroll container holding the sticky 3D stage. The longer
--- | run gives the camera real distance to travel through three acts.
-scrollStage :: Number -> JSX
-scrollStage progress =
-  D.div
-    { id: "scroll-stage"
-    , className: "relative"
-    , style: D.css { height: "220vh" }
-    , children:
-        [ D.div
-            { className: "sticky top-0 h-screen w-full overflow-hidden"
-            , children:
-                [ D.div
-                    { className: "absolute inset-0"
-                    , children: [ element feltballsComponent {} ]
-                    }
-                , D.div
-                    { className: "absolute inset-0"
-                    , children: [ element sceneComponent {} ]
-                    }
-                , topBar
-                , heroLockup progress
-                , captionLayer progress
-                , bottomMeta progress
-                ]
-            }
-        ]
-    }
-
-topBar :: JSX
-topBar =
-  D.div
-    { className: "absolute top-0 inset-x-0 z-20 flex items-center justify-between px-8 py-5 font-mono text-[11px] uppercase tracking-[0.28em] text-[#8a94a8]"
-    , children:
-        [ D.span
-            { style: D.css { fontFamily: "'Sinistre', serif", letterSpacing: "0.05em", fontSize: "15px" }
-            , className: "text-[#f5f1e8] normal-case"
-            , children: [ D.text "markgraf" ]
-            }
-        , D.div
-            { className: "flex items-center gap-6"
-            , children:
-                [ navLink "language"
-                , navLink "render"
-                , navLink "install"
-                , navLink "github ↗"
-                ]
-            }
-        ]
-    }
-
-navLink :: String -> JSX
-navLink t =
-  D.a
-    { href: "#"
-    , className: "hover:text-[#f5f1e8] transition-colors"
-    , children: [ D.text t ]
-    }
-
--- | Act 0 lockup: huge Sinistre wordmark + tagline + install pill.
--- | Visible 0..0.18, fades out by 0.28.
-heroLockup :: Number -> JSX
-heroLockup progress =
-  D.div
-    { className: "absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none px-6"
-    , style: D.css
-        { opacity: show (1.0 - smooth01 progress 0.16 0.30)
-        , transform: "translateY(" <> show (progress * -100.0) <> "px)"
-        }
-    , children:
-        [ D.div
-            { className: "flex flex-col items-center gap-10 max-w-3xl text-center"
-            , children:
-                [ D.h1
-                    { className: "text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold text-[#f5f1e8]"
-                    , style: D.css
-                        { fontFamily: "'Sinistre', serif"
-                        , textShadow: "0 0 80px rgba(10,14,26,0.7)"
-                        }
-                    , children: [ D.text "markgraf" ]
-                    }
-                , D.p
-                    { className: "max-w-xl text-lg sm:text-xl leading-snug text-[#c8cdd9]"
-                    , children:
-                        [ D.text "Animated graph diagrams from a tiny declarative source language. "
-                        , D.span
-                            { style: D.css { color: "#ff3b1a" }
-                            , children: [ D.text "Watch your architecture move." ]
-                            }
-                        ]
-                    }
-                , installPill
-                ]
-            }
-        ]
-    }
-
--- | Cross-fading captions for Acts 1, 2, 3.
-captionLayer :: Number -> JSX
-captionLayer progress =
-  D.div
-    { className: "absolute inset-0 flex items-center justify-center px-6 pointer-events-none"
-    , children:
-        [ caption progress 0.32 0.58 "Every Frame Is a State of Your System"
-        , caption progress 0.58 0.82 "Tokens Carry Data Between Nodes"
-        , caption progress 0.82 1.10 "Now Imagine Yours."
-        ]
-    }
-
-caption :: Number -> Number -> Number -> String -> JSX
-caption progress start endP text =
-  D.p
-    { className: "absolute max-w-3xl text-center text-3xl sm:text-5xl md:text-6xl leading-[0.95] font-bold text-[#f5f1e8] tracking-tight"
-    , style: D.css
-        { fontFamily: "'Sinistre', serif"
-        , opacity: show (triangleFade progress start endP)
-        , transform: "translateY(" <> show (captionYOffset progress start endP) <> "px)"
-        , textShadow: "0 0 90px rgba(10,14,26,0.75)"
-        }
-    , children: [ D.text text ]
-    }
-
--- Triangle fade: 0 at start, 1 at midpoint, 0 at end.
-triangleFade :: Number -> Number -> Number -> Number
-triangleFade p s e
-  | p <= s    = 0.0
-  | p >= e    = 0.0
-  | otherwise =
-      let
-        mid = (s + e) / 2.0
-        d   = abs (p - mid) / ((e - s) / 2.0)
-      in max 0.0 (1.0 - d)
-
-captionYOffset :: Number -> Number -> Number -> Number
-captionYOffset p s e =
-  let mid = (s + e) / 2.0
-  in (p - mid) * -80.0
-
--- Smoothstep 0→1 in [s,e]
-smooth01 :: Number -> Number -> Number -> Number
-smooth01 p s e
-  | p <= s    = 0.0
-  | p >= e    = 1.0
-  | otherwise =
-      let t = (p - s) / (e - s)
-      in t * t * (3.0 - 2.0 * t)
-
-abs :: Number -> Number
-abs n = if n < 0.0 then -n else n
+-- ---------------------------------------------------------------------------
+-- Content spreads after the playground
+-- ---------------------------------------------------------------------------
 
 installPill :: JSX
 installPill =
@@ -576,92 +800,52 @@ installPill =
         ]
     }
 
-bottomMeta :: Number -> JSX
-bottomMeta progress =
-  D.div
-    { className: "absolute bottom-0 inset-x-0 z-20 flex items-end justify-between px-8 py-6 font-mono text-[10px] uppercase tracking-[0.3em] text-[#5a6478] pointer-events-none"
-    , children:
-        [ D.span_ [ D.text ("act " <> actLabel progress) ]
-        , D.div
-            { className: "flex items-center gap-3 opacity-70"
-            , style: D.css { opacity: show (max 0.0 (1.0 - progress * 2.0)) }
-            , children:
-                [ D.text "scroll"
-                , D.span_ [ D.text "↓" ]
-                ]
-            }
-        ]
-    }
-
-actLabel :: Number -> String
-actLabel p
-  | p < 0.30  = "00 / hero"
-  | p < 0.65  = "01 / build"
-  | p < 0.85  = "02 / orbit"
-  | otherwise = "03 / mesh"
-
--- ---------------------------------------------------------------------------
--- Content sections after the sticky hero
--- ---------------------------------------------------------------------------
-
-languageSection :: JSX
-languageSection =
+playerSection :: JSX
+playerSection =
   D.section
-    { id: "language"
-    , className: "relative z-10 bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-32"
+    { id: "player"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
     , children:
         [ D.div
-            { className: "max-w-5xl mx-auto"
+            { className: "max-w-5xl mx-auto w-full"
             , children:
-                [ sectionLabel "02 / language"
+                [ sectionLabel "02 / player"
                 , D.h2
-                    { className: "text-5xl sm:text-7xl font-bold tracking-tight leading-[0.95] mb-8 max-w-3xl"
+                    { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
                     , style: D.css { fontFamily: "'Sinistre', serif" }
-                    , children: [ D.text "A Frame Is One Beat. A Token Is One Hop." ]
+                    , children: [ D.text "Native macOS player." ]
                     }
                 , D.p
-                    { className: "text-lg text-[#8a94a8] max-w-2xl leading-relaxed mb-16"
-                    , children: [ D.text "Eight keywords. Everything else is naming things." ]
+                    { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10"
+                    , children: [ D.text "Swift, Metal, AppKit. Opens .markgraf files, plays them, hot-reloads on save." ]
                     }
                 , D.div
-                    { className: "grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16"
+                    { className: "grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6"
                     , children:
-                        [ codeExample "+node / +edge" "structure the graph"
-                            "frame setup {\n  +node client \"Client\"\n  +node api    \"API\"\n  +edge client api\n}"
-                        , codeExample "tokens" "data flow between nodes"
-                            "frame \"request\" {\n  client -> api \"GET /user\"\n  client <- api \"200 OK\"\n}"
-                        , codeExample "par" "things that happen at once"
-                            "frame \"fanout\" {\n  par {\n    api -> cache \"WARM\"\n    api -> logger \"trace\"\n  }\n}"
-                        , codeExample "chains" "one continuous motion through a stack"
-                            "client -> api  \"GET\"\napi    -> db   \"SELECT\"\napi    <- db   \"row\"\nclient <- api  \"200\""
+                        [ featureRow "Drag-and-drop reload" "Drop a .markgraf file on the window. Edit in your editor of choice; the player picks up saves instantly."
+                        , featureRow "Scrub bar" "Drag along the timeline to step through frames. Pause, rewind, hold on any moment."
+                        , featureRow "Glass backdrop" "Vibrant blur over your desktop so the diagram floats. Looks at home next to your editor."
+                        , featureRow "Pipe straight in" "pbpaste | markgraf --play opens a window without touching the filesystem."
                         ]
                     }
                 ]
             }
+        , spreadFolio "02" "player"
         ]
     }
 
-codeExample :: String -> String -> String -> JSX
-codeExample name what source =
+featureRow :: String -> String -> JSX
+featureRow heading body =
   D.div
-    { className: "flex flex-col gap-3"
+    { className: "flex flex-col gap-1.5"
     , children:
         [ D.div
-            { className: "flex items-baseline gap-3"
-            , children:
-                [ D.span
-                    { className: "font-mono text-sm text-[#ff3b1a]"
-                    , children: [ D.text name ]
-                    }
-                , D.span
-                    { className: "text-sm text-[#8a94a8]"
-                    , children: [ D.text what ]
-                    }
-                ]
+            { className: "font-mono text-xs uppercase tracking-[0.2em] text-[#ff3b1a]"
+            , children: [ D.text heading ]
             }
-        , D.pre
-            { className: "bg-[#11162280] backdrop-blur-sm border border-[#2a3142] rounded-lg px-5 py-4 text-sm overflow-x-auto leading-relaxed text-[#c8cdd9] font-mono"
-            , children: [ D.code_ [ D.text source ] ]
+        , D.p
+            { className: "text-sm text-[#c8cdd9] leading-relaxed"
+            , children: [ D.text body ]
             }
         ]
     }
@@ -670,34 +854,37 @@ renderSection :: JSX
 renderSection =
   D.section
     { id: "render"
-    , className: "relative z-10 bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-32"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
     , children:
         [ D.div
-            { className: "max-w-5xl mx-auto"
+            { className: "max-w-5xl mx-auto w-full"
             , children:
                 [ sectionLabel "03 / render"
                 , D.h2
-                    { className: "text-5xl sm:text-7xl font-bold tracking-tight leading-[0.95] mb-8 max-w-3xl"
+                    { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
                     , style: D.css { fontFamily: "'Sinistre', serif" }
-                    , children: [ D.text "Pipe In. Ship Anywhere." ]
+                    , children: [ D.text "mp4, SVG, GIF, or sequence diagram." ]
                     }
                 , D.p
-                    { className: "text-lg text-[#8a94a8] max-w-2xl leading-relaxed mb-16"
-                    , children: [ D.text "Native player on macOS, mp4 with ffmpeg embedded, animated SVG, gif, or a static sequence diagram." ]
+                    { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10"
+                    , children:
+                        [ D.text "mp4, animated SVG, gif, or a static sequence diagram. ffmpeg is statically linked, so mp4 works on a fresh machine with nothing else installed."
+                        ]
                     }
                 , D.div
                     { className: "grid grid-cols-2 md:grid-cols-3 gap-4"
                     , children:
-                        [ renderCard "--play"     "native player"
-                        , renderCard "-o out.mp4" "encode mp4"
-                        , renderCard "--svg"      "vector"
+                        [ renderCard "--play"     "native macOS player"
+                        , renderCard "-o out.mp4" "mp4 — ffmpeg embedded"
+                        , renderCard "--svg"      "animated svg — vector"
                         , renderCard "--gif"      "keyframe gif"
-                        , renderCard "--sequence" "sequence diagram"
-                        , renderCard "--check"    "typecheck only"
+                        , renderCard "--sequence" "static sequence diagram"
+                        , renderCard "--check"    "typecheck without rendering"
                         ]
                     }
                 ]
             }
+        , spreadFolio "03" "render"
         ]
     }
 
@@ -717,21 +904,125 @@ renderCard flag desc =
         ]
     }
 
+aiSection :: JSX
+aiSection =
+  D.section
+    { id: "ai"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , children:
+        [ D.div
+            { className: "max-w-5xl mx-auto w-full"
+            , children:
+                [ sectionLabel "04 / ai authoring"
+                , D.h2
+                    { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
+                    , style: D.css { fontFamily: "'Sinistre', serif" }
+                    , children: [ D.text "Claude writes the diagram." ]
+                    }
+                , D.p
+                    { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10"
+                    , children:
+                        [ D.text "A Claude Code plugin teaches Claude the syntax and authoring rules. You describe the system in plain English, Claude produces the "
+                        , code ".markgraf"
+                        , D.text " source."
+                        ]
+                    }
+                , D.div
+                    { className: "flex flex-col gap-3 max-w-2xl"
+                    , children:
+                        [ aiCommand "/plugin marketplace add i-am-the-slime/claude-plugins"
+                        , aiCommand "/plugin install markgraf@i-am-the-slime"
+                        ]
+                    }
+                ]
+            }
+        , spreadFolio "04" "ai"
+        ]
+    }
+
+embedSection :: JSX
+embedSection =
+  D.section
+    { id: "embed"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , children:
+        [ D.div
+            { className: "max-w-5xl mx-auto w-full"
+            , children:
+                [ sectionLabel "05 / integrations"
+                , D.h2
+                    { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
+                    , style: D.css { fontFamily: "'Sinistre', serif" }
+                    , children: [ D.text "GitHub and docs sites." ]
+                    }
+                , D.p
+                    { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10"
+                    , children:
+                        [ D.text "The same "
+                        , code "```markgraf"
+                        , D.text " block plays in your README and in your docs."
+                        ]
+                    }
+                , D.div
+                    { className: "grid grid-cols-1 md:grid-cols-2 gap-6"
+                    , children:
+                        [ embedCard "GitHub integration" "Browser extension that renders markgraf code blocks inline on github.com."
+                        , embedCard "Docs plugins" "Docusaurus, Astro Starlight, MkDocs."
+                        ]
+                    }
+                ]
+            }
+        , spreadFolio "05" "integrations"
+        ]
+    }
+
+embedCard :: String -> String -> JSX
+embedCard heading body =
+  D.div
+    { className: "bg-[#11162260] backdrop-blur-sm border border-[#2a3142] rounded-lg p-6 hover:border-[#ff3b1a] hover:bg-[#1a1f2e] transition-colors cursor-default"
+    , children:
+        [ D.div
+            { className: "font-mono text-xs uppercase tracking-[0.2em] text-[#ff3b1a] mb-3"
+            , children: [ D.text heading ]
+            }
+        , D.p
+            { className: "text-sm text-[#c8cdd9] leading-relaxed"
+            , children: [ D.text body ]
+            }
+        ]
+    }
+
+aiCommand :: String -> JSX
+aiCommand cmd =
+  D.pre
+    { className: "bg-[#11162280] backdrop-blur-sm border border-[#2a3142] rounded-lg px-5 py-4 text-sm leading-relaxed text-[#c8cdd9] font-mono overflow-x-auto"
+    , children: [ D.code_ [ D.text cmd ] ]
+    }
+
+code :: String -> JSX
+code text =
+  D.code
+    { className: "font-mono text-[#ff3b1a] bg-[#11162280] border border-[#2a3142] rounded px-1.5 py-0.5 text-[0.85em]"
+    , children: [ D.text text ]
+    }
+
 footerSection :: JSX
 footerSection =
   D.section
-    { className: "relative z-10 bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-24"
+    { id: "install"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
     , children:
         [ D.div
-            { className: "max-w-5xl mx-auto flex flex-col gap-12"
+            { className: "max-w-5xl mx-auto w-full flex flex-col gap-10"
             , children:
-                [ D.div
+                [ sectionLabel "06 / install"
+                , D.div
                     { className: "flex flex-col gap-6"
                     , children:
                         [ D.h2
-                            { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95]"
+                            { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] max-w-3xl"
                             , style: D.css { fontFamily: "'Sinistre', serif" }
-                            , children: [ D.text "Now Imagine Yours." ]
+                            , children: [ D.text "Install" ]
                             }
                         , D.div { children: [ installPill ] }
                         ]
@@ -747,6 +1038,7 @@ footerSection =
                     }
                 ]
             }
+        , spreadFolio "06" "install"
         ]
     }
 
@@ -761,8 +1053,11 @@ footerLink href text =
 sectionLabel :: String -> JSX
 sectionLabel text =
   D.div
-    { className: "font-mono text-[11px] uppercase tracking-[0.3em] text-[#ff3b1a] mb-8"
-    , children: [ D.text text ]
+    { className: "flex items-center gap-4 mb-8 font-mono text-[10px] uppercase tracking-[0.35em]"
+    , children:
+        [ D.span { className: "h-px w-10 bg-[#ff3b1a]", children: [] }
+        , D.span { className: "text-[#ff3b1a]", children: [ D.text ("Dept. " <> text) ] }
+        ]
     }
 
 foreign import sceneComponent :: ReactComponent {}
@@ -776,5 +1071,6 @@ foreign import markgrafPlayerComponent
        , width :: Number
        , height :: Number
        }
-foreign import onScrollProgress :: String -> (Number -> Effect Unit) -> Effect (Effect Unit)
 foreign import onElementResize :: String -> ({ w :: Number, h :: Number } -> Effect Unit) -> Effect (Effect Unit)
+foreign import onIntersect :: String -> (Boolean -> Effect Unit) -> Effect (Effect Unit)
+foreign import installScrollSync :: String -> String -> Effect (Effect Unit)
