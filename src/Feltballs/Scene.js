@@ -90,17 +90,20 @@ export const hoveredBallIndex = (state) => {
 }
 
 export const installGlobalPointerDownImpl = (handler) => () => {
+  if (typeof window === "undefined") return () => {}
   const fn = () => handler()
   window.addEventListener("pointerdown", fn)
   return () => window.removeEventListener("pointerdown", fn)
 }
 
 export const setWordmarkTransformImpl = (px) => (py) => () => {
+  if (typeof document === "undefined") return
   const el = document.getElementById("feltballs-wordmark")
   if (el) el.style.transform = `translate3d(${px}px, ${py}px, 0)`
 }
 
 export const installGlobalPointerUpImpl = (handler) => () => {
+  if (typeof window === "undefined") return () => {}
   const fn = () => handler()
   window.addEventListener("pointerup", fn)
   window.addEventListener("pointercancel", fn)
