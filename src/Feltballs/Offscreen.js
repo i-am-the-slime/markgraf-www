@@ -47,6 +47,18 @@ export const setupFeltballsImpl = (canvas) => () => {
     })
   window.addEventListener("resize", onResize)
 
+  // Periodically nudge the worker to start a chain from a random ball — the
+  // scene itself doesn't take user input anymore. Only fires while visible
+  // (we set/clear the interval from the IntersectionObserver below).
+  let chainTimer = null
+  const startChainTicker = () => {
+    if (chainTimer) return
+    chainTimer = setInterval(() => post("startChain", {}), 4500)
+  }
+  const stopChainTicker = () => {
+    if (chainTimer) { clearInterval(chainTimer); chainTimer = null }
+  }
+
   // Pause R3F's frameloop when the canvas scrolls off-screen — the worker
   // already accepts a {type:"props"} message and re-`root.configure`s with it.
   // "never" stops the loop entirely; "always" resumes the rAF tick.
@@ -54,12 +66,14 @@ export const setupFeltballsImpl = (canvas) => () => {
     (entries) => {
       const visible = entries.some((e) => e.isIntersecting)
       post("props", { frameloop: visible ? "always" : "never" })
+      if (visible) startChainTicker(); else stopChainTicker()
     },
     { threshold: 0 },
   )
   observer.observe(canvas)
 
   return () => {
+    stopChainTicker()
     observer.disconnect()
     window.removeEventListener("resize", onResize)
     worker.terminate()

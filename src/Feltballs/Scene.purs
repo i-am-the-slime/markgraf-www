@@ -2,18 +2,17 @@ module Feltballs.Scene (sceneJSX) where
 
 import Prelude
 
-import Data.Array (any, dropWhile, drop, elem, foldl, index, last, length, nub, range, replicate, snoc, uncons, updateAt, zipWith)
+import Data.Array (any, dropWhile, drop, elem, foldl, index, last, range, replicate, snoc, uncons, updateAt, zipWith)
 import Data.Foldable (sum, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Nullable (Nullable, toNullable)
 import Data.Number (cos, floor, pi, sin, sqrt)
 import Effect (Effect)
+import Effect.Random (randomInt)
 import Effect.Unsafe (unsafePerformEffect)
-import Feltballs.Bindings (cylinderGeometry, html, instance_, instances, meshLambertMaterial, meshStandardMaterial)
+import Feltballs.Bindings (cylinderGeometry, instance_, instances, meshStandardMaterial)
 import React.Basic (JSX, Ref, element)
-import React.Basic.DOM as R
-import React.Basic.DOM.Internal (css)
 import React.Basic.Hooks (Component, component, readRef, readRefMaybe, useEffectOnce, useRef, useState, writeRef, (/\))
 import React.Basic.Hooks as Hooks
 import React.R3F.Hooks (applyProps, useFrame)
@@ -49,7 +48,6 @@ pgEnd = 171
 
 type PersistentState =
   { hold :: Maybe HoldState
-  , score :: Int
   , popStart :: Array Number
   , popCycle :: Array Int
   , arrowTick :: Number
@@ -57,10 +55,7 @@ type PersistentState =
 
 type FrameState =
   { t :: Number
-  , px :: Number
-  , py :: Number
   , aspect :: Number
-  , hover :: Int
   }
 
 type ChainNode = { idx :: Int, cycle :: Int }
@@ -91,39 +86,24 @@ animatedField = unsafePerformEffect animatedFieldComponent
 animatedFieldComponent :: Component {}
 animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
   state /\ setState <- useState initState
-  wrapRef <- useRef (toNullable (Nothing :: Maybe Object3D))
   bgMatRef <- useRef (toNullable (Nothing :: Maybe Object3D))
   noiseMatRef <- useRef (toNullable (Nothing :: Maybe Object3D))
   frameRef <- useRef initFrame
-  prevHoverRef <- useRef (-1)
 
-  useEffectOnce do
-    unsubUp <- installGlobalPointerUp (releaseHold setState)
-    unsubDown <- installGlobalPointerDown (startHoldFromHover setState frameRef)
-    pure (unsubUp *> unsubDown)
+  useEffectOnce $
+    installStartChainListener (startChainFromRandom setState frameRef)
 
   useFrame \rs _ -> do
     let t = readClockElapsed rs
-        px = readPointerX rs
-        py = readPointerY rs
         aspect = readAspect rs
-        hoverIdx = case hoveredBallIndex rs of
-          -1 -> -1
-          i -> if isHidden t state.popStart state.popCycle i then -1 else i
-    writeRef frameRef { t, px, py, aspect, hover: hoverIdx }
+    writeRef frameRef { t, aspect }
 
-    readRefMaybe wrapRef # withJust \o -> applyProps o
-      { position: [ px * 2.2, py * 1.2, 0.0 ]
-      , rotation: [ -py * 0.08, px * 0.12, 0.0 ]
-      }
-    setWordmarkTransform (px * 30.0) (-py * 30.0)
     readRefMaybe bgMatRef # withJust \m -> applyProps m
       { "uniforms-u_time-value": t, "uniforms-u_aspect-value": aspect }
     readRefMaybe noiseMatRef # withJust \m -> applyProps m
       { "uniforms-u_time-value": t }
 
-    traverse_ (paintBall t state.popStart state.popCycle hoverIdx (connectedIdxs state.hold)) (range 0 (totalBalls - 1))
-    writeRef prevHoverRef hoverIdx
+    traverse_ (paintBall t state.popStart state.popCycle (-1) (connectedIdxs state.hold)) (range 0 (totalBalls - 1))
 
     advanceHoldEffect setState state t
 
@@ -133,26 +113,20 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
 
   pure $ element (threejs "Group")
     { children:
-        [ element (threejs "Group")
-            { ref: wrapRef
-            , children:
-                ([ fog
-                 , metaballBackground bgMatRef
-                 , ambient
-                 , hemi
-                 , directional
-                 , rim
-                 ] <> shapeGroups)
-                <> renderArrows state.arrowTick state.hold
-                <> [ noiseOverlay noiseMatRef ]
-            }
-        ]
+        ([ fog
+         , metaballBackground bgMatRef
+         , ambient
+         , hemi
+         , directional
+         , rim
+         ] <> shapeGroups)
+          <> renderArrows state.arrowTick state.hold
+          <> [ noiseOverlay noiseMatRef ]
     }
   where
-  initFrame = { t: 0.0, px: 0.0, py: 0.0, aspect: 1.0, hover: -1 }
+  initFrame = { t: 0.0, aspect: 1.0 }
   initState =
     { hold: Nothing
-    , score: 0
     , popStart: replicate totalBalls (-1.0)
     , popCycle: replicate totalBalls 0
     , arrowTick: 0.0
@@ -309,15 +283,19 @@ noiseFrag =
   }
   """
 
-startHoldFromHover
+-- | Triggered by a "startChain" message from the host page. Picks a random
+-- | non-popped ball as the source and seeds the hold state; the existing
+-- | `advanceHoldEffect` carries the chain forward each frame.
+startChainFromRandom
   :: ((PersistentState -> PersistentState) -> Effect Unit)
   -> Ref FrameState
   -> Effect Unit
-startHoldFromHover setState frameRef = do
+startChainFromRandom setState frameRef = do
   frame <- readRef frameRef
-  case frame.hover of
-    -1 -> pure unit
-    i -> setState \s -> s { hold = Just (freshHold frame.t i s) }
+  source <- randomInt 0 (totalBalls - 1)
+  setState \s -> case s.hold of
+    Just _ -> s
+    Nothing -> s { hold = Just (freshHold frame.t source s) }
   where
   freshHold t i s =
     { chain: [ sourceNode ]
@@ -328,9 +306,6 @@ startHoldFromHover setState frameRef = do
     sourceNode = { idx: i, cycle: ballCycle t i }
     targetIdx = pickNearest t s.popStart s.popCycle i (-1)
     targetNode = { idx: targetIdx, cycle: ballCycle t targetIdx }
-
-releaseHold :: ((PersistentState -> PersistentState) -> Effect Unit) -> Effect Unit
-releaseHold setState = setState _ { hold = Nothing }
 
 advanceHoldEffect
   :: ((PersistentState -> PersistentState) -> Effect Unit)
@@ -362,54 +337,12 @@ advanceHoldEffect setState s t = case s.hold of
     }
 
 closeCycle :: PersistentState -> Number -> Array ChainNode -> PersistentState
-closeCycle s t nodes = (foldl popNode s nodes)
-  { hold = Nothing
-  , score = s.score + scoreCycle (_.idx <$> nodes)
-  }
+closeCycle s t nodes = (foldl popNode s nodes) { hold = Nothing }
   where
   popNode acc n = acc
     { popStart = fromMaybe acc.popStart (updateAt n.idx t acc.popStart)
     , popCycle = fromMaybe acc.popCycle (updateAt n.idx n.cycle acc.popCycle)
     }
-
-ballValue :: Int -> Int
-ballValue i
-  | i < rrEnd = 1
-  | i < pgEnd = 2
-  | otherwise = 5
-
-shapeType :: Int -> Int
-shapeType i
-  | i < rrEnd = 0
-  | i < pgEnd = 1
-  | otherwise = 2
-
-scoreCycle :: Array Int -> Int
-scoreCycle idxs = base + varietyBonus + lengthBonus
-  where
-  base = sum (ballValue <$> idxs)
-  varietyBonus = if length (nub (shapeType <$> idxs)) >= 3 then 10 else 0
-  lengthBonus = max 0 (length idxs - 3) * 2
-
-scoreOverlay :: Int -> JSX
-scoreOverlay n = html
-  { fullscreen: true
-  , style: css { pointerEvents: "none" }
-  , children:
-      [ R.div
-          { style: css
-              { position: "absolute"
-              , top: "16px"
-              , left: "16px"
-              , color: "#ffffff"
-              , font: "600 24px ui-sans-serif, system-ui, sans-serif"
-              , textShadow: "0 0 12px rgba(255,255,255,0.6)"
-              , userSelect: "none"
-              }
-          , children: [ R.text (if n > 0 then show n else "") ]
-          }
-      ]
-  }
 
 pickNearest :: Number -> Array Number -> Array Int -> Int -> Int -> Int
 pickNearest t popStart popCycle source avoid =
@@ -733,22 +666,11 @@ parallelogramGeometry = parallelogramGeometryImpl
 roundedRectGeometry :: Number -> Number -> Number -> Number -> JSX
 roundedRectGeometry = roundedRectGeometryImpl
 
-installGlobalPointerUp :: Effect Unit -> Effect (Effect Unit)
-installGlobalPointerUp = installGlobalPointerUpImpl
-
-installGlobalPointerDown :: Effect Unit -> Effect (Effect Unit)
-installGlobalPointerDown = installGlobalPointerDownImpl
+installStartChainListener :: Effect Unit -> Effect (Effect Unit)
+installStartChainListener = installStartChainListenerImpl
 
 foreign import readClockElapsed :: forall r. { | r } -> Number
-foreign import readPointerX :: forall r. { | r } -> Number
-foreign import readPointerY :: forall r. { | r } -> Number
 foreign import readAspect :: forall r. { | r } -> Number
-foreign import hoveredBallIndex :: forall r. { | r } -> Int
 foreign import parallelogramGeometryImpl :: Number -> Number -> Number -> Number -> JSX
 foreign import roundedRectGeometryImpl :: Number -> Number -> Number -> Number -> JSX
-foreign import installGlobalPointerUpImpl :: Effect Unit -> Effect (Effect Unit)
-foreign import installGlobalPointerDownImpl :: Effect Unit -> Effect (Effect Unit)
-foreign import setWordmarkTransformImpl :: Number -> Number -> Effect Unit
-
-setWordmarkTransform :: Number -> Number -> Effect Unit
-setWordmarkTransform = setWordmarkTransformImpl
+foreign import installStartChainListenerImpl :: Effect Unit -> Effect (Effect Unit)

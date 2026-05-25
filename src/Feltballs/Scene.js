@@ -89,28 +89,12 @@ export const hoveredBallIndex = (state) => {
   return bestIdx
 }
 
-// @react-three/offscreen stubs `self.window = {}` and `self.document = {}` in
-// workers, so `typeof window` is "object" — feature-detect the actual methods.
-export const installGlobalPointerDownImpl = (handler) => () => {
-  if (typeof window === "undefined" || typeof window.addEventListener !== "function") return () => {}
-  const fn = () => handler()
-  window.addEventListener("pointerdown", fn)
-  return () => window.removeEventListener("pointerdown", fn)
-}
-
-export const setWordmarkTransformImpl = (px) => (py) => () => {
-  if (typeof document === "undefined" || typeof document.getElementById !== "function") return
-  const el = document.getElementById("feltballs-wordmark")
-  if (el) el.style.transform = `translate3d(${px}px, ${py}px, 0)`
-}
-
-export const installGlobalPointerUpImpl = (handler) => () => {
-  if (typeof window === "undefined" || typeof window.addEventListener !== "function") return () => {}
-  const fn = () => handler()
-  window.addEventListener("pointerup", fn)
-  window.addEventListener("pointercancel", fn)
-  return () => {
-    window.removeEventListener("pointerup", fn)
-    window.removeEventListener("pointercancel", fn)
-  }
+// Listens on the worker's `self` for `{type:"startChain"}` messages and runs
+// `handler` each time. `addEventListener` doesn't disturb the `self.onmessage`
+// that `@react-three/offscreen` installs — both fire on every message.
+export const installStartChainListenerImpl = (handler) => () => {
+  if (typeof self === "undefined" || typeof self.addEventListener !== "function") return () => {}
+  const onMsg = (e) => { if (e.data && e.data.type === "startChain") handler() }
+  self.addEventListener("message", onMsg)
+  return () => self.removeEventListener("message", onMsg)
 }
