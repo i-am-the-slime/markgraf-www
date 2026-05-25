@@ -15,7 +15,10 @@ import React.Basic.Hooks as Hooks
 import Unsafe.Coerce (unsafeCoerce)
 
 foreign import data CanvasEl :: Type
-foreign import setupFeltballsImpl :: CanvasEl -> Effect (Effect Unit)
+foreign import setupFeltballsImpl :: Int -> CanvasEl -> Effect (Effect Unit)
+
+pixelBudget :: Int
+pixelBudget = 320 * 160
 
 feltballsOffscreen :: ReactComponent {}
 feltballsOffscreen = unsafeCoerce (unsafePerformEffect feltballsOffscreenComponent)
@@ -26,7 +29,7 @@ feltballsOffscreenComponent = component "FeltballsOffscreen" \_ -> Hooks.do
 
   useEffectOnce do
     readRefMaybe canvasRef >>= case _ of
-      Just c -> setupFeltballsImpl c
+      Just c -> setupFeltballsImpl pixelBudget c
       Nothing -> pure (pure unit)
 
   pure $ D.canvas

@@ -2,7 +2,7 @@
 // feltballs R3F scene. The `new URL(literal, import.meta.url)` form is what
 // Turbopack scans to emit the worker as its own chunk — has to be in JS.
 // A ref-guard prevents StrictMode's double-effect from re-transferring.
-export const setupFeltballsImpl = (canvas) => () => {
+export const setupFeltballsImpl = (pixelBudget) => (canvas) => () => {
   if (canvas._feltballsTransferred) return () => {}
   canvas._feltballsTransferred = true
 
@@ -22,9 +22,8 @@ export const setupFeltballsImpl = (canvas) => () => {
   const post = (type, payload) =>
     worker.postMessage({ type, payload }, type === "init" ? [offscreen] : [])
 
-  // Target ~640x480 worth of pixels (a budget, not a fixed size) — dpr is a
-  // uniform scale so the canvas's aspect ratio is preserved automatically.
-  const pixelBudget = 320 * 160
+  // pixelBudget passed in from PureScript; dpr is a uniform scale so the
+  // canvas's aspect ratio is preserved automatically.
   const targetDpr = () => {
     const w = Math.max(1, canvas.clientWidth)
     const h = Math.max(1, canvas.clientHeight)
