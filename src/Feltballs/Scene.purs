@@ -137,7 +137,7 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
     , popCycle: replicate totalBalls 0
     , arrowTick: 0.0
     }
-  fog = makeFog "#0a0e1a" 14.0 110.0
+  fog = makeFog "#0a0e1a" 6.0 55.0
   ambient = element (threejs "AmbientLight") { intensity: 0.12 }
   hemi = makeHemisphereLight "#c8cdd9" "#1a1f2e" 0.9
   directional = element (threejs "DirectionalLight")
