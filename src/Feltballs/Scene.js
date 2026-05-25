@@ -89,6 +89,14 @@ export const hoveredBallIndex = (state) => {
   return bestIdx
 }
 
+// Typed-array helpers. Used by Scene.purs as mutable per-ball buffers so we
+// avoid `Array.index` (boxed) and `updateAt` (whole-array copy) on the per-frame
+// path. Allocated once at component mount and reused for the lifetime of the scene.
+export const newU8Impl = (n) => () => new Uint8Array(n)
+export const readU8Impl = (a) => (i) => () => a[i]
+export const writeU8Impl = (a) => (i) => (v) => () => { a[i] = v }
+export const fillU8Impl = (a) => (v) => () => { a.fill(v) }
+
 // Listens on the worker's `self` for `{type:"startChain"}` messages and runs
 // `handler` each time. `addEventListener` doesn't disturb the `self.onmessage`
 // that `@react-three/offscreen` installs — both fire on every message.

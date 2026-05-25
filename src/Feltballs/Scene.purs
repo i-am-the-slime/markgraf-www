@@ -2,7 +2,8 @@ module Feltballs.Scene (sceneJSX) where
 
 import Prelude
 
-import Data.Array (any, dropWhile, drop, elem, foldl, index, last, range, replicate, snoc, uncons, updateAt, zipWith)
+import Data.Array (any, dropWhile, drop, foldl, index, last, range, replicate, snoc, uncons, updateAt, zipWith)
+import Data.Foldable (for_)
 import Data.Foldable (sum, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
@@ -22,6 +23,43 @@ import Unsafe.Coerce (unsafeCoerce)
 
 noRaycast :: forall a. a
 noRaycast = unsafeCoerce (\_ _ -> unit)
+
+-- Mutable per-ball byte buffer for marking connected/last-color state. Allocated
+-- once and mutated in place to avoid array reallocs on the hot path.
+foreign import data U8Array :: Type
+
+newU8 :: Int -> Effect U8Array
+newU8 = newU8Impl
+
+readU8 :: U8Array -> Int -> Effect Int
+readU8 a i = readU8Impl a i
+
+writeU8 :: U8Array -> Int -> Int -> Effect Unit
+writeU8 a i v = writeU8Impl a i v
+
+fillU8 :: U8Array -> Int -> Effect Unit
+fillU8 = fillU8Impl
+
+-- Frame cadence — backdrop renders at this rate, not 60. useFrame still fires
+-- every rAF, we just bail early when not enough time has passed.
+frameInterval :: Number
+frameInterval = 1.0 / 30.0
+
+-- Color indices written into the last-color buffer; the index matches the
+-- branch in `ballColor` so we can compare cheaply before deciding to repaint.
+colorNormal :: Int
+colorNormal = 0
+
+colorConnected :: Int
+colorConnected = 1
+
+colorHover :: Int
+colorHover = 2
+
+ballColorHex :: Int -> String
+ballColorHex 2 = "#ffd84a"
+ballColorHex 1 = "#ff5a2a"
+ballColorHex _ = "#0a0e1a"
 
 makeFog :: String -> Number -> Number -> JSX
 makeFog color near far =
@@ -83,6 +121,17 @@ wireRefs = (\_ -> unsafeCoerce { current: toNullable Nothing }) <$> range 1 tota
 wireRefAt :: Int -> Ref (Nullable Object3D)
 wireRefAt i = fromMaybe (unsafeCoerce unit) (index wireRefs i)
 
+-- Module-level mutable scratch. Stable across re-renders without needing a ref
+-- since the underlying U8Array identity never changes.
+connectedBuf :: U8Array
+connectedBuf = unsafePerformEffect (newU8 totalBalls)
+
+lastColorBuf :: U8Array
+lastColorBuf = unsafePerformEffect do
+  a <- newU8 totalBalls
+  fillU8 a 255
+  pure a
+
 sceneJSX :: JSX
 sceneJSX = animatedField {}
 
@@ -95,27 +144,32 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
   bgMatRef <- useRef (toNullable (Nothing :: Maybe Object3D))
   noiseMatRef <- useRef (toNullable (Nothing :: Maybe Object3D))
   frameRef <- useRef initFrame
+  lastPaintRef <- useRef (-1.0)
 
   useEffectOnce $
     installStartChainListener (startChainFromRandom setState frameRef)
 
   useFrame \rs _ -> do
     let t = readClockElapsed rs
-        aspect = readAspect rs
-    writeRef frameRef { t, aspect }
+    lastT <- readRef lastPaintRef
+    when (t - lastT >= frameInterval) do
+      let aspect = readAspect rs
+      writeRef lastPaintRef t
+      writeRef frameRef { t, aspect }
 
-    readRefMaybe bgMatRef # withJust \m -> applyProps m
-      { "uniforms-u_time-value": t, "uniforms-u_aspect-value": aspect }
-    readRefMaybe noiseMatRef # withJust \m -> applyProps m
-      { "uniforms-u_time-value": t }
+      readRefMaybe bgMatRef # withJust \m -> applyProps m
+        { "uniforms-u_time-value": t, "uniforms-u_aspect-value": aspect }
+      readRefMaybe noiseMatRef # withJust \m -> applyProps m
+        { "uniforms-u_time-value": t }
 
-    traverse_ (paintBall t state.popStart state.popCycle (-1) (connectedIdxs state.hold)) (range 0 (totalBalls - 1))
+      refreshConnected state.hold
+      for_ (range 0 (totalBalls - 1)) (paintBall t state.popStart state.popCycle)
 
-    advanceHoldEffect setState state t
+      advanceHoldEffect setState state t
 
-    case state.hold of
-      Nothing -> pure unit
-      Just _ -> setState _ { arrowTick = t }
+      case state.hold of
+        Nothing -> pure unit
+        Just _ -> setState _ { arrowTick = t }
 
   pure $ element (threejs "Group")
     { children:
@@ -148,25 +202,31 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
 withJust :: forall a. (a -> Effect Unit) -> Effect (Maybe a) -> Effect Unit
 withJust f m = m >>= traverse_ f
 
-connectedIdxs :: Maybe HoldState -> Array Int
-connectedIdxs Nothing = []
-connectedIdxs (Just h) = _.idx <$> h.chain
+-- Refresh the connected-bitmask in place. Cheap: clear and set just the few
+-- chain members. Avoids the per-ball O(C) `elem` scan in paintBall.
+refreshConnected :: Maybe HoldState -> Effect Unit
+refreshConnected hold = do
+  fillU8 connectedBuf 0
+  case hold of
+    Nothing -> pure unit
+    Just h -> for_ h.chain \n -> writeU8 connectedBuf n.idx 1
 
-ballColor :: Int -> Int -> Array Int -> String
-ballColor i hoverIdx conn
-  | i == hoverIdx = "#ffd84a"
-  | elem i conn = "#ff5a2a"
-  | otherwise = "#0a0e1a"
-
-paintBall :: Number -> Array Number -> Array Int -> Int -> Array Int -> Int -> Effect Unit
-paintBall t popStart popCycle hoverIdx conn i = do
-  readRefMaybe (ballRefAt i) # withJust \o ->
+paintBall :: Number -> Array Number -> Array Int -> Int -> Effect Unit
+paintBall t popStart popCycle i = do
+  readRefMaybe (ballRefAt i) # withJust \o -> do
     applyProps o
       { position: [ p.x, p.y, p.z ]
       , scale: baseScale * envelope * popMul
       , rotation: [ spin, spin * 0.7, 0.0 ]
-      , color: ballColor i hoverIdx conn
       }
+    -- Only push color when it actually changes — drei marks instanceColor
+    -- needsUpdate on every setColorAt and re-uploads the buffer to the GPU.
+    isConn <- readU8 connectedBuf i
+    let nextColor = if isConn == 1 then colorConnected else colorNormal
+    prev <- readU8 lastColorBuf i
+    when (prev /= nextColor) do
+      applyProps o { color: ballColorHex nextColor }
+      writeU8 lastColorBuf i nextColor
   readRefMaybe (wireRefAt i) # withJust \o ->
     applyProps o
       { position: [ p.x, p.y, p.z ]
@@ -697,3 +757,7 @@ foreign import readAspect :: forall r. { | r } -> Number
 foreign import parallelogramGeometryImpl :: Number -> Number -> Number -> Number -> JSX
 foreign import roundedRectGeometryImpl :: Number -> Number -> Number -> Number -> JSX
 foreign import installStartChainListenerImpl :: Effect Unit -> Effect (Effect Unit)
+foreign import newU8Impl :: Int -> Effect U8Array
+foreign import readU8Impl :: U8Array -> Int -> Effect Int
+foreign import writeU8Impl :: U8Array -> Int -> Int -> Effect Unit
+foreign import fillU8Impl :: U8Array -> Int -> Effect Unit
