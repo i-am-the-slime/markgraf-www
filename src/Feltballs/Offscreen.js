@@ -10,8 +10,7 @@ export const setupFeltballsImpl = (canvas) => () => {
   // not via Turbopack: dev-mode Turbopack injects React Fast Refresh signatures
   // into PS-compiled modules and they crash in a Worker context. Served from
   // /public so the Next-bundler never sees it.
-  const workerUrl = (typeof window !== "undefined" ? window.__NEXT_DATA__?.assetPrefix : "") + "/markgraf-www/feltballs-worker.js"
-  const worker = new Worker(workerUrl, { type: "module" })
+  const worker = new Worker("/markgraf-www/feltballs-worker.js", { type: "module" })
   const offscreen = canvas.transferControlToOffscreen()
 
   const post = (type, payload) =>

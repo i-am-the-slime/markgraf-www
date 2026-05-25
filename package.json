@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "spago build && next dev",
-    "build": "spago build && next build",
-    "start": "next start"
+    "dev": "spago build && bun run worker && next dev",
+    "build": "spago build && bun run worker && next build",
+    "start": "next start",
+    "worker": "bun run scripts/build-feltballs-worker.mjs"
   },
   "dependencies": {
     "@codemirror/theme-one-dark": "^6.1.3",
