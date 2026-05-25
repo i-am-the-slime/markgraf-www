@@ -6,10 +6,12 @@ export const setupFeltballsImpl = (canvas) => () => {
   if (canvas._feltballsTransferred) return () => {}
   canvas._feltballsTransferred = true
 
-  const worker = new Worker(
-    new URL("../../app/feltballs.worker.js", import.meta.url),
-    { type: "module" },
-  )
+  // Worker bundled out-of-band by scripts/build-feltballs-worker.mjs (esbuild),
+  // not via Turbopack: dev-mode Turbopack injects React Fast Refresh signatures
+  // into PS-compiled modules and they crash in a Worker context. Served from
+  // /public so the Next-bundler never sees it.
+  const workerUrl = (typeof window !== "undefined" ? window.__NEXT_DATA__?.assetPrefix : "") + "/markgraf-www/feltballs-worker.js"
+  const worker = new Worker(workerUrl, { type: "module" })
   const offscreen = canvas.transferControlToOffscreen()
 
   const post = (type, payload) =>
