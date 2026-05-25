@@ -83,7 +83,7 @@ makeHemisphereLight sky ground intensity =
   element (threejs "HemisphereLight") { args: [ unsafeCoerce sky, unsafeCoerce ground, unsafeCoerce intensity ] }
 
 totalBalls :: Int
-totalBalls = 180
+totalBalls = 135
 
 segDuration :: Number
 segDuration = 0.45
@@ -92,15 +92,14 @@ popDuration :: Number
 popDuration = 0.55
 
 rrEnd :: Int
-rrEnd = 135
+rrEnd = 101
 
 pgEnd :: Int
-pgEnd = 171
+pgEnd = 128
 
-type PersistentState =
-  { hold :: Maybe HoldState
-  , arrowTick :: Number
-  }
+-- hold lives in a ref, not React state. Putting it in state caused the parent
+-- component to re-render on every chain transition, which made drei reconcile
+-- every <Instance> and flicker. ArrowsLayer reads the ref each frame.
 
 type FrameState =
   { t :: Number
@@ -154,13 +153,13 @@ animatedField = unsafePerformEffect animatedFieldComponent
 
 animatedFieldComponent :: Component {}
 animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
-  state /\ setState <- useState initState
   noiseMatRef <- useRef (toNullable (Nothing :: Maybe Object3D))
   frameRef <- useRef initFrame
   lastPaintRef <- useRef (-1.0)
+  holdRef <- useRef (Nothing :: Maybe HoldState)
 
   useEffectOnce $
-    installStartChainListener (startChainFromRandom setState frameRef)
+    installStartChainListener (startChainFromRandom holdRef frameRef)
 
   useFrame \rs _ -> do
     let t = readClockElapsed rs
@@ -173,14 +172,11 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
       readRefMaybe noiseMatRef # withJust \m -> applyProps m
         { "uniforms-u_time-value": t }
 
-      refreshConnected state.hold
+      hold <- readRef holdRef
+      refreshConnected hold
       for_ (range 0 (totalBalls - 1)) (paintBall t)
 
-      advanceHoldEffect setState state t
-
-      case state.hold of
-        Nothing -> pure unit
-        Just _ -> setState _ { arrowTick = t }
+      advanceHoldEffect holdRef t
 
   pure $ element (threejs "Group")
     { children:
@@ -190,15 +186,11 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
          , directional
          , rim
          ] <> shapeGroups)
-          <> renderArrows state.arrowTick state.hold
+          <> [ arrowsLayer { holdRef } ]
           <> [ noiseOverlay noiseMatRef ]
     }
   where
   initFrame = { t: 0.0, aspect: 1.0 }
-  initState =
-    { hold: Nothing
-    , arrowTick: 0.0
-    }
   fog = makeFog "#0a0e1a" 6.0 55.0
   ambient = element (threejs "AmbientLight") { intensity: 0.12 }
   hemi = makeHemisphereLight "#c8cdd9" "#1a1f2e" 0.9
@@ -369,25 +361,27 @@ noiseFrag =
 -- | non-popped ball as the source and seeds the hold state; the existing
 -- | `advanceHoldEffect` carries the chain forward each frame.
 startChainFromRandom
-  :: ((PersistentState -> PersistentState) -> Effect Unit)
+  :: Ref (Maybe HoldState)
   -> Ref FrameState
   -> Effect Unit
-startChainFromRandom setState frameRef = do
-  frame <- readRef frameRef
-  -- Skip popped balls as sources: the chain can close back on its source, and
-  -- re-popping an already-popped ball restarts deathPop from k=0 — which makes
-  -- the ball swell briefly back to scale ≈1 and then shrink, i.e. pop-pulses.
-  maybeSrc <- pickFreshSource totalBalls
-  case maybeSrc of
-    Nothing -> pure unit
-    Just source -> do
-      targetIdx <- pickNearest frame.t source (-1)
-      let sourceNode = { idx: source, cycle: ballCycle frame.t source }
-          targetNode = { idx: targetIdx, cycle: ballCycle frame.t targetIdx }
-          fresh = { chain: [ sourceNode ], target: targetNode, segStart: frame.t }
-      setState \s -> case s.hold of
-        Just _ -> s
-        Nothing -> s { hold = Just fresh }
+startChainFromRandom holdRef frameRef = do
+  existing <- readRef holdRef
+  case existing of
+    Just _ -> pure unit
+    Nothing -> do
+      frame <- readRef frameRef
+      -- Skip popped balls as sources: the chain can close back on its source, and
+      -- re-popping an already-popped ball restarts deathPop from k=0 — which makes
+      -- the ball swell briefly back to scale ≈1 and then shrink, i.e. pop-pulses.
+      maybeSrc <- pickFreshSource totalBalls
+      case maybeSrc of
+        Nothing -> pure unit
+        Just source -> do
+          targetIdx <- pickNearest frame.t source (-1)
+          let sourceNode = { idx: source, cycle: ballCycle frame.t source }
+              targetNode = { idx: targetIdx, cycle: ballCycle frame.t targetIdx }
+              fresh = { chain: [ sourceNode ], target: targetNode, segStart: frame.t }
+          writeRef holdRef (Just fresh)
 
 pickFreshSource :: Int -> Effect (Maybe Int)
 pickFreshSource attempts
@@ -399,11 +393,10 @@ pickFreshSource attempts
       else pure (Just i)
 
 advanceHoldEffect
-  :: ((PersistentState -> PersistentState) -> Effect Unit)
-  -> PersistentState
+  :: Ref (Maybe HoldState)
   -> Number
   -> Effect Unit
-advanceHoldEffect setState s t = case s.hold of
+advanceHoldEffect holdRef t = readRef holdRef >>= case _ of
   Nothing -> pure unit
   Just h -> advanceJust h
   where
@@ -413,20 +406,20 @@ advanceHoldEffect setState s t = case s.hold of
 
   advanceJust h
     | any wrapped h.chain || wrapped h.target =
-        setState _ { hold = Nothing }
+        writeRef holdRef Nothing
     | t - h.segStart < segDuration = pure unit
     | otherwise = do
         nextIdx <- pickNearest t h.target.idx (lastIdx h)
         let ext = extendedChain h
         if any (\n -> n.idx == nextIdx) ext then do
           closePops t (dropWhile (\n -> n.idx /= nextIdx) ext)
-          setState _ { hold = Nothing }
+          writeRef holdRef Nothing
         else
-          setState _ { hold = Just
+          writeRef holdRef $ Just
             { chain: ext
             , target: { idx: nextIdx, cycle: ballCycle t nextIdx }
             , segStart: t
-            } }
+            }
 
 -- Mutates the pop buffer in place; React state only loses `hold`.
 closePops :: Number -> Array ChainNode -> Effect Unit
@@ -464,12 +457,12 @@ foldlEffect f z = foldl step (pure z)
 
 shapeGroups :: Array JSX
 shapeGroups =
-  [ shapeGroup rrGeo solidMat 0 135
-  , shapeGroup pgGeo solidMat 135 36
-  , shapeGroup cylinderGeo solidMat 171 9
-  , wireGroup rrGeo 0 135
-  , wireGroup pgGeo 135 36
-  , wireGroup cylinderGeo 171 9
+  [ shapeGroup rrGeo solidMat 0 101
+  , shapeGroup pgGeo solidMat 101 27
+  , shapeGroup cylinderGeo solidMat 128 7
+  , wireGroup rrGeo 0 101
+  , wireGroup pgGeo 101 27
+  , wireGroup cylinderGeo 128 7
   ]
   where
   rrGeo = roundedRectGeometry 1.9 1.2 0.55 0.28
@@ -503,7 +496,6 @@ shapeGroup geo mat startIdx count = instances { limit: count, range: count }
 ballInstance :: Int -> JSX
 ballInstance i = instance_
   { ref: ballRefAt i
-  , color: "#ffffff"
   , userData: { ballIndex: i }
   }
 
@@ -545,6 +537,26 @@ ballPos t i = { x, y, z }
   x = (rx - 0.5) * spread + drift
   y = (ry - 0.5) * spread * 0.55 + drift - 8.0 + local * 0.77
   z = 8.0 - local * 0.64
+
+-- Arrows are extracted into their own component so the per-frame re-render
+-- that drives the growing-tip animation stays local. Re-rendering the parent
+-- AnimatedField every frame caused drei to reconcile every <Instance>, which
+-- flickered shape colors and matrices.
+arrowsLayer :: { holdRef :: Ref (Maybe HoldState) } -> JSX
+arrowsLayer = unsafePerformEffect arrowsLayerComponent
+
+arrowsLayerComponent :: Component { holdRef :: Ref (Maybe HoldState) }
+arrowsLayerComponent = component "ArrowsLayer" \props -> Hooks.do
+  st /\ setSt <- useState initSt
+  useFrame \rs _ -> do
+    let t = readClockElapsed rs
+    hold <- readRef props.holdRef
+    setSt \prev -> case prev.hold, hold of
+      Nothing, Nothing -> prev
+      _, _ -> { hold, t }
+  pure $ element (threejs "Group") { children: renderArrows st.t st.hold }
+  where
+  initSt = { hold: Nothing :: Maybe HoldState, t: 0.0 }
 
 renderArrows :: Number -> Maybe HoldState -> Array JSX
 renderArrows _ Nothing = []
