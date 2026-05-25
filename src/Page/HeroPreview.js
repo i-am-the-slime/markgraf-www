@@ -6,34 +6,36 @@ export const sceneComponent = markgrafScene;
 export const feltballsComponent = FeltballsOffscreen;
 export const markgrafPlayerComponent = MarkgrafPlayer;
 
-// Updates --scene-progress on <html> based on how far the named element has
-// scrolled through its sticky window. Throttled to rAF.
-export const onScrollProgress = (elemId) => (cb) => () => {
+// Fires the callback with the element's intersection state as it crosses the
+// 50% visibility threshold. Used to remount the markgraf player so the
+// animation restarts each time the playground spread comes into view.
+// Mirrors the textarea's scroll position onto the highlight overlay so the
+// colored spans stay aligned with the actual caret/text as the user scrolls
+// the editor.
+export const installScrollSync = (textareaId) => (preId) => () => {
   if (typeof window === "undefined") return () => {};
-  let raf = 0;
-  const tick = () => {
-    raf = 0;
-    const el = document.getElementById(elemId);
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const total = el.offsetHeight - window.innerHeight;
-    const scrolled = Math.max(0, Math.min(total, -rect.top));
-    const progress = total > 0 ? scrolled / total : 0;
-    document.documentElement.style.setProperty("--scene-progress", String(progress));
-    cb(progress)();
+  const ta = document.getElementById(textareaId);
+  const pre = document.getElementById(preId);
+  if (!ta || !pre) return () => {};
+  const sync = () => {
+    pre.scrollTop = ta.scrollTop;
+    pre.scrollLeft = ta.scrollLeft;
   };
-  const handler = () => {
-    if (raf) return;
-    raf = window.requestAnimationFrame(tick);
-  };
-  handler();
-  window.addEventListener("scroll", handler, { passive: true });
-  window.addEventListener("resize", handler, { passive: true });
-  return () => {
-    window.removeEventListener("scroll", handler);
-    window.removeEventListener("resize", handler);
-    if (raf) window.cancelAnimationFrame(raf);
-  };
+  ta.addEventListener("scroll", sync, { passive: true });
+  sync();
+  return () => ta.removeEventListener("scroll", sync);
+};
+
+export const onIntersect = (elemId) => (cb) => () => {
+  if (typeof window === "undefined") return () => {};
+  const el = document.getElementById(elemId);
+  if (!el) return () => {};
+  const observer = new IntersectionObserver(
+    (entries) => { for (const e of entries) cb(e.isIntersecting)(); },
+    { threshold: 0.5 },
+  );
+  observer.observe(el);
+  return () => observer.disconnect();
 };
 
 export const onElementResize = (elemId) => (cb) => () => {
