@@ -24,7 +24,7 @@ export const setupFeltballsImpl = (canvas) => () => {
 
   // Target ~640x480 worth of pixels (a budget, not a fixed size) — dpr is a
   // uniform scale so the canvas's aspect ratio is preserved automatically.
-  const pixelBudget = 640 * 480
+  const pixelBudget = 320 * 160
   const targetDpr = () => {
     const w = Math.max(1, canvas.clientWidth)
     const h = Math.max(1, canvas.clientHeight)
