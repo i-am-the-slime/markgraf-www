@@ -1,5 +1,5 @@
 import { MarkgrafPlayer } from "@markgrafhq/markgraf-react";
-import FeltballsOffscreen from "../../app/feltballs-loader.jsx";
+import { feltballsOffscreen as FeltballsOffscreen } from "../../output/Feltballs.Offscreen/index.js";
 import { sceneComponent as markgrafScene } from "../../output/Components.Scene/index.js";
 
 export const sceneComponent = markgrafScene;
