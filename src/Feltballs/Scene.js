@@ -89,21 +89,23 @@ export const hoveredBallIndex = (state) => {
   return bestIdx
 }
 
+// @react-three/offscreen stubs `self.window = {}` and `self.document = {}` in
+// workers, so `typeof window` is "object" — feature-detect the actual methods.
 export const installGlobalPointerDownImpl = (handler) => () => {
-  if (typeof window === "undefined") return () => {}
+  if (typeof window === "undefined" || typeof window.addEventListener !== "function") return () => {}
   const fn = () => handler()
   window.addEventListener("pointerdown", fn)
   return () => window.removeEventListener("pointerdown", fn)
 }
 
 export const setWordmarkTransformImpl = (px) => (py) => () => {
-  if (typeof document === "undefined") return
+  if (typeof document === "undefined" || typeof document.getElementById !== "function") return
   const el = document.getElementById("feltballs-wordmark")
   if (el) el.style.transform = `translate3d(${px}px, ${py}px, 0)`
 }
 
 export const installGlobalPointerUpImpl = (handler) => () => {
-  if (typeof window === "undefined") return () => {}
+  if (typeof window === "undefined" || typeof window.addEventListener !== "function") return () => {}
   const fn = () => handler()
   window.addEventListener("pointerup", fn)
   window.addEventListener("pointercancel", fn)

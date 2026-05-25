@@ -253,9 +253,9 @@ bgFrag =
       field += exp(-d * d / (r * r));
     }
     vec3 c0 = vec3(0.039, 0.055, 0.102);
-    vec3 c1 = vec3(0.078, 0.094, 0.145);
-    vec3 c2 = vec3(0.110, 0.130, 0.180);
-    vec3 c3 = vec3(0.340, 0.400, 0.500);
+    vec3 c1 = vec3(0.16, 0.20, 0.34);
+    vec3 c2 = vec3(0.28, 0.36, 0.55);
+    vec3 c3 = vec3(0.55, 0.65, 0.85);
     vec3 col = c0;
     col = mix(col, c1, smoothstep(0.05, 0.5, field));
     col = mix(col, c2, smoothstep(0.6, 1.3, field));
