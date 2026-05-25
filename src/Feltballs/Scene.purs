@@ -11,7 +11,7 @@ import Data.Number (cos, floor, pi, sin, sqrt)
 import Effect (Effect)
 import Effect.Random (randomInt)
 import Effect.Unsafe (unsafePerformEffect)
-import Feltballs.Bindings (cylinderGeometry, instance_, instances, meshStandardMaterial)
+import Feltballs.Bindings (cylinderGeometry, instance_, instances, meshBasicMaterial, meshStandardMaterial)
 import React.Basic (JSX, Ref, element)
 import React.Basic.Hooks (Component, component, readRef, readRefMaybe, useEffectOnce, useRef, useState, writeRef, (/\))
 import React.Basic.Hooks as Hooks
@@ -76,6 +76,12 @@ ballRefs = (\_ -> unsafeCoerce { current: toNullable Nothing }) <$> range 1 tota
 
 ballRefAt :: Int -> Ref (Nullable Object3D)
 ballRefAt i = fromMaybe (unsafeCoerce unit) (index ballRefs i)
+
+wireRefs :: Array (Ref (Nullable Object3D))
+wireRefs = (\_ -> unsafeCoerce { current: toNullable Nothing }) <$> range 1 totalBalls
+
+wireRefAt :: Int -> Ref (Nullable Object3D)
+wireRefAt i = fromMaybe (unsafeCoerce unit) (index wireRefs i)
 
 sceneJSX :: JSX
 sceneJSX = animatedField {}
@@ -150,16 +156,23 @@ ballColor :: Int -> Int -> Array Int -> String
 ballColor i hoverIdx conn
   | i == hoverIdx = "#ffd84a"
   | elem i conn = "#ff5a2a"
-  | otherwise = "#6b7790"
+  | otherwise = "#0a0e1a"
 
 paintBall :: Number -> Array Number -> Array Int -> Int -> Array Int -> Int -> Effect Unit
-paintBall t popStart popCycle hoverIdx conn i = readRefMaybe (ballRefAt i) # withJust \o ->
-  applyProps o
-    { position: [ p.x, p.y, p.z ]
-    , scale: baseScale * envelope * popMul
-    , rotation: [ spin, spin * 0.7, 0.0 ]
-    , color: ballColor i hoverIdx conn
-    }
+paintBall t popStart popCycle hoverIdx conn i = do
+  readRefMaybe (ballRefAt i) # withJust \o ->
+    applyProps o
+      { position: [ p.x, p.y, p.z ]
+      , scale: baseScale * envelope * popMul
+      , rotation: [ spin, spin * 0.7, 0.0 ]
+      , color: ballColor i hoverIdx conn
+      }
+  readRefMaybe (wireRefAt i) # withJust \o ->
+    applyProps o
+      { position: [ p.x, p.y, p.z ]
+      , scale: baseScale * envelope * popMul * 1.18
+      , rotation: [ spin, spin * 0.7, 0.0 ]
+      }
   where
   p = ballPos t i
   fi = Int.toNumber i
@@ -362,29 +375,41 @@ pickNearest t popStart popCycle source avoid =
     dist = dx * dx + dy * dy + dz * dz
 
 isHidden :: Number -> Array Number -> Array Int -> Int -> Boolean
-isHidden t popStart popCycle i =
-  start >= 0.0 && ballCycle t i == recordedCycle
+isHidden _ popStart _ i = start >= 0.0
   where
   start = fromMaybe (-1.0) (index popStart i)
-  recordedCycle = fromMaybe 0 (index popCycle i)
 
 shapeGroups :: Array JSX
 shapeGroups =
   [ shapeGroup rrGeo solidMat 0 135
   , shapeGroup pgGeo solidMat 135 36
   , shapeGroup cylinderGeo solidMat 171 9
+  , wireGroup rrGeo 0 135
+  , wireGroup pgGeo 135 36
+  , wireGroup cylinderGeo 171 9
   ]
   where
   rrGeo = roundedRectGeometry 1.9 1.2 0.55 0.28
   pgGeo = parallelogramGeometry 1.8 1.1 0.6 0.18
-  cylinderGeo = cylinderGeometry { args: [ 0.9, 0.9, 1.6, 24.0 ] }
+  cylinderGeo = cylinderGeometry { args: [ 0.9, 0.9, 1.6, 8.0 ] }
   solidMat = meshStandardMaterial
     { color: "#ffffff"
-    , roughness: 0.85
-    , metalness: 0.0
-    , emissive: "#ffffff"
+    , roughness: 0.3
+    , metalness: 0.55
+    , emissive: "#f5f1e8"
     , emissiveIntensity: 0.04
     }
+  wireMat = meshBasicMaterial
+    { color: "#ffffff"
+    , wireframe: true
+    , transparent: true
+    , opacity: 0.3
+    }
+
+  wireGroup geo startIdx count = instances { limit: count, range: count }
+    ([ geo, wireMat ] <> (wireInstance <$> range startIdx (startIdx + count - 1)))
+
+  wireInstance i = instance_ { ref: wireRefAt i }
 
 shapeGroup :: JSX -> JSX -> Int -> Int -> JSX
 shapeGroup geo mat startIdx count = instances { limit: count, range: count }
@@ -409,14 +434,12 @@ spread :: Number
 spread = 38.0
 
 popMultiplierAt :: Number -> Array Number -> Array Int -> Int -> Number
-popMultiplierAt t popStart popCycle i =
+popMultiplierAt t popStart _ i =
   if start < 0.0 then 1.0
-  else if ballCycle t i /= recordedCycle then 1.0
   else if k >= 1.0 then 0.0
   else deathPop k
   where
   start = fromMaybe (-1.0) (index popStart i)
-  recordedCycle = fromMaybe 0 (index popCycle i)
   k = (t - start) / popDuration
 
 ballCycle :: Number -> Int -> Int
@@ -585,7 +608,7 @@ segmentMesh start end r =
     , quaternion: [ q.x, q.y, q.z, q.w ]
     , raycast: noRaycast
     , children:
-        [ element (threejs "CylinderGeometry") { args: [ r, r, len, 12.0 ] }
+        [ element (threejs "CylinderGeometry") { args: [ r, r, len, 6.0 ] }
         , arrowMat
         ]
     }
@@ -604,7 +627,7 @@ coneTipMesh start end r =
     , quaternion: [ q.x, q.y, q.z, q.w ]
     , raycast: noRaycast
     , children:
-        [ element (threejs "ConeGeometry") { args: [ r, len, 20.0 ] }
+        [ element (threejs "ConeGeometry") { args: [ r, len, 8.0 ] }
         , arrowMat
         ]
     }

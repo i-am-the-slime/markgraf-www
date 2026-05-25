@@ -51,8 +51,8 @@ const getRoundedRect = (w, h, r, depth) => {
     bevelEnabled: true,
     bevelThickness: 0.1,
     bevelSize: 0.1,
-    bevelSegments: 6,
-    curveSegments: 12,
+    bevelSegments: 2,
+    curveSegments: 4,
     steps: 1,
   })
   g.translate(0, 0, -depth / 2)
