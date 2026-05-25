@@ -109,13 +109,15 @@ editorAndPreview src setSrc rendered size =
   D.div
     { style: D.css
         { display: "grid"
-        , gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)"
+        , gridTemplateColumns: "500px 500px"
         , gap: "1px"
         , backgroundColor: "#1a1f2e"
         , border: "1px solid #1a1f2e"
         , borderRadius: "12px"
         , overflow: "hidden"
         , height: "400px"
+        , width: "fit-content"
+        , marginInline: "auto"
         }
     , children:
         [ editorPane src setSrc
