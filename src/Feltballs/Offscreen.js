@@ -22,10 +22,14 @@ export const setupFeltballsImpl = (canvas) => () => {
   const post = (type, payload) =>
     worker.postMessage({ type, payload }, type === "init" ? [offscreen] : [])
 
-  // Target a fixed render resolution (~640x480) regardless of canvas display
-  // size; dpr scales the backing store relative to CSS pixels.
-  const targetDpr = () =>
-    Math.min(640 / Math.max(1, canvas.clientWidth), 480 / Math.max(1, canvas.clientHeight))
+  // Target ~640x480 worth of pixels (a budget, not a fixed size) — dpr is a
+  // uniform scale so the canvas's aspect ratio is preserved automatically.
+  const pixelBudget = 640 * 480
+  const targetDpr = () => {
+    const w = Math.max(1, canvas.clientWidth)
+    const h = Math.max(1, canvas.clientHeight)
+    return Math.min(1, Math.sqrt(pixelBudget / (w * h)))
+  }
 
   post("init", {
     props: {
