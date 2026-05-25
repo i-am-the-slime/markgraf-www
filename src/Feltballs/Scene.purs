@@ -2,9 +2,8 @@ module Feltballs.Scene (sceneJSX) where
 
 import Prelude
 
-import Data.Array (any, dropWhile, drop, foldl, index, last, range, replicate, snoc, uncons, updateAt, zipWith)
-import Data.Foldable (for_)
-import Data.Foldable (sum, traverse_)
+import Data.Array (any, dropWhile, drop, foldl, index, last, range, snoc, uncons, zipWith)
+import Data.Foldable (for_, sum, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Nullable (Nullable, toNullable)
@@ -39,6 +38,20 @@ writeU8 a i v = writeU8Impl a i v
 
 fillU8 :: U8Array -> Int -> Effect Unit
 fillU8 = fillU8Impl
+
+-- Per-ball pop bookkeeping. popStart is the elapsed-time when the ball started
+-- popping (or -1 if not popping). Lives outside React state so closeCycle
+-- doesn't churn React and per-frame reads are direct typed-array indexing.
+foreign import data F32Array :: Type
+
+newF32 :: Int -> Effect F32Array
+newF32 = newF32Impl
+
+readF32 :: F32Array -> Int -> Effect Number
+readF32 a i = readF32Impl a i
+
+writeF32 :: F32Array -> Int -> Number -> Effect Unit
+writeF32 a i v = writeF32Impl a i v
 
 -- Frame cadence — backdrop renders at this rate, not 60. useFrame still fires
 -- every rAF, we just bail early when not enough time has passed.
@@ -86,8 +99,6 @@ pgEnd = 171
 
 type PersistentState =
   { hold :: Maybe HoldState
-  , popStart :: Array Number
-  , popCycle :: Array Int
   , arrowTick :: Number
   }
 
@@ -132,6 +143,9 @@ lastColorBuf = unsafePerformEffect do
   fillU8 a 255
   pure a
 
+popStartBuf :: F32Array
+popStartBuf = unsafePerformEffect (newF32 totalBalls)
+
 sceneJSX :: JSX
 sceneJSX = animatedField {}
 
@@ -163,7 +177,7 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
         { "uniforms-u_time-value": t }
 
       refreshConnected state.hold
-      for_ (range 0 (totalBalls - 1)) (paintBall t state.popStart state.popCycle)
+      for_ (range 0 (totalBalls - 1)) (paintBall t)
 
       advanceHoldEffect setState state t
 
@@ -187,8 +201,6 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
   initFrame = { t: 0.0, aspect: 1.0 }
   initState =
     { hold: Nothing
-    , popStart: replicate totalBalls (-1.0)
-    , popCycle: replicate totalBalls 0
     , arrowTick: 0.0
     }
   fog = makeFog "#0a0e1a" 6.0 55.0
@@ -211,12 +223,14 @@ refreshConnected hold = do
     Nothing -> pure unit
     Just h -> for_ h.chain \n -> writeU8 connectedBuf n.idx 1
 
-paintBall :: Number -> Array Number -> Array Int -> Int -> Effect Unit
-paintBall t popStart popCycle i = do
+paintBall :: Number -> Int -> Effect Unit
+paintBall t i = do
+  popMul <- popMultiplierAt t i
+  let scale = baseScale * envelope * popMul
   readRefMaybe (ballRefAt i) # withJust \o -> do
     applyProps o
       { position: [ p.x, p.y, p.z ]
-      , scale: baseScale * envelope * popMul
+      , scale
       , rotation: [ spin, spin * 0.7, 0.0 ]
       }
     -- Only push color when it actually changes — drei marks instanceColor
@@ -230,7 +244,7 @@ paintBall t popStart popCycle i = do
   readRefMaybe (wireRefAt i) # withJust \o ->
     applyProps o
       { position: [ p.x, p.y, p.z ]
-      , scale: baseScale * envelope * popMul * 1.18
+      , scale: scale * 1.18
       , rotation: [ spin, spin * 0.7, 0.0 ]
       }
   where
@@ -243,7 +257,6 @@ paintBall t popStart popCycle i = do
   baseScale = 0.55 + 0.45 * hash01 (fi * 1.61803)
   envelope = plopEnvelope u
   spin = t * (0.3 + hash01 (fi * 4.27) * 0.6) + fi
-  popMul = popMultiplierAt t popStart popCycle i
 
 metaballBackground :: Ref (Nullable Object3D) -> JSX
 metaballBackground matRef = element (threejs "Mesh")
@@ -366,19 +379,13 @@ startChainFromRandom
 startChainFromRandom setState frameRef = do
   frame <- readRef frameRef
   source <- randomInt 0 (totalBalls - 1)
+  targetIdx <- pickNearest frame.t source (-1)
+  let sourceNode = { idx: source, cycle: ballCycle frame.t source }
+      targetNode = { idx: targetIdx, cycle: ballCycle frame.t targetIdx }
+      fresh = { chain: [ sourceNode ], target: targetNode, segStart: frame.t }
   setState \s -> case s.hold of
     Just _ -> s
-    Nothing -> s { hold = Just (freshHold frame.t source s) }
-  where
-  freshHold t i s =
-    { chain: [ sourceNode ]
-    , target: targetNode
-    , segStart: t
-    }
-    where
-    sourceNode = { idx: i, cycle: ballCycle t i }
-    targetIdx = pickNearest t s.popStart s.popCycle i (-1)
-    targetNode = { idx: targetIdx, cycle: ballCycle t targetIdx }
+    Nothing -> s { hold = Just fresh }
 
 advanceHoldEffect
   :: ((PersistentState -> PersistentState) -> Effect Unit)
@@ -389,44 +396,44 @@ advanceHoldEffect setState s t = case s.hold of
   Nothing -> pure unit
   Just h -> advanceJust h
   where
-  advanceJust h
-    | any (wrapped h) h.chain || wrapped h h.target =
-        setState _ { hold = Nothing }
-    | t - h.segStart < segDuration = pure unit
-    | cycleClosed h =
-        setState \st -> closeCycle st t (cycleNodes h)
-    | otherwise =
-        setState _ { hold = Just (nextHold h) }
-  wrapped _ n = ballCycle t n.idx /= n.cycle
+  wrapped n = ballCycle t n.idx /= n.cycle
   extendedChain h = snoc h.chain h.target
   lastIdx h = maybe (-1) _.idx (last h.chain)
-  newTargetIdx h = pickNearest t s.popStart s.popCycle h.target.idx (lastIdx h)
-  cycleClosed h = any (\n -> n.idx == newTargetIdx h) (extendedChain h)
-  cycleNodes h = dropWhile (\n -> n.idx /= newTargetIdx h) (extendedChain h)
-  nextHold h =
-    { chain: extendedChain h
-    , target: { idx: newTargetIdx h, cycle: ballCycle t (newTargetIdx h) }
-    , segStart: t
-    }
 
-closeCycle :: PersistentState -> Number -> Array ChainNode -> PersistentState
-closeCycle s t nodes = (foldl popNode s nodes) { hold = Nothing }
-  where
-  popNode acc n = acc
-    { popStart = fromMaybe acc.popStart (updateAt n.idx t acc.popStart)
-    , popCycle = fromMaybe acc.popCycle (updateAt n.idx n.cycle acc.popCycle)
-    }
+  advanceJust h
+    | any wrapped h.chain || wrapped h.target =
+        setState _ { hold = Nothing }
+    | t - h.segStart < segDuration = pure unit
+    | otherwise = do
+        nextIdx <- pickNearest t h.target.idx (lastIdx h)
+        let ext = extendedChain h
+        if any (\n -> n.idx == nextIdx) ext then do
+          closePops t (dropWhile (\n -> n.idx /= nextIdx) ext)
+          setState _ { hold = Nothing }
+        else
+          setState _ { hold = Just
+            { chain: ext
+            , target: { idx: nextIdx, cycle: ballCycle t nextIdx }
+            , segStart: t
+            } }
 
-pickNearest :: Number -> Array Number -> Array Int -> Int -> Int -> Int
-pickNearest t popStart popCycle source avoid =
-  (foldl step { idx: -1, d: 1.0e308 } (range 0 (totalBalls - 1))).idx
+-- Mutates the pop buffer in place; React state only loses `hold`.
+closePops :: Number -> Array ChainNode -> Effect Unit
+closePops t nodes = for_ nodes \n -> writeF32 popStartBuf n.idx t
+
+pickNearest :: Number -> Int -> Int -> Effect Int
+pickNearest t source avoid =
+  _.idx <$> foldlEffect step { idx: -1, d: 1.0e308 } (range 0 (totalBalls - 1))
   where
   origin = ballPos t source
   step acc i =
-    if i == source || i == avoid then acc
-    else if isHidden t popStart popCycle i then acc
-    else if dist < acc.d then { idx: i, d: dist }
-    else acc
+    if i == source || i == avoid then pure acc
+    else do
+      hidden <- isHidden i
+      if hidden then pure acc
+      else pure (compare' acc i)
+  compare' acc i =
+    if dist < acc.d then { idx: i, d: dist } else acc
     where
     p = ballPos t i
     dx = p.x - origin.x
@@ -434,10 +441,15 @@ pickNearest t popStart popCycle source avoid =
     dz = p.z - origin.z
     dist = dx * dx + dy * dy + dz * dz
 
-isHidden :: Number -> Array Number -> Array Int -> Int -> Boolean
-isHidden _ popStart _ i = start >= 0.0
+isHidden :: Int -> Effect Boolean
+isHidden i = do
+  start <- readF32 popStartBuf i
+  pure (start >= 0.0)
+
+foldlEffect :: forall a b. (b -> a -> Effect b) -> b -> Array a -> Effect b
+foldlEffect f z = foldl step (pure z)
   where
-  start = fromMaybe (-1.0) (index popStart i)
+  step macc a = macc >>= \acc -> f acc a
 
 shapeGroups :: Array JSX
 shapeGroups =
@@ -493,14 +505,14 @@ streamSpeed = 6.0
 spread :: Number
 spread = 38.0
 
-popMultiplierAt :: Number -> Array Number -> Array Int -> Int -> Number
-popMultiplierAt t popStart _ i =
-  if start < 0.0 then 1.0
-  else if k >= 1.0 then 0.0
-  else deathPop k
-  where
-  start = fromMaybe (-1.0) (index popStart i)
-  k = (t - start) / popDuration
+popMultiplierAt :: Number -> Int -> Effect Number
+popMultiplierAt t i = do
+  start <- readF32 popStartBuf i
+  let k = (t - start) / popDuration
+  pure $
+    if start < 0.0 then 1.0
+    else if k >= 1.0 then 0.0
+    else deathPop k
 
 ballCycle :: Number -> Int -> Int
 ballCycle t i = Int.floor (travel / corridorDepth)
@@ -761,3 +773,6 @@ foreign import newU8Impl :: Int -> Effect U8Array
 foreign import readU8Impl :: U8Array -> Int -> Effect Int
 foreign import writeU8Impl :: U8Array -> Int -> Int -> Effect Unit
 foreign import fillU8Impl :: U8Array -> Int -> Effect Unit
+foreign import newF32Impl :: Int -> Effect F32Array
+foreign import readF32Impl :: F32Array -> Int -> Effect Number
+foreign import writeF32Impl :: F32Array -> Int -> Number -> Effect Unit

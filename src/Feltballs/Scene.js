@@ -97,6 +97,15 @@ export const readU8Impl = (a) => (i) => () => a[i]
 export const writeU8Impl = (a) => (i) => (v) => () => { a[i] = v }
 export const fillU8Impl = (a) => (v) => () => { a.fill(v) }
 
+export const newF32Impl = (n) => () => {
+  const a = new Float32Array(n)
+  a.fill(-1)
+  return a
+}
+export const readF32Impl = (a) => (i) => () => a[i]
+export const writeF32Impl = (a) => (i) => (v) => () => { a[i] = v }
+
+
 // Listens on the worker's `self` for `{type:"startChain"}` messages and runs
 // `handler` each time. `addEventListener` doesn't disturb the `self.onmessage`
 // that `@react-three/offscreen` installs — both fire on every message.
