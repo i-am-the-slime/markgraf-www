@@ -202,6 +202,7 @@ previewPane src size =
                 , minHeight: "0"
                 , position: "relative"
                 , overflow: "hidden"
+                , mixBlendMode: "hard-light"
                 }
             , children:
                 if size.w <= 0.0 || size.h <= 0.0
@@ -769,6 +770,7 @@ foreign import markgrafPlayerComponent
   :: ReactComponent
        { src :: String
        , renderer :: String
+       , theme :: String
        , width :: Number
        , height :: Number
        }
