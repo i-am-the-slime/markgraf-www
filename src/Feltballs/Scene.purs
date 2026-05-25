@@ -155,7 +155,6 @@ animatedField = unsafePerformEffect animatedFieldComponent
 animatedFieldComponent :: Component {}
 animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
   state /\ setState <- useState initState
-  bgMatRef <- useRef (toNullable (Nothing :: Maybe Object3D))
   noiseMatRef <- useRef (toNullable (Nothing :: Maybe Object3D))
   frameRef <- useRef initFrame
   lastPaintRef <- useRef (-1.0)
@@ -171,8 +170,6 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
       writeRef lastPaintRef t
       writeRef frameRef { t, aspect }
 
-      readRefMaybe bgMatRef # withJust \m -> applyProps m
-        { "uniforms-u_time-value": t, "uniforms-u_aspect-value": aspect }
       readRefMaybe noiseMatRef # withJust \m -> applyProps m
         { "uniforms-u_time-value": t }
 
@@ -188,7 +185,6 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
   pure $ element (threejs "Group")
     { children:
         ([ fog
-         , metaballBackground bgMatRef
          , ambient
          , hemi
          , directional
@@ -378,14 +374,29 @@ startChainFromRandom
   -> Effect Unit
 startChainFromRandom setState frameRef = do
   frame <- readRef frameRef
-  source <- randomInt 0 (totalBalls - 1)
-  targetIdx <- pickNearest frame.t source (-1)
-  let sourceNode = { idx: source, cycle: ballCycle frame.t source }
-      targetNode = { idx: targetIdx, cycle: ballCycle frame.t targetIdx }
-      fresh = { chain: [ sourceNode ], target: targetNode, segStart: frame.t }
-  setState \s -> case s.hold of
-    Just _ -> s
-    Nothing -> s { hold = Just fresh }
+  -- Skip popped balls as sources: the chain can close back on its source, and
+  -- re-popping an already-popped ball restarts deathPop from k=0 — which makes
+  -- the ball swell briefly back to scale ≈1 and then shrink, i.e. pop-pulses.
+  maybeSrc <- pickFreshSource totalBalls
+  case maybeSrc of
+    Nothing -> pure unit
+    Just source -> do
+      targetIdx <- pickNearest frame.t source (-1)
+      let sourceNode = { idx: source, cycle: ballCycle frame.t source }
+          targetNode = { idx: targetIdx, cycle: ballCycle frame.t targetIdx }
+          fresh = { chain: [ sourceNode ], target: targetNode, segStart: frame.t }
+      setState \s -> case s.hold of
+        Just _ -> s
+        Nothing -> s { hold = Just fresh }
+
+pickFreshSource :: Int -> Effect (Maybe Int)
+pickFreshSource attempts
+  | attempts <= 0 = pure Nothing
+  | otherwise = do
+      i <- randomInt 0 (totalBalls - 1)
+      hidden <- isHidden i
+      if hidden then pickFreshSource (attempts - 1)
+      else pure (Just i)
 
 advanceHoldEffect
   :: ((PersistentState -> PersistentState) -> Effect Unit)
