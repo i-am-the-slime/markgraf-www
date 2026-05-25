@@ -22,27 +22,34 @@ export const setupFeltballsImpl = (canvas) => () => {
   const post = (type, payload) =>
     worker.postMessage({ type, payload }, type === "init" ? [offscreen] : [])
 
+  // Target a fixed render resolution (~640x480) regardless of canvas display
+  // size; dpr scales the backing store relative to CSS pixels.
+  const targetDpr = () =>
+    Math.min(640 / Math.max(1, canvas.clientWidth), 480 / Math.max(1, canvas.clientHeight))
+
   post("init", {
     props: {
       camera: { position: [0, -3, 9], rotation: [0.28, 0, 0], fov: 85 },
       gl: { alpha: true },
-      dpr: 0.45,
+      dpr: targetDpr(),
     },
     drawingSurface: offscreen,
     width: canvas.clientWidth,
     height: canvas.clientHeight,
     top: canvas.offsetTop,
     left: canvas.offsetLeft,
-    pixelRatio: 0.45,
+    pixelRatio: targetDpr(),
   })
 
-  const onResize = () =>
+  const onResize = () => {
+    post("props", { dpr: targetDpr() })
     post("resize", {
       width: canvas.clientWidth,
       height: canvas.clientHeight,
       top: canvas.offsetTop,
       left: canvas.offsetLeft,
     })
+  }
   window.addEventListener("resize", onResize)
 
   // Periodically nudge the worker to start a chain from a random ball — the
