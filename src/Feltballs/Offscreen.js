@@ -47,7 +47,20 @@ export const setupFeltballsImpl = (canvas) => () => {
     })
   window.addEventListener("resize", onResize)
 
+  // Pause R3F's frameloop when the canvas scrolls off-screen — the worker
+  // already accepts a {type:"props"} message and re-`root.configure`s with it.
+  // "never" stops the loop entirely; "always" resumes the rAF tick.
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const visible = entries.some((e) => e.isIntersecting)
+      post("props", { frameloop: visible ? "always" : "never" })
+    },
+    { threshold: 0 },
+  )
+  observer.observe(canvas)
+
   return () => {
+    observer.disconnect()
     window.removeEventListener("resize", onResize)
     worker.terminate()
   }
