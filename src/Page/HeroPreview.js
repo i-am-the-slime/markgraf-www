@@ -1,9 +1,9 @@
 import { MarkgrafPlayer } from "@markgrafhq/markgraf-react";
-import { feltballsApp } from "../../output/Feltballs.Entry/index.js";
+import FeltballsOffscreen from "../../app/feltballs-loader.jsx";
 import { sceneComponent as markgrafScene } from "../../output/Components.Scene/index.js";
 
 export const sceneComponent = markgrafScene;
-export const feltballsComponent = feltballsApp;
+export const feltballsComponent = FeltballsOffscreen;
 export const markgrafPlayerComponent = MarkgrafPlayer;
 
 // Updates --scene-progress on <html> based on how far the named element has

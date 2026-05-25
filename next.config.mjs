@@ -4,6 +4,7 @@ const config = {
   basePath: "/markgraf-www",
   images: { unoptimized: true },
   trailingSlash: true,
+  reactStrictMode: false,
 };
 
 export default config;

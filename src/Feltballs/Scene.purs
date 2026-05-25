@@ -144,7 +144,7 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
                  , rim
                  ] <> shapeGroups)
                 <> renderArrows state.arrowTick state.hold
-                <> [ noiseOverlay noiseMatRef, scoreOverlay state.score ]
+                <> [ noiseOverlay noiseMatRef ]
             }
         ]
     }
