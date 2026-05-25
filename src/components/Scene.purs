@@ -259,11 +259,10 @@ effectsJsx :: JSX
 effectsJsx = effectComposer {}
   [ bloom
       { mipmapBlur: true
-      , intensity: 1.4
-      , luminanceThreshold: 0.2
+      , intensity: 0.6
+      , luminanceThreshold: 0.4
       , luminanceSmoothing: 0.4
       }
-  , chromaticAberration { offset: [ 0.0006, 0.0006 ] }
   ]
 
 -- Main scene JSX --------------------------------------------------------------

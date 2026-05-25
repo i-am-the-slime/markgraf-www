@@ -26,13 +26,16 @@ export const setupFeltballsImpl = (canvas) => () => {
     props: {
       camera: { position: [0, -3, 9], rotation: [0.28, 0, 0], fov: 85 },
       gl: { alpha: true },
+      // Clamp dpr at 1 (no retina upscale). Scene is decorative + noise overlay
+      // hides aliasing. Cuts fragment work to ~25% of native 2x DPR.
+      dpr: 1,
     },
     drawingSurface: offscreen,
     width: canvas.clientWidth,
     height: canvas.clientHeight,
     top: canvas.offsetTop,
     left: canvas.offsetLeft,
-    pixelRatio: window.devicePixelRatio,
+    pixelRatio: 1,
   })
 
   const onResize = () =>

@@ -10,6 +10,14 @@
 }
 
 @font-face {
+  font-family: "Ilisarniq";
+  src: url("/markgraf-www/fonts/Ilisarniq-Demi.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Commit Mono";
   src: url("/markgraf-www/fonts/CommitMono-Regular.woff2") format("woff2");
   font-weight: 400;
@@ -36,7 +44,7 @@
   --color-accent: hsl(0 0% 7%);
   --color-accent-foreground: hsl(40 25% 96%);
 
-  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+  --font-sans: "Ilisarniq", ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: "Commit Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-display: "Sinistre", ui-serif, Georgia, serif;
 

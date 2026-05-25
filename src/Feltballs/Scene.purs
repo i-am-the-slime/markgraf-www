@@ -10,7 +10,7 @@ import Data.Nullable (Nullable, toNullable)
 import Data.Number (cos, floor, pi, sin, sqrt)
 import Effect (Effect)
 import Effect.Unsafe (unsafePerformEffect)
-import Feltballs.Bindings (cylinderGeometry, html, instance_, instances, meshStandardMaterial)
+import Feltballs.Bindings (cylinderGeometry, html, instance_, instances, meshLambertMaterial, meshStandardMaterial)
 import React.Basic (JSX, Ref, element)
 import React.Basic.DOM as R
 import React.Basic.DOM.Internal (css)
