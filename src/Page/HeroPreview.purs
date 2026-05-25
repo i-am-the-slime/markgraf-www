@@ -115,8 +115,7 @@ editorAndPreview src setSrc rendered size =
         , border: "1px solid #1a1f2e"
         , borderRadius: "12px"
         , overflow: "hidden"
-        , minHeight: "360px"
-        , maxHeight: "440px"
+        , height: "400px"
         }
     , children:
         [ editorPane src setSrc
