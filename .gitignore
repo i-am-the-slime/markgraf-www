@@ -7,3 +7,4 @@ spago.lock
 bun.lock
 *.tsbuildinfo
 .DS_Store
+/public/feltballs-worker.js

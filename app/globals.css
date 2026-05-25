@@ -1,5 +1,40 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Sinistre";
+  src: url("/markgraf-www/fonts/sinistre/SinistreVF.woff2") format("woff2-variations"),
+       url("/markgraf-www/fonts/sinistre/SinistreVF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Ilisarniq";
+  src: url("/markgraf-www/fonts/Ilisarniq-Demi.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Commit Mono";
+  src: url("/markgraf-www/fonts/CommitMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* markgraf-embed's published CSS still references "Ioskeley Mono" — alias it
+   to Commit Mono so labels inside the player pick up the right typeface. */
+@font-face {
+  font-family: "Ioskeley Mono";
+  src: url("/markgraf-www/fonts/CommitMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-background: hsl(40 25% 96%);
   --color-foreground: hsl(0 0% 7%);
@@ -9,12 +44,20 @@
   --color-accent: hsl(0 0% 7%);
   --color-accent-foreground: hsl(40 25% 96%);
 
-  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-sans: "Ilisarniq", ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: "Commit Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-display: "Sinistre", ui-serif, Georgia, serif;
 
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
+}
+
+/* markgraf-react paints a <svg class="markgraf-player"> with intrinsic width
+   and height attributes from the layout viewport.  Force it to scale to its
+   container so it fits the playground pane instead of overflowing.  */
+.markgraf-player {
+  display: block;
 }
 
 @layer base {

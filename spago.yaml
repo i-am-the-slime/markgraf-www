@@ -1,6 +1,45 @@
 workspace:
-  packageSet:
-    registry: 75.9.1
+  package_set:
+    registry: 77.3.1
+  extra_packages:
+    react-r3f:
+      git: https://github.com/edwardw/purescript-react-r3f.git
+      ref: main
+      dependencies:
+        - arraybuffer-types
+        - console
+        - effect
+        - foreign
+        - foreign-object
+        - functions
+        - js-object
+        - prelude
+        - profunctor-lenses
+        - react-basic
+        - react-basic-dom
+        - react-basic-hooks
+        - record-extra
+        - typelevel-prelude
+        - typelevel-regex
+        - untagged-union
+    js-object:
+      git: https://github.com/purescript-codegen/purescript-js-object
+      ref: baba9598f114062dfaa4025b79eca0e06245a0c6
+      dependencies:
+        - aff
+        - contravariant
+        - effect
+        - foreign
+        - foreign-object
+        - heterogeneous
+        - newtype
+        - nullable
+        - partial
+        - prelude
+        - record
+        - typelevel-prelude
+        - unsafe-coerce
+        - unsafe-reference
 package:
   name: markgraf-www
   dependencies:
@@ -9,5 +48,24 @@ package:
     - react-basic
     - react-basic-hooks
     - react-basic-dom
+    - arrays
+    - either
+    - foldable-traversable
+    - foreign
+    - foreign-object
+    - functions
+    - integers
+    - lists
+    - maybe
+    - newtype
+    - numbers
+    - random
+    - react-r3f
+    - refs
+    - st
+    - transformers
+    - tuples
+    - typelevel-prelude
+    - unsafe-coerce
   build:
     censorProjectWarnings: all
