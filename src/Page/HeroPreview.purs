@@ -202,7 +202,6 @@ previewPane src size =
                 , minHeight: "0"
                 , position: "relative"
                 , overflow: "hidden"
-                , mixBlendMode: "hard-light"
                 }
             , children:
                 if size.w <= 0.0 || size.h <= 0.0
@@ -212,6 +211,7 @@ previewPane src size =
                         { src
                         , renderer: "svg"
                         , theme: "dark"
+                        , transparent: true
                         , width: size.w
                         , height: size.h
                         }
@@ -771,6 +771,7 @@ foreign import markgrafPlayerComponent
        { src :: String
        , renderer :: String
        , theme :: String
+       , transparent :: Boolean
        , width :: Number
        , height :: Number
        }
