@@ -115,3 +115,17 @@ export const installStartChainListenerImpl = (handler) => () => {
   self.addEventListener("message", onMsg)
   return () => self.removeEventListener("message", onMsg)
 }
+
+// Same pattern but for explode / gather. Host posts these as the hero scrolls
+// out of / back into view. Handler receives the target amount (1 = exploded,
+// 0 = gathered); Scene.purs lerps the current value toward it each frame.
+export const installExplodeListenerImpl = (handler) => () => {
+  if (typeof self === "undefined" || typeof self.addEventListener !== "function") return () => {}
+  const onMsg = (e) => {
+    if (!e.data) return
+    if (e.data.type === "explode") handler(1.0)()
+    else if (e.data.type === "gather") handler(0.0)()
+  }
+  self.addEventListener("message", onMsg)
+  return () => self.removeEventListener("message", onMsg)
+}

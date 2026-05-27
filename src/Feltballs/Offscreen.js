@@ -80,9 +80,32 @@ export const setupFeltballsImpl = (pixelBudget) => (canvas) => () => {
   )
   observer.observe(canvas)
 
+  // Explode the balls outward as the hero scrolls out of view, gather them
+  // back when it returns. Trigger at 50% so there's headroom for the
+  // animation before the frameloop pauses (canvas observer above kicks in at
+  // threshold 0). Observed on the hero section, not the canvas, because the
+  // canvas may extend slightly past the hero in flex layouts.
+  const heroSection = (typeof document !== "undefined") ? document.getElementById("page-hero") : null
+  let heroObserver = null
+  if (heroSection) {
+    let exploded = false
+    heroObserver = new IntersectionObserver(
+      (entries) => {
+        const e = entries[entries.length - 1]
+        if (!e) return
+        const shouldExplode = e.intersectionRatio < 0.5
+        if (shouldExplode && !exploded) { post("explode", {}); exploded = true }
+        else if (!shouldExplode && exploded) { post("gather", {}); exploded = false }
+      },
+      { threshold: [0, 0.25, 0.5, 0.75, 1] },
+    )
+    heroObserver.observe(heroSection)
+  }
+
   return () => {
     stopChainTicker()
     observer.disconnect()
+    if (heroObserver) heroObserver.disconnect()
     window.removeEventListener("resize", onResize)
     worker.terminate()
   }

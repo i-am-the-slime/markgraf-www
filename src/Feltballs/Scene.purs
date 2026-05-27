@@ -145,6 +145,18 @@ lastColorBuf = unsafePerformEffect do
 popStartBuf :: F32Array
 popStartBuf = unsafePerformEffect (newF32 totalBalls)
 
+-- explodeBuf[0] = target (0 gathered, 1 exploded), explodeBuf[1] = current.
+-- newF32 fills with -1 so write 0s explicitly.
+explodeBuf :: F32Array
+explodeBuf = unsafePerformEffect do
+  a <- newF32 2
+  writeF32 a 0 0.0
+  writeF32 a 1 0.0
+  pure a
+
+explodeMagnitude :: Number
+explodeMagnitude = 80.0
+
 sceneJSX :: JSX
 sceneJSX = animatedField {}
 
@@ -161,6 +173,10 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
   useEffectOnce $
     installStartChainListener (startChainFromRandom holdRef frameRef)
 
+  useEffectOnce $ installExplodeListener \v -> do
+    writeF32 explodeBuf 0 v
+    when (v > 0.5) (writeRef holdRef Nothing)
+
   useFrame \rs _ -> do
     let t = readClockElapsed rs
     lastT <- readRef lastPaintRef
@@ -172,11 +188,16 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
       readRefMaybe noiseMatRef # withJust \m -> applyProps m
         { "uniforms-u_time-value": t }
 
+      target <- readF32 explodeBuf 0
+      cur <- readF32 explodeBuf 1
+      let nextCur = cur + (target - cur) * 0.06
+      writeF32 explodeBuf 1 nextCur
+
       hold <- readRef holdRef
       refreshConnected hold
-      for_ (range 0 (totalBalls - 1)) (paintBall t)
+      for_ (range 0 (totalBalls - 1)) (paintBall t nextCur)
 
-      advanceHoldEffect holdRef t
+      when (nextCur < 0.01) (advanceHoldEffect holdRef t)
 
   pure $ element (threejs "Group")
     { children:
@@ -211,13 +232,13 @@ refreshConnected hold = do
     Nothing -> pure unit
     Just h -> for_ h.chain \n -> writeU8 connectedBuf n.idx 1
 
-paintBall :: Number -> Int -> Effect Unit
-paintBall t i = do
+paintBall :: Number -> Number -> Int -> Effect Unit
+paintBall t explode i = do
   popMul <- popMultiplierAt t i
   let scale = baseScale * envelope * popMul
   readRefMaybe (ballRefAt i) # withJust \o -> do
     applyProps o
-      { position: [ p.x, p.y, p.z ]
+      { position: [ px, py, pz ]
       , scale
       , rotation: [ spin, spin * 0.7, 0.0 ]
       }
@@ -231,7 +252,7 @@ paintBall t i = do
       writeU8 lastColorBuf i nextColor
   readRefMaybe (wireRefAt i) # withJust \o ->
     applyProps o
-      { position: [ p.x, p.y, p.z ]
+      { position: [ px, py, pz ]
       , scale: scale * 1.18
       , rotation: [ spin, spin * 0.7, 0.0 ]
       }
@@ -245,6 +266,13 @@ paintBall t i = do
   baseScale = 0.55 + 0.45 * hash01 (fi * 1.61803)
   envelope = plopEnvelope u
   spin = t * (0.3 + hash01 (fi * 4.27) * 0.6) + fi
+  dirx = hash01 (fi * 9.13) - 0.5
+  diry = hash01 (fi * 17.37) - 0.5
+  dirz = hash01 (fi * 23.71) - 0.5
+  off = explode * explodeMagnitude
+  px = p.x + dirx * off
+  py = p.y + diry * off
+  pz = p.z + dirz * off
 
 metaballBackground :: Ref (Nullable Object3D) -> JSX
 metaballBackground matRef = element (threejs "Mesh")
@@ -787,11 +815,15 @@ roundedRectGeometry = roundedRectGeometryImpl
 installStartChainListener :: Effect Unit -> Effect (Effect Unit)
 installStartChainListener = installStartChainListenerImpl
 
+installExplodeListener :: (Number -> Effect Unit) -> Effect (Effect Unit)
+installExplodeListener = installExplodeListenerImpl
+
 foreign import readClockElapsed :: forall r. { | r } -> Number
 foreign import readAspect :: forall r. { | r } -> Number
 foreign import parallelogramGeometryImpl :: Number -> Number -> Number -> Number -> JSX
 foreign import roundedRectGeometryImpl :: Number -> Number -> Number -> Number -> JSX
 foreign import installStartChainListenerImpl :: Effect Unit -> Effect (Effect Unit)
+foreign import installExplodeListenerImpl :: (Number -> Effect Unit) -> Effect (Effect Unit)
 foreign import newU8Impl :: Int -> Effect U8Array
 foreign import readU8Impl :: U8Array -> Int -> Effect Int
 foreign import writeU8Impl :: U8Array -> Int -> Int -> Effect Unit
