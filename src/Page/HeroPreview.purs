@@ -591,7 +591,7 @@ editorPane src setSrc activeOnMobile =
   D.div
     { className:
         (if activeOnMobile then "flex " else "hidden ")
-          <> "sm:flex flex-col overflow-hidden bg-[#0a0e1a]"
+          <> "sm:flex flex-col overflow-hidden"
     , children:
         [ paneHeader "#ff3b1a" "source.mg"
         , D.div
