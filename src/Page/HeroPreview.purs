@@ -10,35 +10,34 @@ import Effect (Effect)
 import Effect.Aff (Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Unsafe (unsafePerformEffect)
-import Data.Nullable (Nullable, toNullable)
-import Data.TwoOrMore as TwoOrMore
-import Framer.Motion.Hook (useScroll, useTransform)
+import Data.Nullable (Nullable)
 import Framer.Motion.MotionComponent as Motion
 import Framer.Motion.Types as Motion
+import Framer.Motion.Types (VariantLabel(..))
 import Yoga.React.DOM.Internal (css)
-import React.Basic (JSX, ReactComponent, Ref, element, keyed)
+import React.Basic (JSX, ReactComponent, element, keyed)
 import React.Basic.DOM as D
 import React.Basic.DOM.SVG as S
 import React.Basic.DOM.Events (targetValue)
 import React.Basic.Events (handler, handler_)
 import React.Basic.Hooks (Component, component, readRef, useEffectOnce, useEffect, useRef, useState', writeRef)
 import React.Basic.Hooks as Hooks
-import Literals.Undefined (Undefined)
-import MotionValue (MotionValue)
-import Unsafe.Coerce (unsafeCoerce)
 import Untagged.Castable (cast)
-import Untagged.Union (type (|+|))
 import Web.DOM (Node)
 
 mkHeroPreview :: Component {}
 mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
   ratiosRef <- useRef ([] :: Array { id :: String, ratio :: Number })
   activeRef <- useRef ""
+  activeSection /\ setActiveSection <- useState' "page-hero"
   useEffectOnce $
     observeRatios "magazine" (_.id <$> sectionStates) \id ratio -> do
       ratios <- readRef ratiosRef
       let ratios' = Array.snoc (Array.filter (\x -> x.id /= id) ratios) { id, ratio }
       writeRef ratiosRef ratios'
+      case mostVisible ratios' of
+        Just best -> setActiveSection best.id
+        Nothing -> pure unit
       dispatchActive activeRef ratios'
   pure $
     D.main
@@ -49,7 +48,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
           , topBar
           , pageRail
           , heroPage
-          , playground {}
+          , playground { section: activeSection }
           , playerSection
           , renderSection
           , aiSection
@@ -389,48 +388,20 @@ defaultSource = case Array.head examples of
   Just e -> e.source
   Nothing -> ""
 
-playground :: {} -> JSX
+playground :: { section :: String } -> JSX
 playground = unsafePerformEffect mkPlayground
 
 data Pane = SourcePane | RenderPane
 
 derive instance Eq Pane
 
-mkPlayground :: Component {}
-mkPlayground = component "Playground" \_ -> Hooks.do
+mkPlayground :: Component { section :: String }
+mkPlayground = component "Playground" \{ section } -> Hooks.do
   src /\ setSrc <- useState' defaultSource
   debounced /\ setDebounced <- useState' defaultSource
   size /\ setSize <- useState' { w: 0.0, h: 0.0 }
   active /\ setActive <- useState' RenderPane
   gen /\ setGen <- useState' 0
-
-  -- Scroll observation: the playground's position within #magazine drives the
-  -- card's translate, the editor-column drawer, and the preview pane header.
-  containerRef <- useRef (toNullable (Nothing :: Maybe Node))
-  targetRef <- useRef (toNullable (Nothing :: Maybe Node))
-  useEffectOnce do
-    c <- lookupNode "magazine"
-    t <- lookupNode "playground"
-    writeRef containerRef c
-    writeRef targetRef t
-    pure (pure unit)
-  scroll <- useScroll
-    { container: (cast containerRef :: Ref (Nullable Node) |+| Undefined)
-    , target: (cast targetRef :: Ref (Nullable Node) |+| Undefined)
-    , offset: (cast [ "start end", "start start" ] :: Array String |+| Undefined)
-    }
-  let progress = unsafeCoerce scroll.scrollYProgress :: MotionValue String
-  cardY <- useTransform progress
-    (TwoOrMore.twoOrMore (0.0 /\ "-95vh") (0.5 /\ "0vh") [ 1.0 /\ "0vh" ]) Nothing
-  cardX <- useTransform progress
-    (TwoOrMore.twoOrMore (0.0 /\ "0px") (0.8 /\ "0px") [ 1.0 /\ "-280px" ]) Nothing
-  gridCols <- useTransform progress
-    (TwoOrMore.twoOrMore (0.0 /\ "0px 560px") (0.8 /\ "0px 560px") [ 1.0 /\ "560px 560px" ]) Nothing
-  headerH <- useTransform progress
-    (TwoOrMore.twoOrMore (0.0 /\ "0px") (0.8 /\ "0px") [ 1.0 /\ "40px" ]) Nothing
-  bgColor <- useTransform progress
-    (TwoOrMore.twoOrMore (0.0 /\ "rgba(10,14,26,0)") (0.8 /\ "rgba(10,14,26,0)") [ 1.0 /\ "rgba(10,14,26,1)" ]) Nothing
-
   useEffect src do
     launchAff_ do
       delay (Milliseconds 250.0)
@@ -443,7 +414,7 @@ mkPlayground = component "Playground" \_ -> Hooks.do
   useEffect debounced do
     setGen (gen + 1)
     pure (pure unit)
-  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, cardY, cardX, gridCols, headerH, bgColor })
+  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, section })
 
 type PlaygroundProps =
   { src :: String
@@ -454,11 +425,7 @@ type PlaygroundProps =
   , active :: Pane
   , setActive :: Pane -> Effect Unit
   , gen :: Int
-  , cardY :: MotionValue String
-  , cardX :: MotionValue String
-  , gridCols :: MotionValue String
-  , headerH :: MotionValue String
-  , bgColor :: MotionValue String
+  , section :: String
   }
 
 playgroundView :: PlaygroundProps -> JSX
@@ -566,18 +533,36 @@ paneTabs active setActive =
 editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
   Motion.div
-    { style: css
-        { x: p.cardX
-        , y: p.cardY
-        , gridTemplateColumns: p.gridCols
-        , backgroundColor: p.bgColor
-        }
+    { variants: Motion.variants cardVariants
+    , initial: cast (VariantLabel "page-hero") :: Motion.Initial
+    , animate: cast (VariantLabel p.section) :: Motion.Animate
+    , transition: cast (css { duration: 0.7, ease: "easeInOut" }) :: Motion.Transition
     , className:
         "grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto"
     }
     [ editorPane p.src p.setSrc (p.active == SourcePane)
-    , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane) p.headerH p.bgColor
+    , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
     ]
+  where
+    floatingCss = css
+      { y: "-95vh", x: "0px"
+      , gridTemplateColumns: "0px 560px"
+      , backgroundColor: "rgba(10,14,26,0)"
+      }
+    settledCss = css
+      { y: "0vh", x: "-280px"
+      , gridTemplateColumns: "560px 560px"
+      , backgroundColor: "rgba(10,14,26,1)"
+      }
+    cardVariants =
+      { "page-hero": floatingCss
+      , playground:  settledCss
+      , player:      settledCss
+      , render:      settledCss
+      , ai:          settledCss
+      , embed:       settledCss
+      , install:     settledCss
+      }
 
 editorPane :: String -> (String -> Effect Unit) -> Boolean -> JSX
 editorPane src setSrc activeOnMobile =
@@ -649,40 +634,53 @@ editorPane src setSrc activeOnMobile =
         ]
     }
 
-previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> MotionValue String -> MotionValue String -> JSX
-previewPane src size visible gen activeOnMobile headerH bgColor =
-  Motion.div
-    { style: css { backgroundColor: bgColor }
-    , className:
+previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> JSX
+previewPane src size visible gen activeOnMobile =
+  D.div
+    { className:
         (if activeOnMobile then "flex " else "hidden ")
           <> "sm:flex flex-col overflow-hidden"
-    }
-    [ Motion.div
-        { style: css { height: headerH, overflow: "hidden" } }
-        [ paneHeader "#69dcaa" "live render" ]
-    , D.div
-        { id: "markgraf-preview"
-        , style: D.css
-            { flex: "1"
-            , minHeight: "0"
-            , position: "relative"
-            , overflow: "hidden"
+    , children:
+        [ Motion.div
+            { variants: Motion.variants headerVariants
             }
-        , children:
-            if not visible || size.w <= 0.0 || size.h <= 0.0
-              then []
-              else
-                [ keyed (show gen) $ element markgrafPlayerComponent
-                    { src
-                    , renderer: "svg"
-                    , theme: "dark"
-                    , transparent: true
-                    , width: size.w
-                    , height: size.h
-                    }
-                ]
-        }
-    ]
+            [ paneHeader "#69dcaa" "live render" ]
+        , D.div
+            { id: "markgraf-preview"
+            , style: D.css
+                { flex: "1"
+                , minHeight: "0"
+                , position: "relative"
+                , overflow: "hidden"
+                }
+            , children:
+                if not visible || size.w <= 0.0 || size.h <= 0.0
+                  then []
+                  else
+                    [ keyed (show gen) $ element markgrafPlayerComponent
+                        { src
+                        , renderer: "svg"
+                        , theme: "dark"
+                        , transparent: true
+                        , width: size.w
+                        , height: size.h
+                        }
+                    ]
+            }
+        ]
+    }
+  where
+    closed = css { height: "0px", overflow: "hidden" }
+    open   = css { height: "40px", overflow: "hidden" }
+    headerVariants =
+      { "page-hero": closed
+      , playground:  open
+      , player:      open
+      , render:      open
+      , ai:          open
+      , embed:       open
+      , install:     open
+      }
 
 paneHeader :: String -> String -> JSX
 paneHeader dot label =
