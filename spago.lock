@@ -731,7 +731,7 @@
       },
       "yoga-react-dom": {
         "git": "https://github.com/rowtype-yoga/purescript-yoga-react-dom.git",
-        "ref": "fb7454979280f51676b37f39e16c02ff762cc3e0",
+        "ref": "7b53729b411151efbf017a71a2612654669509c7",
         "dependencies": [
           "datetime",
           "effect",
@@ -1839,7 +1839,7 @@
     "yoga-react-dom": {
       "type": "git",
       "url": "https://github.com/rowtype-yoga/purescript-yoga-react-dom.git",
-      "rev": "fb7454979280f51676b37f39e16c02ff762cc3e0",
+      "rev": "7b53729b411151efbf017a71a2612654669509c7",
       "dependencies": [
         "datetime",
         "effect",

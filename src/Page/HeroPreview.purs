@@ -147,8 +147,8 @@ sectionStates =
     , formation: ring { radius: 7.0, speed: 0.5 }
     }
   , { id: "embed",      morph: gathered
-    , camera: home { pz = 32.0, fov = 70.0 }
-    , formation: wave { radius: 9.6, length: 40.0, speed: 1.8 }
+    , camera: home { pz = 16.0, fov = 70.0 }
+    , formation: wave { radius: 2.4, length: 22.0, speed: 1.8 }
     }
   , { id: "install",    morph: gathered
     , camera: home { pz = 6.0, fov = 90.0 }
@@ -546,22 +546,52 @@ markgrafSpring = cast (css markgrafSpringRecord)
 
 editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
-  D.div
-    { className:
-        "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit"
-    , style: D.css { gridTemplateColumns: "560px 560px" }
-    , children:
-        [ editorPane p.src p.setSrc (p.active == SourcePane)
-        , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
-        ]
+  Motion.div
+    { variants: Motion.variants cardVariants
+    , initial: cast (VariantLabel "page-hero") :: Motion.Initial
+    , animate: cast (VariantLabel p.section) :: Motion.Animate
+    , transition: markgrafSpring
+    , style: css { backgroundColor: "rgb(10 14 26 / var(--bg-a))" }
+    , className:
+        "grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto"
     }
+    [ editorPane p.src p.setSrc (p.active == SourcePane)
+    , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
+    ]
+  where
+    floatingCss = css
+      { y: "-95vh", x: "0px"
+      , gridTemplateColumns: "0px 560px"
+      , "--bg-a": 0
+      }
+    settledCss = css
+      { y: "0vh", x: "0px"
+      , gridTemplateColumns: "560px 560px"
+      , "--bg-a": 1
+      , transition: css
+          { default: markgrafSpringRecord
+          , gridTemplateColumns: delayedSpring
+          , "--bg-a": delayedSpring
+          }
+      }
+    delayedSpring = css
+      { type: "spring", stiffness: 160, damping: 24, mass: 1.0, delay: 0.55 }
+    cardVariants =
+      { "page-hero": floatingCss
+      , playground:  settledCss
+      , player:      settledCss
+      , render:      settledCss
+      , ai:          settledCss
+      , embed:       settledCss
+      , install:     settledCss
+      }
 
 editorPane :: String -> (String -> Effect Unit) -> Boolean -> JSX
 editorPane src setSrc activeOnMobile =
   D.div
     { className:
         (if activeOnMobile then "flex " else "hidden ")
-          <> "sm:flex flex-col overflow-hidden"
+          <> "sm:flex flex-col overflow-hidden bg-[#0a0e1a]"
     , children:
         [ paneHeader "#ff3b1a" "source.mg"
         , D.div
@@ -633,7 +663,10 @@ previewPane src size visible gen activeOnMobile =
         (if activeOnMobile then "flex " else "hidden ")
           <> "sm:flex flex-col overflow-hidden"
     , children:
-        [ paneHeader "#69dcaa" "live render"
+        [ Motion.div
+            { variants: Motion.variants headerVariants
+            }
+            [ paneHeader "#69dcaa" "live render" ]
         , D.div
             { id: "markgraf-preview"
             , style: D.css
@@ -658,6 +691,21 @@ previewPane src size visible gen activeOnMobile =
             }
         ]
     }
+  where
+    closed = css { height: "0px", overflow: "hidden" }
+    open   = css
+      { height: "40px", overflow: "hidden"
+      , transition: css { type: "spring", stiffness: 160, damping: 24, mass: 1.0, delay: 0.55 }
+      }
+    headerVariants =
+      { "page-hero": closed
+      , playground:  open
+      , player:      open
+      , render:      open
+      , ai:          open
+      , embed:       open
+      , install:     open
+      }
 
 paneHeader :: String -> String -> JSX
 paneHeader dot label =
