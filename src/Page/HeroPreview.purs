@@ -61,10 +61,9 @@ heroLockup =
     { className: "absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none px-6"
     , children:
         [ D.div
-            { className: "flex flex-col items-center gap-8 max-w-3xl text-center"
+            { className: "flex flex-col items-center gap-10 max-w-3xl text-center"
             , children:
-                [ kicker
-                , D.h1
+                [ D.h1
                     { className: "text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold text-[#f5f1e8]"
                     , style: D.css
                         { fontFamily: "'Sinistre', serif"
@@ -84,42 +83,10 @@ heroLockup =
                         ]
                     }
                 , installPill
-                , coverLines
                 ]
             }
         ]
     }
-
-kicker :: JSX
-kicker =
-  D.div
-    { className: "flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.4em] text-[#8a94a8]"
-    , children:
-        [ D.span { className: "h-px w-12 bg-[#2a3142]", children: [] }
-        , D.span_ [ D.text "The Quarterly · Software · MMXXVI" ]
-        , D.span { className: "h-px w-12 bg-[#2a3142]", children: [] }
-        ]
-    }
-
-coverLines :: JSX
-coverLines =
-  D.div
-    { className: "mt-4 flex flex-wrap justify-center items-center gap-x-3 gap-y-2 font-mono text-[10px] uppercase tracking-[0.35em] text-[#5a6478] max-w-2xl"
-    , children:
-        [ coverLine "A new syntax for systems"
-        , bullet
-        , coverLine "Live playground"
-        , bullet
-        , coverLine "Native macOS player"
-        , bullet
-        , coverLine "Claude writes it for you"
-        ]
-    }
-  where
-    bullet = D.span { style: D.css { color: "#ff3b1a" }, children: [ D.text "◆" ] }
-
-coverLine :: String -> JSX
-coverLine t = D.span_ [ D.text t ]
 
 -- ---------------------------------------------------------------------------
 -- Fixed chrome: top bar with brand + nav, side rail with page dots.
@@ -128,34 +95,24 @@ coverLine t = D.span_ [ D.text t ]
 topBar :: JSX
 topBar =
   D.div
-    { className: "fixed top-0 inset-x-0 z-30 pointer-events-none"
+    { className: "fixed top-0 inset-x-0 z-30 flex items-center justify-between px-8 py-5 font-mono text-[11px] uppercase tracking-[0.28em] text-[#8a94a8] pointer-events-none"
     , children:
-        [ D.div
-            { className: "grid grid-cols-3 items-center px-8 py-4 font-mono text-[10px] uppercase tracking-[0.32em] text-[#8a94a8]"
+        [ D.span
+            { style: D.css { fontFamily: "'Sinistre', serif", letterSpacing: "0.05em", fontSize: "15px" }
+            , className: "text-[#f5f1e8] normal-case pointer-events-auto"
+            , children: [ D.text "markgraf" ]
+            }
+        , D.div
+            { className: "flex items-center gap-6 pointer-events-auto"
             , children:
-                [ D.span
-                    { className: "justify-self-start pointer-events-auto"
-                    , children: [ D.text "Vol. I · Nº 01" ]
-                    }
-                , D.span
-                    { style: D.css { fontFamily: "'Sinistre', serif", letterSpacing: "0.04em", fontSize: "16px" }
-                    , className: "justify-self-center text-[#f5f1e8] normal-case pointer-events-auto"
-                    , children: [ D.text "markgraf" ]
-                    }
-                , D.div
-                    { className: "justify-self-end flex items-center gap-5 pointer-events-auto"
-                    , children:
-                        [ navLink "#playground" "playground"
-                        , navLink "#player" "player"
-                        , navLink "#render" "render"
-                        , navLink "#ai" "ai"
-                        , navLink "#embed" "embed"
-                        , navLink "#install" "install"
-                        ]
-                    }
+                [ navLink "#playground" "playground"
+                , navLink "#player" "player"
+                , navLink "#render" "render"
+                , navLink "#ai" "ai"
+                , navLink "#embed" "integrations"
+                , navLink "#install" "install"
                 ]
             }
-        , D.div { className: "h-px bg-[#1a1f2e] mx-8", children: [] }
         ]
     }
 
@@ -190,23 +147,11 @@ railDot href =
     , children: []
     }
 
--- | Folio: magazine-style page label in the lower corners of each spread.
 spreadFolio :: String -> String -> JSX
 spreadFolio num label =
   D.div
-    { className: "absolute bottom-0 inset-x-0 z-20 px-8 py-6 pointer-events-none flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.32em] text-[#5a6478]"
-    , children:
-        [ D.span_ [ D.text ("Page " <> num) ]
-        , D.span
-            { className: "flex items-center gap-3"
-            , children:
-                [ D.span { className: "h-px w-8 bg-[#2a3142]", children: [] }
-                , D.span_ [ D.text label ]
-                , D.span { className: "h-px w-8 bg-[#2a3142]", children: [] }
-                ]
-            }
-        , D.span_ [ D.text "Markgraf · Nº I" ]
-        ]
+    { className: "absolute bottom-0 left-0 z-20 px-8 py-6 font-mono text-[10px] uppercase tracking-[0.3em] text-[#5a6478] pointer-events-none"
+    , children: [ D.text (num <> " / " <> label) ]
     }
 
 -- ---------------------------------------------------------------------------
@@ -1056,7 +1001,7 @@ sectionLabel text =
     { className: "flex items-center gap-4 mb-8 font-mono text-[10px] uppercase tracking-[0.35em]"
     , children:
         [ D.span { className: "h-px w-10 bg-[#ff3b1a]", children: [] }
-        , D.span { className: "text-[#ff3b1a]", children: [ D.text ("Dept. " <> text) ] }
+        , D.span { className: "text-[#ff3b1a]", children: [ D.text text ] }
         ]
     }
 
