@@ -22,107 +22,74 @@ import React.Basic.Hooks (Component, component, useEffect, useState')
 import React.Basic.Hooks as Hooks
 
 mkHeroPreview :: Component {}
-mkHeroPreview = do
-  playground <- mkPlayground
-  component "HeroPreview" \_ -> Hooks.do
-    inView /\ setInView <- useState' false
-    useEffect unit do
-      onIntersect "playground" setInView
-    pure $
-      D.main
-        { id: "magazine"
-        , className: "bg-[#0a0e1a] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
-        , children:
-            [ topBar
-            , pageRail
-            , heroPage inView
-            , playground { showPreview: inView }
-            , playerSection
-            , renderSection
-            , aiSection
-            , embedSection
-            , footerSection
-            ]
-        }
+mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
+  pure $
+    D.main
+      { id: "magazine"
+      , className: "bg-[#0a0e1a] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
+      , children:
+          [ topBar
+          , pageRail
+          , heroPage
+          , playground {}
+          , playerSection
+          , renderSection
+          , aiSection
+          , embedSection
+          , footerSection
+          ]
+      }
 
 -- ---------------------------------------------------------------------------
 -- Page 0 — hero spread. One screen, no scroll-driven captions; the 3D scene
 -- only paints behind this page, not the ones that follow.
 -- ---------------------------------------------------------------------------
 
-heroPage :: Boolean -> JSX
-heroPage playgroundIsInView =
+heroPage :: JSX
+heroPage =
   D.section
     { id: "page-hero"
     , className: "relative snap-start snap-always h-screen w-full overflow-hidden"
     , children:
         [ D.div { className: "absolute inset-0", children: [ element feltballsComponent {} ] }
         , D.div { className: "absolute inset-0", children: [ element sceneComponent {} ] }
-        , heroLockup (not playgroundIsInView)
+        , heroLockup
         , spreadFolio "00" "hero"
         ]
     }
 
-heroLockup :: Boolean -> JSX
-heroLockup showCard =
+heroLockup :: JSX
+heroLockup =
   D.div
     { className: "absolute inset-0 z-10 flex flex-col items-center justify-start pt-[12vh] pointer-events-none px-6"
     , children:
         [ D.div
             { className: "flex flex-col items-center gap-10 max-w-3xl text-center"
-            , children: title <> card <> [ installPill ]
+            , children:
+                [ D.h1
+                    { className: "text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold text-[#f5f1e8]"
+                    , style: D.css
+                        { fontFamily: "'Sinistre', serif"
+                        , textShadow: "0 0 80px rgba(10,14,26,0.7)"
+                        }
+                    , children: [ D.text "markgraf" ]
+                    }
+                , D.p
+                    { className: "max-w-xl text-lg sm:text-xl leading-snug text-[#c8cdd9]"
+                    , style: D.css { fontFamily: "ui-serif, Georgia, 'Times New Roman', serif" }
+                    , children:
+                        [ D.text "Animated graph diagrams from a tiny declarative source language. "
+                        , D.span
+                            { style: D.css { color: "#ff3b1a" }
+                            , children: [ D.text "Watch your architecture move." ]
+                            }
+                        ]
+                    }
+                , installPill
+                ]
             }
         ]
     }
-  where
-    title =
-      [ D.h1
-          { className: "text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold text-[#f5f1e8]"
-          , style: D.css
-              { fontFamily: "'Sinistre', serif"
-              , textShadow: "0 0 80px rgba(10,14,26,0.7)"
-              }
-          , children: [ D.text "markgraf" ]
-          }
-      , D.p
-          { className: "max-w-xl text-lg sm:text-xl leading-snug text-[#c8cdd9]"
-          , style: D.css { fontFamily: "ui-serif, Georgia, 'Times New Roman', serif" }
-          , children:
-              [ D.text "Animated graph diagrams from a tiny declarative source language. "
-              , D.span
-                  { style: D.css { color: "#ff3b1a" }
-                  , children: [ D.text "Watch your architecture move." ]
-                  }
-              ]
-          }
-      ]
-    card = if showCard then [ heroPlayerCard ] else []
-
-heroPlayerCard :: JSX
-heroPlayerCard =
-  Motion.div
-    { layoutId: Motion.layoutId "player-card"
-    , className: "pointer-events-auto"
-    , style: css
-        { width: "360px"
-        , height: "210px"
-        , borderRadius: "12px"
-        , overflow: "hidden"
-        , background: "rgba(10,14,26,0.55)"
-        , backdropFilter: "blur(8px)"
-        , border: "1px solid #2a3142"
-        }
-    , transition: Motion.transition { type: "spring", stiffness: 110, damping: 18, mass: 0.6 }
-    }
-    [ element markgrafPlayerComponent
-        { src: defaultSource
-        , renderer: "svg"
-        , theme: "dark"
-        , transparent: true
-        , width: 360.0
-        , height: 210.0
-        }
-    ]
 
 -- ---------------------------------------------------------------------------
 -- Fixed chrome: top bar with brand + nav, side rail with page dots.
@@ -311,12 +278,15 @@ defaultSource = case Array.head examples of
   Just e -> e.source
   Nothing -> ""
 
+playground :: {} -> JSX
+playground = unsafePerformEffect mkPlayground
+
 data Pane = SourcePane | RenderPane
 
 derive instance Eq Pane
 
-mkPlayground :: Component { showPreview :: Boolean }
-mkPlayground = component "Playground" \props -> Hooks.do
+mkPlayground :: Component {}
+mkPlayground = component "Playground" \_ -> Hooks.do
   src /\ setSrc <- useState' defaultSource
   debounced /\ setDebounced <- useState' defaultSource
   size /\ setSize <- useState' { w: 0.0, h: 0.0 }
@@ -331,13 +301,10 @@ mkPlayground = component "Playground" \props -> Hooks.do
     onElementResize "markgraf-preview" setSize
   useEffect unit do
     installScrollSync "mg-textarea" "mg-pre"
-  useEffect props.showPreview do
-    when props.showPreview (setGen (gen + 1))
-    pure (pure unit)
   useEffect debounced do
     setGen (gen + 1)
     pure (pure unit)
-  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: props.showPreview, active, setActive, gen })
+  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen })
 
 type PlaygroundProps =
   { src :: String
@@ -456,7 +423,7 @@ editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
   D.div
     { className:
-        "grid grid-cols-1 sm:grid-cols-[500px_500px] gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[400px] w-full sm:w-fit sm:mx-auto"
+        "scroll-settle grid grid-cols-1 sm:grid-cols-[560px_560px] gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-full sm:w-fit sm:mx-auto shadow-2xl"
     , children:
         [ editorPane p.src p.setSrc (p.active == SourcePane)
         , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
@@ -535,48 +502,36 @@ editorPane src setSrc activeOnMobile =
 
 previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> JSX
 previewPane src size visible gen activeOnMobile =
-  if not visible
-    then D.div { className: visClasses, children: [] }
-    else Motion.div
-      { layoutId: Motion.layoutId "player-card"
-      , className: visClasses
-      , style: css
-          { width: "100%"
-          , height: "100%"
-          , borderRadius: "0px"
-          , overflow: "hidden"
-          , background: "#0a0e1a"
-          }
-      , transition: Motion.transition { type: "spring", stiffness: 110, damping: 18, mass: 0.6 }
-      }
-      [ paneHeader "#69dcaa" "live render"
-      , D.div
-          { id: "markgraf-preview"
-          , style: D.css
-              { flex: "1"
-              , minHeight: "0"
-              , position: "relative"
-              , overflow: "hidden"
-              }
-          , children:
-              if size.w <= 0.0 || size.h <= 0.0
-                then []
-                else
-                  [ keyed (show gen) $ element markgrafPlayerComponent
-                      { src
-                      , renderer: "svg"
-                      , theme: "dark"
-                      , transparent: true
-                      , width: size.w
-                      , height: size.h
-                      }
-                  ]
-          }
-      ]
-  where
-    visClasses =
-      (if activeOnMobile then "flex " else "hidden ")
-        <> "sm:flex flex-col overflow-hidden bg-[#0a0e1a]"
+  D.div
+    { className:
+        (if activeOnMobile then "flex " else "hidden ")
+          <> "sm:flex flex-col overflow-hidden bg-[#0a0e1a]"
+    , children:
+        [ paneHeader "#69dcaa" "live render"
+        , D.div
+            { id: "markgraf-preview"
+            , style: D.css
+                { flex: "1"
+                , minHeight: "0"
+                , position: "relative"
+                , overflow: "hidden"
+                }
+            , children:
+                if not visible || size.w <= 0.0 || size.h <= 0.0
+                  then []
+                  else
+                    [ keyed (show gen) $ element markgrafPlayerComponent
+                        { src
+                        , renderer: "canvas"
+                        , theme: "dark"
+                        , transparent: true
+                        , width: size.w
+                        , height: size.h
+                        }
+                    ]
+            }
+        ]
+    }
 
 paneHeader :: String -> String -> JSX
 paneHeader dot label =

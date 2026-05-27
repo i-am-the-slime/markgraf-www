@@ -93,11 +93,11 @@ export const setupFeltballsImpl = (pixelBudget) => (canvas) => () => {
       (entries) => {
         const e = entries[entries.length - 1]
         if (!e) return
-        const shouldExplode = e.intersectionRatio < 0.5
+        const shouldExplode = e.intersectionRatio < 0.92
         if (shouldExplode && !exploded) { post("explode", {}); exploded = true }
         else if (!shouldExplode && exploded) { post("gather", {}); exploded = false }
       },
-      { threshold: [0, 0.25, 0.5, 0.75, 1] },
+      { threshold: [0, 0.5, 0.85, 0.9, 0.92, 0.95, 1] },
     )
     heroObserver.observe(heroSection)
   }

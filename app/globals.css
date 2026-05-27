@@ -60,6 +60,21 @@
   display: block;
 }
 
+#playground {
+  view-timeline-name: --playground-view;
+  view-timeline-axis: block;
+}
+@keyframes scroll-settle {
+  from { transform: translateY(-95vh); }
+  to   { transform: translateY(0); }
+}
+.scroll-settle {
+  animation: scroll-settle linear both;
+  animation-timeline: --playground-view;
+  animation-range: entry 0% cover 50%;
+  will-change: transform;
+}
+
 @layer base {
   *,
   ::before,
