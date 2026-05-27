@@ -551,7 +551,6 @@ editorAndPreview p =
     , initial: cast (VariantLabel "page-hero") :: Motion.Initial
     , animate: cast (VariantLabel p.section) :: Motion.Animate
     , transition: markgrafSpring
-    , style: css { backgroundColor: "rgb(10 14 26 / var(--bg-a))" }
     , className:
         "grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto"
     }
@@ -562,16 +561,13 @@ editorAndPreview p =
     floatingCss = css
       { y: "-95vh", x: "0px"
       , gridTemplateColumns: "0px 560px"
-      , "--bg-a": 0
       }
     settledCss = css
       { y: "0vh", x: "0px"
       , gridTemplateColumns: "560px 560px"
-      , "--bg-a": 1
       , transition: css
           { default: markgrafSpringRecord
           , gridTemplateColumns: delayedSpring
-          , "--bg-a": delayedSpring
           }
       }
     delayedSpring = css
@@ -593,8 +589,7 @@ editorPane src setSrc activeOnMobile =
         (if activeOnMobile then "flex " else "hidden ")
           <> "sm:flex flex-col overflow-hidden"
     , children:
-        [ paneHeader "#ff3b1a" "source.mg"
-        , D.div
+        [ D.div
             { style: D.css
                 { position: "relative"
                 , flex: "1"
