@@ -150,7 +150,7 @@ sectionStates =
     }
   , { id: "embed",      morph: gathered
     , camera: home { pz = 28.0, fov = 70.0 }
-    , formation: wave { radius: 2.4, length: 36.0, speed: 1.8 }
+    , formation: wave { radius: 0.9, length: 36.0, speed: 1.8 }
     }
   , { id: "install",    morph: gathered
     , camera: home { pz = 6.0, fov = 90.0 }

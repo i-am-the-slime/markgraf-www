@@ -386,7 +386,7 @@ wavePos t f i = { x, y, z: 0.0 }
   -- lines. Offset is a fraction of one ball-step, varied per row by an
   -- irrational-ish sine so no two rows line up.
   step = 1.0 / (perRowN - 1.0)
-  rowOffsetU = sin (rowIdxN * 1.732) * step * 0.5
+  rowOffsetU = sin (rowIdxN * 1.732) * step * 1.7
   u = Int.toNumber posInRow / (perRowN - 1.0) + rowOffsetU
   x = (u - 0.5) * f.length
   rowSpacing = 2.2
@@ -395,7 +395,10 @@ wavePos t f i = { x, y, z: 0.0 }
   -- Pulse pulse: (abs sin)^4 makes a sharp positive spike. Three layered at
   -- mismatched frequencies + phases gives Joy-Division-y random-looking peaks
   -- that drift slowly with t.
-  pulse k = q * q * q * q
+  -- (sin k)^2 — a *fat* positive pulse (not the ^4 needle). Fatter peaks span
+  -- multiple balls along x so each peak reads as a horizontal hump rather than
+  -- a single tall ball that the eye joins into a vertical bar.
+  pulse k = q * q
     where
     s = sin k
     q = if s < 0.0 then -s else s
