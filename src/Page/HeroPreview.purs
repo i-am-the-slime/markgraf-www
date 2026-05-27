@@ -423,11 +423,11 @@ mkPlayground = component "Playground" \_ -> Hooks.do
   cardY <- useTransform progress
     (TwoOrMore.twoOrMore (0.0 /\ "-95vh") (0.5 /\ "0vh") [ 1.0 /\ "0vh" ]) Nothing
   gridCols <- useTransform progress
-    (TwoOrMore.twoOrMore (0.0 /\ "0px 560px") (0.5 /\ "0px 560px") [ 1.0 /\ "560px 560px" ]) Nothing
+    (TwoOrMore.twoOrMore (0.0 /\ "0px 560px") (0.8 /\ "0px 560px") [ 1.0 /\ "560px 560px" ]) Nothing
   headerH <- useTransform progress
-    (TwoOrMore.twoOrMore (0.0 /\ "0px") (0.5 /\ "0px") [ 1.0 /\ "40px" ]) Nothing
+    (TwoOrMore.twoOrMore (0.0 /\ "0px") (0.8 /\ "0px") [ 1.0 /\ "40px" ]) Nothing
   bgColor <- useTransform progress
-    (TwoOrMore.twoOrMore (0.0 /\ "rgba(10,14,26,0)") (0.5 /\ "rgba(10,14,26,0)") [ 1.0 /\ "rgba(10,14,26,1)" ]) Nothing
+    (TwoOrMore.twoOrMore (0.0 /\ "rgba(10,14,26,0)") (0.8 /\ "rgba(10,14,26,0)") [ 1.0 /\ "rgba(10,14,26,1)" ]) Nothing
 
   useEffect src do
     launchAff_ do
