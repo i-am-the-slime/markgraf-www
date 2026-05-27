@@ -456,7 +456,7 @@ playgroundView p =
                             , D.h2
                                 { className: "text-3xl sm:text-5xl font-bold tracking-tight leading-[0.95] max-w-2xl"
                                 , style: D.css { fontFamily: "'Sinistre', serif" }
-                                , children: [ D.text "Type Left. Watch Right." ]
+                                , children: [ D.text "A few words are worth a thousand pictures." ]
                                 }
                             ]
                         , D.p
