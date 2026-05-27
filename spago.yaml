@@ -24,7 +24,7 @@ workspace:
         - untagged-union
     yoga-react-dom:
       git: https://github.com/rowtype-yoga/purescript-yoga-react-dom.git
-      ref: 7b53729b411151efbf017a71a2612654669509c7
+      ref: cbe23d8ac4513560fd186025a9f9d70d83ab922d
       dependencies:
         - datetime
         - effect
