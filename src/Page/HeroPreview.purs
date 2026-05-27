@@ -324,7 +324,7 @@ playgroundView :: PlaygroundProps -> JSX
 playgroundView p =
   D.section
     { id: "playground"
-    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
     , children:
         [ D.div
             { className: "max-w-5xl mx-auto w-full"
@@ -426,7 +426,7 @@ editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
   D.div
     { className:
-        "grid grid-cols-1 sm:grid-cols-[500px_500px] gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[400px] w-full sm:w-fit sm:mx-auto"
+        "scroll-settle grid grid-cols-1 sm:grid-cols-[500px_500px] gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[400px] w-full sm:w-fit sm:mx-auto"
     , children:
         [ editorPane p.src p.setSrc (p.active == SourcePane)
         , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
