@@ -398,6 +398,7 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
   size /\ setSize <- useState' { w: 0.0, h: 0.0 }
   active /\ setActive <- useState' RenderPane
   gen /\ setGen <- useState' 0
+  xMv <- MV.useMotionValue (-280.0)
   yMv <- MV.useMotionValue 0.0
   useEffect src do
     launchAff_ do
@@ -409,11 +410,13 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
   useEffect unit do
     installScrollSync "mg-textarea" "mg-pre"
   useEffect unit do
-    onMagazineScroll \y -> MV.set y yMv
+    onMagazineScroll \p -> do
+      MV.set p.x xMv
+      MV.set p.y yMv
   useEffect debounced do
     setGen (gen + 1)
     pure (pure unit)
-  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, section, yMv })
+  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, section, xMv, yMv })
 
 type PlaygroundProps =
   { src :: String
@@ -425,6 +428,7 @@ type PlaygroundProps =
   , setActive :: Pane -> Effect Unit
   , gen :: Int
   , section :: String
+  , xMv :: MotionValue Number
   , yMv :: MotionValue Number
   }
 
@@ -533,27 +537,11 @@ editorAndPreview pp =
     }
     [ editorPane pp.src pp.setSrc (pp.active == SourcePane)
     , Motion.div
-        { variants: Motion.variants previewVariants
-        , initial: cast (VariantLabel "page-hero") :: Motion.Initial
-        , animate: cast (VariantLabel pp.section) :: Motion.Animate
-        , transition: markgrafSpring
-        , style: css { y: pp.yMv }
+        { style: css { x: pp.xMv, y: pp.yMv }
         , className: "h-full"
         }
         [ previewPane pp.rendered pp.size pp.visible pp.gen (pp.active == RenderPane) ]
     ]
-  where
-  floatingCss = css { x: "-280px" }
-  settledCss  = css { x: "0px" }
-  previewVariants =
-    { "page-hero": floatingCss
-    , playground:  settledCss
-    , player:      settledCss
-    , render:      settledCss
-    , ai:          settledCss
-    , embed:       settledCss
-    , install:     settledCss
-    }
 
 editorPane :: String -> (String -> Effect Unit) -> Boolean -> JSX
 editorPane src setSrc activeOnMobile =
@@ -1073,7 +1061,7 @@ foreign import observeRatiosImpl
   -> Effect (Effect Unit)
 foreign import postWorkerMessageImpl :: forall a. String -> a -> Effect Unit
 
-onMagazineScroll :: (Number -> Effect Unit) -> Effect (Effect Unit)
+onMagazineScroll :: ({ x :: Number, y :: Number } -> Effect Unit) -> Effect (Effect Unit)
 onMagazineScroll = onMagazineScrollImpl
 
-foreign import onMagazineScrollImpl :: (Number -> Effect Unit) -> Effect (Effect Unit)
+foreign import onMagazineScrollImpl :: ({ x :: Number, y :: Number } -> Effect Unit) -> Effect (Effect Unit)
