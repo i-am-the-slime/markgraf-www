@@ -4,7 +4,7 @@ import { sceneComponent as markgrafScene } from "../../output/Components.Scene/i
 
 export const sceneComponent = markgrafScene;
 export const feltballsComponent = FeltballsOffscreen;
-export const markgrafPlayerComponent = MarkgrafPlayer;
+export const markgrafPlayerImpl = MarkgrafPlayer;
 
 // FFI: lookup a DOM node by id, returns the Element or null.
 export const lookupNode = (id) => () => document.getElementById(id);
@@ -31,7 +31,9 @@ export const onIntersect = (elemId) => (cb) => () => {
   const el = document.getElementById(elemId);
   if (!el) return () => {};
   const observer = new IntersectionObserver(
-    (entries) => { for (const e of entries) cb(e.isIntersecting)(); },
+    (entries) => {
+      for (const e of entries) cb(e.isIntersecting)();
+    },
     { threshold: 0.5 },
   );
   observer.observe(el);
@@ -61,20 +63,23 @@ export const writeClipboard = (text) => () => {
 // Thin shim: observe each section inside the scrolling root container, hand
 // every intersection ratio back to PureScript. All policy (which section is
 // active, when to post) lives in HeroPreview.purs.
-export const observeRatiosImpl = (rootId) => (sectionIds) => (onRatio) => () => {
-  if (typeof window === "undefined") return () => {};
-  const root = document.getElementById(rootId) || null;
-  const els = sectionIds
-    .map((id) => document.getElementById(id))
-    .filter((el) => el);
-  if (els.length === 0) return () => {};
-  const obs = new IntersectionObserver(
-    (ents) => { for (const e of ents) onRatio(e.target.id)(e.intersectionRatio)(); },
-    { root, threshold: [0, 0.25, 0.5, 0.75, 1] },
-  );
-  for (const el of els) obs.observe(el);
-  return () => obs.disconnect();
-};
+export const observeRatiosImpl =
+  (rootId) => (sectionIds) => (onRatio) => () => {
+    if (typeof window === "undefined") return () => {};
+    const root = document.getElementById(rootId) || null;
+    const els = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter((el) => el);
+    if (els.length === 0) return () => {};
+    const obs = new IntersectionObserver(
+      (ents) => {
+        for (const e of ents) onRatio(e.target.id)(e.intersectionRatio)();
+      },
+      { root, threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+    for (const el of els) obs.observe(el);
+    return () => obs.disconnect();
+  };
 
 // Track scroll inside the magazine container and hand back a y offset (in px)
 // that interpolates from -95vh at scrollTop 0 to 0 once the second page is

@@ -40,6 +40,8 @@ import Yoga.React.DOM.HTML.Textarea (textarea)
 import Yoga.React.DOM.Internal (css, noJSX, text)
 import Yoga.React.DOM.SVG.Path (path)
 import Yoga.React.DOM.SVG.Svg (svg)
+import Prim.Row (class Union)
+import Data.Monoid as Monoid
 
 onTargetValue :: (String -> Effect Unit) -> EventHandler
 onTargetValue cb = mkEffectFn1 \e -> cb (unsafeCoerce e).target.value
@@ -215,7 +217,7 @@ heroLockup =
             { className: "max-w-xl text-lg sm:text-xl leading-snug text-[#c8cdd9]"
             , style: css { fontFamily: "'Ilisarniq', ui-sans-serif, system-ui, sans-serif" }
             }
-            [ text "“A few words are worth a thousand pictures.”" ]
+            [ text "A few words are worth a thousand pictures." ]
         , installPill
         ]
     ]
@@ -523,7 +525,7 @@ paneTabs active setActive =
                 if active == SourcePane then "bg-[#ff3b1a] border-[#ff3b1a] text-[#0a0e1a]"
                 else "bg-transparent border-[#2a3142] text-[#8a94a8] hover:border-[#ff3b1a] hover:text-[#f5f1e8]"
         }
-        [ codeIcon ]
+        codeIcon
     ]
 
 -- The house spring. One feel everywhere the playground card morphs.
@@ -547,7 +549,7 @@ editorAndPreview pp =
         { style: css { x: pp.xMv, y: pp.yMv }
         , className: "h-full"
         }
-        [ previewPane pp.rendered pp.size pp.visible pp.gen (pp.active == RenderPane) ]
+        $ previewPane pp.rendered pp.size pp.visible pp.gen (pp.active == RenderPane)
     ]
 
 editorPane :: String -> (String -> Effect Unit) -> Boolean -> JSX
@@ -623,7 +625,7 @@ previewPane src size visible gen activeOnMobile =
         (if activeOnMobile then "flex " else "hidden ")
           <> "sm:flex flex-col overflow-hidden h-full"
     }
-    [ div
+    $ div
         { id: "markgraf-preview"
         , style: css
             { flex: "1"
@@ -632,19 +634,17 @@ previewPane src size visible gen activeOnMobile =
             , overflow: "hidden"
             }
         }
-        ( if not visible || size.w <= 0.0 || size.h <= 0.0 then ([] :: Array JSX)
-          else
-            [ keyed (show gen) $ element markgrafPlayerComponent
-                { src
-                , renderer: "svg"
-                , theme: "dark"
-                , transparent: true
-                , width: size.w
-                , height: size.h
-                }
-            ]
-        )
-    ]
+    $ keyed (show gen)
+    $
+      markgrafPlayer
+        { src
+        , renderer: "svg"
+        , theme: "dark"
+        , transparent: true
+        , width: size.w
+        , height: size.h
+        }
+        # Monoid.guard (visible && size.w > 0.0 && size.h > 0.0)
 
 -- ---------------------------------------------------------------------------
 -- Tokenizer: produces colored <span> children for the highlight overlay.
@@ -859,9 +859,9 @@ playerSection =
             { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
             , style: css { fontFamily: "'Sinistre', serif" }
             }
-            [ text "Native macOS player." ]
+            "Native macOS player."
         , p { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10" }
-            [ text "Swift, Metal, AppKit. Opens .markgraf files, plays them, hot-reloads on save." ]
+            "Swift, Metal, AppKit. Opens .markgraf files, plays them, hot-reloads on save."
         , div { className: "grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6" }
             [ featureRow "Drag-and-drop reload" "Drop a .markgraf file on the window. Edit in your editor of choice; the player picks up saves instantly."
             , featureRow "Scrub bar" "Drag along the timeline to step through frames. Pause, rewind, hold on any moment."
@@ -875,8 +875,8 @@ playerSection =
 featureRow :: String -> String -> JSX
 featureRow heading body =
   div { className: "flex flex-col gap-1.5" }
-    [ div { className: "font-mono text-xs uppercase tracking-[0.2em] text-[#ff3b1a]" } [ text heading ]
-    , p { className: "text-sm text-[#c8cdd9] leading-relaxed" } [ text body ]
+    [ div { className: "font-mono text-xs uppercase tracking-[0.2em] text-[#ff3b1a]" } heading
+    , p { className: "text-sm text-[#c8cdd9] leading-relaxed" } body
     ]
 
 renderSection :: JSX
@@ -891,9 +891,9 @@ renderSection =
             { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
             , style: css { fontFamily: "'Sinistre', serif" }
             }
-            [ text "mp4, SVG, GIF, or sequence diagram." ]
+            "mp4, SVG, GIF, or sequence diagram."
         , p { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10" }
-            [ text "mp4, animated SVG, gif, or a static sequence diagram. ffmpeg is statically linked, so mp4 works on a fresh machine with nothing else installed." ]
+            "mp4, animated SVG, gif, or a static sequence diagram. ffmpeg is statically linked, so mp4 works on a fresh machine with nothing else installed."
         , div { className: "grid grid-cols-2 md:grid-cols-3 gap-4" }
             [ renderCard "--play" "native macOS player"
             , renderCard "-o out.mp4" "mp4 — ffmpeg embedded"
@@ -909,8 +909,8 @@ renderSection =
 renderCard :: String -> String -> JSX
 renderCard flag desc =
   div { className: "bg-[#11162260] backdrop-blur-sm border border-[#2a3142] rounded-lg p-5 hover:border-[#ff3b1a] hover:bg-[#1a1f2e] transition-colors cursor-default" }
-    [ div { className: "font-mono text-[#ff3b1a] text-sm mb-2" } [ text flag ]
-    , div { className: "text-[#c8cdd9] text-sm" } [ text desc ]
+    [ div { className: "font-mono text-[#ff3b1a] text-sm mb-2" } flag
+    , div { className: "text-[#c8cdd9] text-sm" } desc
     ]
 
 aiSection :: JSX
@@ -925,7 +925,7 @@ aiSection =
             { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
             , style: css { fontFamily: "'Sinistre', serif" }
             }
-            [ text "Claude writes the diagram." ]
+            "Claude writes the diagram."
         , p { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10" }
             [ text "A Claude Code plugin teaches Claude the syntax and authoring rules. You describe the system in plain English, Claude produces the "
             , inlineCode ".markgraf"
@@ -951,7 +951,7 @@ embedSection =
             { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
             , style: css { fontFamily: "'Sinistre', serif" }
             }
-            [ text "GitHub and docs sites." ]
+            "GitHub and docs sites."
         , p { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10" }
             [ text "The same "
             , inlineCode "```markgraf"
@@ -968,14 +968,14 @@ embedSection =
 embedCard :: String -> String -> JSX
 embedCard heading body =
   div { className: "bg-[#11162260] backdrop-blur-sm border border-[#2a3142] rounded-lg p-6 hover:border-[#ff3b1a] hover:bg-[#1a1f2e] transition-colors cursor-default" }
-    [ div { className: "font-mono text-xs uppercase tracking-[0.2em] text-[#ff3b1a] mb-3" } [ text heading ]
-    , p { className: "text-sm text-[#c8cdd9] leading-relaxed" } [ text body ]
+    [ div { className: "font-mono text-xs uppercase tracking-[0.2em] text-[#ff3b1a] mb-3" } heading
+    , p { className: "text-sm text-[#c8cdd9] leading-relaxed" } body
     ]
 
 aiCommand :: String -> JSX
 aiCommand cmd =
   pre { className: "bg-[#11162280] backdrop-blur-sm border border-[#2a3142] rounded-lg px-5 py-4 text-sm leading-relaxed text-[#c8cdd9] font-mono overflow-x-auto" }
-    [ H.code {} [ text cmd ] ]
+    [ H.code {} cmd ]
 
 inlineCode :: String -> JSX
 inlineCode source =
@@ -996,7 +996,7 @@ footerSection =
                 { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] max-w-3xl"
                 , style: css { fontFamily: "'Sinistre', serif" }
                 }
-                [ text "Install" ]
+                "Install"
             , div {} [ installPill ]
             ]
         , div { className: "flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#8a94a8] font-mono pt-8 border-t border-[#1a1f2e]" }
@@ -1011,26 +1011,32 @@ footerSection =
 
 footerLink :: String -> String -> JSX
 footerLink href label =
-  a { href, className: "hover:text-[#f5f1e8] transition-colors" } [ text label ]
+  a { href, className: "hover:text-[#f5f1e8] transition-colors" } label
 
 sectionLabel :: String -> JSX
 sectionLabel label =
   div { className: "flex items-center gap-4 mb-8 font-mono text-[10px] uppercase tracking-[0.35em]" }
     [ span { className: "h-px w-10 bg-[#ff3b1a]" } noJSX
-    , span { className: "text-[#ff3b1a]" } [ text label ]
+    , span { className: "text-[#ff3b1a]" } label
     ]
 
 foreign import sceneComponent :: ReactComponent {}
 foreign import feltballsComponent :: ReactComponent {}
-foreign import markgrafPlayerComponent
-  :: ReactComponent
-       { src :: String
+foreign import markgrafPlayerImpl :: forall a. ReactComponent { | a }
+
+markgrafPlayer
+  :: forall props props_
+   . Union props props_
+       ( src :: String
        , renderer :: String
        , theme :: String
        , transparent :: Boolean
        , width :: Number
        , height :: Number
-       }
+       )
+  => { | props }
+  -> JSX
+markgrafPlayer = element markgrafPlayerImpl
 
 foreign import lookupNode :: String -> Effect (Nullable Node)
 
