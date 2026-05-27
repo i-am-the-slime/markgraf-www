@@ -87,7 +87,9 @@ export const onMagazineScrollImpl = (cb) => () => {
   const fire = () => {
     const vh = window.innerHeight || 1;
     const p = Math.max(0, Math.min(1, el.scrollTop / vh));
-    cb((-0.95 + 0.95 * p) * vh)();
+    const y = (-0.95 + 0.95 * p) * vh;
+    const x = -280 + 280 * p;
+    cb({ x, y })();
   };
   el.addEventListener("scroll", fire, { passive: true });
   fire();

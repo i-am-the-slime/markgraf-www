@@ -442,7 +442,7 @@ playgroundView pp =
                     { className: "text-3xl sm:text-5xl font-bold tracking-tight leading-[0.95] max-w-2xl"
                     , style: css { fontFamily: "'Sinistre', serif" }
                     }
-                    [ text "A few words are worth a thousand pictures." ]
+                    [ text "“A few words are worth a thousand pictures.”" ]
                 ]
             , p { className: "text-sm text-[#8a94a8] max-w-xs leading-snug" }
                 [ text "Edit the source. The diagram replays on every save." ]
