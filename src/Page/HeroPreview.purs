@@ -10,16 +10,25 @@ import Effect (Effect)
 import Effect.Aff (Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Unsafe (unsafePerformEffect)
+import Data.Nullable (Nullable, toNullable)
+import Data.TwoOrMore as TwoOrMore
+import Framer.Motion.Hook (useScroll, useTransform)
 import Framer.Motion.MotionComponent as Motion
 import Framer.Motion.Types as Motion
 import Yoga.React.DOM.Internal (css)
-import React.Basic (JSX, ReactComponent, element, keyed)
+import React.Basic (JSX, ReactComponent, Ref, element, keyed)
 import React.Basic.DOM as D
 import React.Basic.DOM.SVG as S
 import React.Basic.DOM.Events (targetValue)
 import React.Basic.Events (handler, handler_)
 import React.Basic.Hooks (Component, component, readRef, useEffectOnce, useEffect, useRef, useState', writeRef)
 import React.Basic.Hooks as Hooks
+import Literals.Undefined (Undefined)
+import MotionValue (MotionValue)
+import Unsafe.Coerce (unsafeCoerce)
+import Untagged.Castable (cast)
+import Untagged.Union (type (|+|))
+import Web.DOM (Node)
 
 mkHeroPreview :: Component {}
 mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
@@ -489,12 +498,11 @@ paneTabs active setActive =
 
 editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
-  element settleCardComponent
+  settleCard
     { containerId: "magazine"
     , targetId: "playground"
     , fromY: "-95vh"
     , toY: "0vh"
-    , className: "block"
     , children:
         [ D.div
             { className:
@@ -1090,15 +1098,45 @@ foreign import markgrafPlayerComponent
        , width :: Number
        , height :: Number
        }
-foreign import settleCardComponent
-  :: ReactComponent
-       { containerId :: String
-       , targetId :: String
-       , fromY :: String
-       , toY :: String
-       , className :: String
-       , children :: Array JSX
-       }
+foreign import lookupNode :: String -> Effect (Nullable Node)
+
+-- Scroll-linked wrapper: applies a translateY interpolated between fromY and
+-- toY as `targetId` scrolls through `containerId`'s viewport.  Range maps
+-- [target top at scrollport bottom] → [target top at scrollport top] to [0,1].
+settleCard :: SettleProps -> JSX
+settleCard = unsafePerformEffect mkSettleCard
+
+type SettleProps =
+  { containerId :: String
+  , targetId :: String
+  , fromY :: String
+  , toY :: String
+  , children :: Array JSX
+  }
+
+mkSettleCard :: Component SettleProps
+mkSettleCard = component "SettleCard" \props -> Hooks.do
+  containerRef <- useRef (toNullable (Nothing :: Maybe Node))
+  targetRef <- useRef (toNullable (Nothing :: Maybe Node))
+  useEffectOnce do
+    container <- lookupNode props.containerId
+    target <- lookupNode props.targetId
+    writeRef containerRef container
+    writeRef targetRef target
+    pure (pure unit)
+  scroll <- useScroll
+    { container: (cast containerRef :: Ref (Nullable Node) |+| Undefined)
+    , target: (cast targetRef :: Ref (Nullable Node) |+| Undefined)
+    , offset: (cast [ "start end", "start start" ] :: Array String |+| Undefined)
+    }
+  -- `useTransform`'s row constrains input and keyframe types to the same `a`;
+  -- here we map a Number progress to a string `<length>`, which motion handles
+  -- correctly at runtime by inspecting the keyframes.  Coerce away the PS-side
+  -- type so the call typechecks; semantics are identical.
+  y <- useTransform (unsafeCoerce scroll.scrollYProgress :: MotionValue String)
+    (TwoOrMore.twoOrMore (0.0 /\ props.fromY) (1.0 /\ props.toY) [])
+    Nothing
+  pure $ Motion.div { style: css { y } } props.children
 foreign import onElementResize :: String -> ({ w :: Number, h :: Number } -> Effect Unit) -> Effect (Effect Unit)
 foreign import onIntersect :: String -> (Boolean -> Effect Unit) -> Effect (Effect Unit)
 foreign import installScrollSync :: String -> String -> Effect (Effect Unit)

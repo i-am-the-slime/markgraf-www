@@ -15,8 +15,10 @@
             "functions",
             "integers",
             "lists",
+            "literals",
             "maybe",
             "newtype",
+            "nullable",
             "numbers",
             "prelude",
             "random",
@@ -28,8 +30,11 @@
             "st",
             "transformers",
             "tuples",
+            "two-or-more",
             "typelevel-prelude",
-            "unsafe-coerce"
+            "unsafe-coerce",
+            "untagged-union",
+            "web-dom"
           ]
         },
         "test": {

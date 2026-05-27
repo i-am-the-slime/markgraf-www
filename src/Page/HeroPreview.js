@@ -1,6 +1,3 @@
-import React from "react";
-import { useRef, useEffect, useState } from "react";
-import { useScroll, useTransform, motion } from "motion/react";
 import { MarkgrafPlayer } from "@markgrafhq/markgraf-react";
 import { feltballsOffscreen as FeltballsOffscreen } from "../../output/Feltballs.Offscreen/index.js";
 import { sceneComponent as markgrafScene } from "../../output/Components.Scene/index.js";
@@ -9,26 +6,8 @@ export const sceneComponent = markgrafScene;
 export const feltballsComponent = FeltballsOffscreen;
 export const markgrafPlayerComponent = MarkgrafPlayer;
 
-// Scroll-linked wrapper: applies a translateY interpolated between fromY and
-// toY as `targetId` scrolls through `containerId`'s viewport.  Range maps
-// [target top at scrollport bottom] → [target top at scrollport top] to [0,1].
-export const settleCardComponent = ({ containerId, targetId, fromY, toY, className, children }) => {
-  const containerRef = useRef(null);
-  const targetRef = useRef(null);
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    containerRef.current = document.getElementById(containerId);
-    targetRef.current = document.getElementById(targetId);
-    setReady(Boolean(containerRef.current && targetRef.current));
-  }, [containerId, targetId]);
-  const { scrollYProgress } = useScroll({
-    container: containerRef,
-    target: targetRef,
-    offset: ["start end", "start start"],
-  });
-  const y = useTransform(scrollYProgress, [0, 1], [fromY, toY]);
-  return React.createElement(motion.div, { className, style: { y } }, children);
-};
+// FFI: lookup a DOM node by id, returns the Element or null.
+export const lookupNode = (id) => () => document.getElementById(id);
 
 // Mirrors the textarea's scroll position onto the highlight overlay so the
 // colored spans stay aligned with the actual caret/text as the user scrolls

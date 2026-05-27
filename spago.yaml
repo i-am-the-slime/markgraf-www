@@ -68,5 +68,10 @@ package:
     - tuples
     - typelevel-prelude
     - unsafe-coerce
+    - nullable
+    - untagged-union
+    - web-dom
+    - two-or-more
+    - literals
   build:
     censorProjectWarnings: all
