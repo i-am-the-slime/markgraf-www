@@ -374,7 +374,7 @@ spherePos t f i = { x, y, z }
 wavePos :: Number -> Formation -> Int -> Vec3
 wavePos t f i = { x, y, z: 0.0 }
   where
-  rows = 9
+  rows = 5
   perRow = totalBalls / rows
   rowIdx = i / perRow
   posInRow = i - rowIdx * perRow
@@ -389,7 +389,7 @@ wavePos t f i = { x, y, z: 0.0 }
   rowOffsetU = sin (rowIdxN * 1.732) * step * 0.5
   u = Int.toNumber posInRow / (perRowN - 1.0) + rowOffsetU
   x = (u - 0.5) * f.length
-  rowSpacing = 1.4
+  rowSpacing = 2.2
   rowY = (rowIdxN - (rowsN - 1.0) * 0.5) * rowSpacing
   rowPhase = rowIdxN * 1.7
   -- Pulse pulse: (abs sin)^4 makes a sharp positive spike. Three layered at
