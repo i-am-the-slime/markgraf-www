@@ -103,7 +103,29 @@ cameraForProgress p = { x: sin ang2 * r2, y: y2, z: cos ang2 * r2 }
 -- Token curve cached at module load -------------------------------------------
 
 tokenCurve :: ThreeCurve
-tokenCurve = unsafePerformEffect (makeCurveImpl tokenWaypoints)
+tokenCurve = unsafePerformEffect $
+  mkCatmullRomCurveImpl tokenWaypoints true "catmullrom" 0.1
+
+-- Primitive geometry attached as a child of a Mesh/Line ----------------------
+
+primitiveGeometry :: ThreeObject -> JSX
+primitiveGeometry o = element (threejs "primitive")
+  { object: o, attach: "geometry" }
+
+lineGeometry :: Vec3 -> Vec3 -> JSX
+lineGeometry from to = primitiveGeometry $
+  unsafePerformEffect (mkLineGeometryImpl from to)
+
+tubeGeometry :: Vec3 -> Vec3 -> Number -> JSX
+tubeGeometry from to radius = primitiveGeometry $
+  unsafePerformEffect (mkTubeGeometryImpl from to 8 radius 6 false)
+
+-- Scroll progress -------------------------------------------------------------
+
+readSceneProgress :: Effect Number
+readSceneProgress = readCssVarImpl "--scene-progress" <#> parse
+  where
+  parse s = fromMaybe 0.0 (Number.fromString s)
 
 -- drei wrappers ---------------------------------------------------------------
 
@@ -159,7 +181,7 @@ nodeJsx pos = floatNode { speed: 1.4, rotationIntensity: 0.2, floatIntensity: 0.
 edgeJsx :: { from :: Vec3, to :: Vec3 } -> JSX
 edgeJsx e = element (threejs "Line")
   { children:
-      [ lineGeometryImpl e.from e.to
+      [ lineGeometry e.from e.to
       , element (threejs "LineBasicMaterial")
           { color: bone, transparent: true, opacity: 0.35 }
       ]
@@ -168,7 +190,7 @@ edgeJsx e = element (threejs "Line")
 edgeTubeJsx :: { from :: Vec3, to :: Vec3 } -> JSX
 edgeTubeJsx e = element (threejs "Mesh")
   { children:
-      [ tubeGeometryImpl e.from e.to 0.015
+      [ tubeGeometry e.from e.to 0.015
       , element (threejs "MeshBasicMaterial")
           { color: bone, transparent: true, opacity: 0.25 }
       ]
@@ -334,6 +356,7 @@ sceneComponent = unsafePerformEffect sceneComp
 
 foreign import data ThreeCurve :: Type
 foreign import data ThreeCamera :: Type
+foreign import data ThreeObject :: Type
 
 foreign import floatImpl :: forall a. ReactComponent { | a }
 foreign import trailImpl :: forall a. ReactComponent { | a }
@@ -343,13 +366,15 @@ foreign import effectComposerImpl :: forall a. ReactComponent { | a }
 foreign import bloomImpl :: forall a. ReactComponent { | a }
 foreign import chromaticAberrationImpl :: forall a. ReactComponent { | a }
 
-foreign import lineGeometryImpl :: Vec3 -> Vec3 -> JSX
-foreign import tubeGeometryImpl :: Vec3 -> Vec3 -> Number -> JSX
+foreign import mkLineGeometryImpl :: Vec3 -> Vec3 -> Effect ThreeObject
+foreign import mkTubeGeometryImpl
+  :: Vec3 -> Vec3 -> Int -> Number -> Int -> Boolean -> Effect ThreeObject
 
-foreign import makeCurveImpl :: Array Vec3 -> Effect ThreeCurve
+foreign import mkCatmullRomCurveImpl
+  :: Array Vec3 -> Boolean -> String -> Number -> Effect ThreeCurve
 foreign import curvePointAtImpl :: ThreeCurve -> Number -> Effect Vec3
 
-foreign import readSceneProgress :: Effect Number
+foreign import readCssVarImpl :: String -> Effect String
 foreign import readCamera :: forall r. { | r } -> ThreeCamera
 foreign import cameraPosImpl :: ThreeCamera -> { x :: Number, y :: Number, z :: Number }
 foreign import setCameraPosImpl :: ThreeCamera -> Number -> Number -> Number -> Effect Unit
