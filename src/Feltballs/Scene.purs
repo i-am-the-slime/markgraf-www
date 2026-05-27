@@ -401,8 +401,13 @@ wavePos t f i = { x, y, z: 0.0 }
   -- "loud" stretches tower over peaks in "quiet" ones. Without this every
   -- spike caps near the same height because (abs sin)^4 maxes at 1.
   ampWiggle = sin (x * 0.083 + rowPhase * 2.3 + t * 0.07)
-            + sin (x * 0.197 - rowPhase * 1.1 + t * 0.05) * 0.6
-  amp = 0.32 + 0.68 * (0.5 + 0.5 * ampWiggle)
+            + sin (x * 0.197 - rowPhase * 1.1 + t * 0.05) * 0.8
+            + sin (x * 0.43  + rowPhase * 3.7 - t * 0.03) * 0.5
+  -- Map ampWiggle (~[-2.3..2.3]) into a steep curve: cube it so extremes
+  -- dominate, then offset+scale to [0.05 .. 3.2]. Quiet stretches nearly
+  -- flatten while loud peaks tower 3× over the median.
+  w = ampWiggle / 2.3
+  amp = 0.05 + 1.6 * (w * w * w + 1.0)
   spike = (p1 + p2 + p3) * amp
   -- Bell-shaped center fade: tall in the middle, near-zero at the edges.
   xc = x * 0.11
