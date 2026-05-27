@@ -23,7 +23,6 @@
             "prelude",
             "random",
             "react-basic",
-            "react-basic-dom",
             "react-basic-hooks",
             "react-r3f",
             "refs",
