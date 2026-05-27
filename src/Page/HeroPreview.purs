@@ -536,7 +536,7 @@ editorAndPreview p =
     { variants: Motion.variants cardVariants
     , initial: cast (VariantLabel "page-hero") :: Motion.Initial
     , animate: cast (VariantLabel p.section) :: Motion.Animate
-    , transition: cast (css { duration: 0.7, ease: "easeInOut" }) :: Motion.Transition
+    , transition: cast (css { type: "spring", stiffness: 120, damping: 22, mass: 1.0 }) :: Motion.Transition
     , className:
         "grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto"
     }
