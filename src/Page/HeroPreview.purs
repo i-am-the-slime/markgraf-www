@@ -94,8 +94,12 @@ type Morph =
   { dx :: Number, dy :: Number, dz :: Number, amount :: Number }
 
 type CameraArm =
-  { px :: Number, py :: Number, pz :: Number
-  , lx :: Number, ly :: Number, lz :: Number
+  { px :: Number
+  , py :: Number
+  , pz :: Number
+  , lx :: Number
+  , ly :: Number
+  , lz :: Number
   , fov :: Number
   }
 
@@ -142,31 +146,38 @@ gathered = { dx: 0.0, dy: 0.0, dz: 0.0, amount: 0.0 }
 
 sectionStates :: Array SectionState
 sectionStates =
-  [ { id: "page-hero",  morph: gathered
+  [ { id: "page-hero"
+    , morph: gathered
     , camera: home
     , formation: stream
     }
-  , { id: "playground", morph: gathered
+  , { id: "playground"
+    , morph: gathered
     , camera: home { py = -1.0, pz = 12.0, lx = 1.0, ly = -5.0, fov = 75.0 }
     , formation: ring { radius: 5.0, speed: 0.35 }
     }
-  , { id: "player",     morph: gathered
+  , { id: "player"
+    , morph: gathered
     , camera: home { px = -4.0, lx = -1.8, fov = 80.0 }
     , formation: helix { radius: 4.0, length: 12.0, speed: 0.6 }
     }
-  , { id: "render",     morph: gathered
+  , { id: "render"
+    , morph: gathered
     , camera: home { py = -6.0, lx = -0.8, ly = 2.0 }
     , formation: sphere { radius: 5.0, speed: 0.25 }
     }
-  , { id: "ai",         morph: gathered
+  , { id: "ai"
+    , morph: gathered
     , camera: home { px = 4.0, lx = 1.4, fov = 80.0 }
     , formation: ring { radius: 7.0, speed: 0.5 }
     }
-  , { id: "embed",      morph: gathered
+  , { id: "embed"
+    , morph: gathered
     , camera: home { pz = 28.0, fov = 70.0 }
     , formation: wave { radius: 2.4, length: 36.0, speed: 1.8 }
     }
-  , { id: "install",    morph: gathered
+  , { id: "install"
+    , morph: gathered
     , camera: home { pz = 6.0, fov = 90.0 }
     , formation: stream
     }
@@ -202,11 +213,9 @@ heroLockup =
             [ text "markgraf" ]
         , p
             { className: "max-w-xl text-lg sm:text-xl leading-snug text-[#c8cdd9]"
-            , style: css { fontFamily: "ui-serif, Georgia, 'Times New Roman', serif" }
+            , style: css { fontFamily: "'Ilisarniq', ui-sans-serif, system-ui, sans-serif" }
             }
-            [ text "Animated graph diagrams from a tiny declarative source language. "
-            , span { style: css { color: "#ff3b1a" } } [ text "Watch your architecture move." ]
-            ]
+            [ text "“A few words are worth a thousand pictures.”" ]
         , installPill
         ]
     ]
@@ -446,10 +455,8 @@ playgroundView pp =
                     { className: "text-3xl sm:text-5xl font-bold tracking-tight leading-[0.95] max-w-2xl"
                     , style: css { fontFamily: "'Sinistre', serif" }
                     }
-                    [ text "“A few words are worth a thousand pictures.”" ]
+                    "“A few words are worth a thousand pictures.”"
                 ]
-            , p { className: "text-sm text-[#8a94a8] max-w-xs leading-snug" }
-                [ text "Edit the source. The diagram replays on every save." ]
             ]
         , exampleStrip pp.src pp.setSrc
         , paneTabs pp.active pp.setActive
@@ -512,16 +519,16 @@ paneTabs active setActive =
         , onClick: handler_ (setActive (if active == SourcePane then RenderPane else SourcePane))
         , className:
             "w-10 h-10 rounded-md border flex items-center justify-center transition-colors cursor-pointer "
-              <> if active == SourcePane
-                   then "bg-[#ff3b1a] border-[#ff3b1a] text-[#0a0e1a]"
-                   else "bg-transparent border-[#2a3142] text-[#8a94a8] hover:border-[#ff3b1a] hover:text-[#f5f1e8]"
+              <>
+                if active == SourcePane then "bg-[#ff3b1a] border-[#ff3b1a] text-[#0a0e1a]"
+                else "bg-transparent border-[#2a3142] text-[#8a94a8] hover:border-[#ff3b1a] hover:text-[#f5f1e8]"
         }
         [ codeIcon ]
     ]
 
 -- The house spring. One feel everywhere the playground card morphs.
-markgrafSpringRecord ::
-  { type :: String, stiffness :: Int, damping :: Int, mass :: Number, restDelta :: Number }
+markgrafSpringRecord
+  :: { type :: String, stiffness :: Int, damping :: Int, mass :: Number, restDelta :: Number }
 markgrafSpringRecord =
   { type: "spring", stiffness: 140, damping: 20, mass: 1.0, restDelta: 0.001 }
 
@@ -625,18 +632,17 @@ previewPane src size visible gen activeOnMobile =
             , overflow: "hidden"
             }
         }
-        ( if not visible || size.w <= 0.0 || size.h <= 0.0
-            then ([] :: Array JSX)
-            else
-              [ keyed (show gen) $ element markgrafPlayerComponent
-                  { src
-                  , renderer: "svg"
-                  , theme: "dark"
-                  , transparent: true
-                  , width: size.w
-                  , height: size.h
-                  }
-              ]
+        ( if not visible || size.w <= 0.0 || size.h <= 0.0 then ([] :: Array JSX)
+          else
+            [ keyed (show gen) $ element markgrafPlayerComponent
+                { src
+                , renderer: "svg"
+                , theme: "dark"
+                , transparent: true
+                , width: size.w
+                , height: size.h
+                }
+            ]
         )
     ]
 
@@ -664,14 +670,14 @@ data TokKind
 derive instance Eq TokKind
 
 tokColor :: TokKind -> String
-tokColor TKeyword  = "#ff3b1a"
+tokColor TKeyword = "#ff3b1a"
 tokColor TOperator = "#ff8a5c"
-tokColor TString   = "#a7e3a3"
-tokColor TNumber   = "#d9c97a"
-tokColor TComment  = "#5a6478"
-tokColor TBrace    = "#8a94a8"
-tokColor TIdent    = "#c8cdd9"
-tokColor TPlain    = "#c8cdd9"
+tokColor TString = "#a7e3a3"
+tokColor TNumber = "#d9c97a"
+tokColor TComment = "#5a6478"
+tokColor TBrace = "#8a94a8"
+tokColor TIdent = "#c8cdd9"
+tokColor TPlain = "#c8cdd9"
 
 -- | Walk the source one position at a time, emitting tokens. Keeps adjacent
 -- | runs of plain text fused so the overlay has fewer spans.
@@ -685,8 +691,10 @@ tokenize input = fuse (go 0 [])
     | otherwise = case matchAt i of
         { tok: Just t, next } -> go next (acc <> [ t ])
         { next } ->
-          let ch = fromMaybe "" (CU.singleton <$> CU.charAt i input)
-          in go (i + 1) (acc <> [ { kind: TPlain, text: ch } ])
+          let
+            ch = fromMaybe "" (CU.singleton <$> CU.charAt i input)
+          in
+            go (i + 1) (acc <> [ { kind: TPlain, text: ch } ])
 
   matchAt i =
     case tryComment i of
@@ -710,9 +718,10 @@ tokenize input = fuse (go 0 [])
 
   tryComment i = do
     let s = suffix i
-    pref <- if startsWith "//" s then Just "//"
-            else if startsWith "#" s then Just "#"
-            else Nothing
+    pref <-
+      if startsWith "//" s then Just "//"
+      else if startsWith "#" s then Just "#"
+      else Nothing
     let line = takeWhileStr (\c -> c /= '\n') (CU.drop (CU.length pref) s)
     pure { kind: TComment, text: pref <> line }
 
@@ -730,43 +739,45 @@ tokenize input = fuse (go 0 [])
       | k >= len = CU.take k s
       | otherwise = case CU.charAt k s of
           Just '\\' -> go' (k + 2)
-          Just '"'  -> CU.take (k + 1) s
-          _         -> go' (k + 1)
+          Just '"' -> CU.take (k + 1) s
+          _ -> go' (k + 1)
 
   tryOperator i =
-    let s = suffix i in
-    if startsWith "<-->" s then Just { kind: TOperator, text: "<-->" }
-    else if startsWith "<->" s then Just { kind: TOperator, text: "<->" }
-    else if startsWith "-->" s then Just { kind: TOperator, text: "-->" }
-    else if startsWith "->"  s then Just { kind: TOperator, text: "->" }
-    else if startsWith "<-"  s then Just { kind: TOperator, text: "<-" }
-    else Nothing
+    let
+      s = suffix i
+    in
+      if startsWith "<-->" s then Just { kind: TOperator, text: "<-->" }
+      else if startsWith "<->" s then Just { kind: TOperator, text: "<->" }
+      else if startsWith "-->" s then Just { kind: TOperator, text: "-->" }
+      else if startsWith "->" s then Just { kind: TOperator, text: "->" }
+      else if startsWith "<-" s then Just { kind: TOperator, text: "<-" }
+      else Nothing
 
   tryBrace i = case CU.charAt i input of
     Just '{' -> Just { kind: TBrace, text: "{" }
     Just '}' -> Just { kind: TBrace, text: "}" }
-    _        -> Nothing
+    _ -> Nothing
 
   tryPlusKw i = do
     let s = suffix i
     _ <- if startsWith "+" s then Just unit else Nothing
-    let rest = takeWhileStr isIdentChar (CU.drop 1 s)
-        full = "+" <> rest
-    if rest == "node" || rest == "edge" || rest == "group"
-      then Just { kind: TKeyword, text: full }
-      else Nothing
+    let
+      rest = takeWhileStr isIdentChar (CU.drop 1 s)
+      full = "+" <> rest
+    if rest == "node" || rest == "edge" || rest == "group" then Just { kind: TKeyword, text: full }
+    else Nothing
 
   tryNumber i = do
     let s = suffix i
     _ <- case CU.charAt 0 s of
       Just c | isDigit c -> Just unit
       _ -> Nothing
-    let whole = takeWhileStr isDigit s
-        afterWhole = CU.drop (CU.length whole) s
-        frac =
-          if startsWith "." afterWhole
-            then "." <> takeWhileStr isDigit (CU.drop 1 afterWhole)
-            else ""
+    let
+      whole = takeWhileStr isDigit s
+      afterWhole = CU.drop (CU.length whole) s
+      frac =
+        if startsWith "." afterWhole then "." <> takeWhileStr isDigit (CU.drop 1 afterWhole)
+        else ""
     pure { kind: TNumber, text: whole <> frac }
 
   tryIdent i = do
@@ -774,13 +785,16 @@ tokenize input = fuse (go 0 [])
     _ <- case CU.charAt 0 s of
       Just c | isIdentStart c -> Just unit
       _ -> Nothing
-    let word = takeWhileStr isIdentChar s
-        kind = if isKeyword word then TKeyword else TIdent
+    let
+      word = takeWhileStr isIdentChar s
+      kind = if isKeyword word then TKeyword else TIdent
     pure { kind, text: word }
 
   isKeyword w =
     w == "seed" || w == "frame" || w == "par"
-      || w == "chain" || w == "group" || w == "layout"
+      || w == "chain"
+      || w == "group"
+      || w == "layout"
 
   fuse arr = fuseGo arr []
   fuseGo xs acc = case Array.uncons xs of
@@ -881,12 +895,12 @@ renderSection =
         , p { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10" }
             [ text "mp4, animated SVG, gif, or a static sequence diagram. ffmpeg is statically linked, so mp4 works on a fresh machine with nothing else installed." ]
         , div { className: "grid grid-cols-2 md:grid-cols-3 gap-4" }
-            [ renderCard "--play"     "native macOS player"
+            [ renderCard "--play" "native macOS player"
             , renderCard "-o out.mp4" "mp4 — ffmpeg embedded"
-            , renderCard "--svg"      "animated svg — vector"
-            , renderCard "--gif"      "keyframe gif"
+            , renderCard "--svg" "animated svg — vector"
+            , renderCard "--gif" "keyframe gif"
             , renderCard "--sequence" "static sequence diagram"
-            , renderCard "--check"    "typecheck without rendering"
+            , renderCard "--check" "typecheck without rendering"
             ]
         ]
     , spreadFolio "03" "render"
@@ -1017,11 +1031,13 @@ foreign import markgrafPlayerComponent
        , width :: Number
        , height :: Number
        }
+
 foreign import lookupNode :: String -> Effect (Nullable Node)
 
 foreign import onElementResize :: String -> ({ w :: Number, h :: Number } -> Effect Unit) -> Effect (Effect Unit)
 foreign import onIntersect :: String -> (Boolean -> Effect Unit) -> Effect (Effect Unit)
 foreign import installScrollSync :: String -> String -> Effect (Effect Unit)
+
 -- Picks the most-visible section from the ratios so far and, when it changes,
 -- posts its declared morph + camera arm to the worker.
 dispatchActive
@@ -1049,7 +1065,9 @@ mostVisible = Array.foldl pick Nothing
   pick (Just best) x = Just (if x.ratio > best.ratio then x else best)
 
 observeRatios
-  :: String -> Array String -> (String -> Number -> Effect Unit)
+  :: String
+  -> Array String
+  -> (String -> Number -> Effect Unit)
   -> Effect (Effect Unit)
 observeRatios root ids cb = observeRatiosImpl root ids cb
 
@@ -1057,8 +1075,11 @@ postWorkerMessage :: forall a. String -> a -> Effect Unit
 postWorkerMessage = postWorkerMessageImpl
 
 foreign import observeRatiosImpl
-  :: String -> Array String -> (String -> Number -> Effect Unit)
+  :: String
+  -> Array String
+  -> (String -> Number -> Effect Unit)
   -> Effect (Effect Unit)
+
 foreign import postWorkerMessageImpl :: forall a. String -> a -> Effect Unit
 
 onMagazineScroll :: ({ x :: Number, y :: Number } -> Effect Unit) -> Effect (Effect Unit)
