@@ -546,33 +546,26 @@ markgrafSpring = cast (css markgrafSpringRecord)
 
 editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
-  Motion.div
-    { variants: Motion.variants cardVariants
-    , initial: cast (VariantLabel "page-hero") :: Motion.Initial
-    , animate: cast (VariantLabel p.section) :: Motion.Animate
-    , transition: markgrafSpring
-    , className:
-        "grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto"
+  D.div
+    { className:
+        "grid gap-px h-[60vh] sm:h-[520px] w-fit mx-auto"
+    , style: D.css { gridTemplateColumns: "560px 560px" }
+    , children:
+        [ editorPane p.src p.setSrc (p.active == SourcePane)
+        , Motion.div
+            { variants: Motion.variants previewVariants
+            , initial: cast (VariantLabel "page-hero") :: Motion.Initial
+            , animate: cast (VariantLabel p.section) :: Motion.Animate
+            , transition: markgrafSpring
+            , className: "h-full"
+            }
+            [ previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane) ]
+        ]
     }
-    [ editorPane p.src p.setSrc (p.active == SourcePane)
-    , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
-    ]
   where
-    floatingCss = css
-      { y: "-95vh", x: "0px"
-      , gridTemplateColumns: "0px 560px"
-      }
-    settledCss = css
-      { y: "0vh", x: "0px"
-      , gridTemplateColumns: "560px 560px"
-      , transition: css
-          { default: markgrafSpringRecord
-          , gridTemplateColumns: delayedSpring
-          }
-      }
-    delayedSpring = css
-      { type: "spring", stiffness: 160, damping: 24, mass: 1.0, delay: 0.55 }
-    cardVariants =
+    floatingCss = css { y: "-95vh" }
+    settledCss  = css { y: "0vh" }
+    previewVariants =
       { "page-hero": floatingCss
       , playground:  settledCss
       , player:      settledCss
