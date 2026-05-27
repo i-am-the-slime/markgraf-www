@@ -663,11 +663,7 @@ previewPane src size visible gen activeOnMobile =
         (if activeOnMobile then "flex " else "hidden ")
           <> "sm:flex flex-col overflow-hidden"
     , children:
-        [ Motion.div
-            { variants: Motion.variants headerVariants
-            }
-            [ paneHeader "#69dcaa" "live render" ]
-        , D.div
+        [ D.div
             { id: "markgraf-preview"
             , style: D.css
                 { flex: "1"
@@ -691,21 +687,6 @@ previewPane src size visible gen activeOnMobile =
             }
         ]
     }
-  where
-    closed = css { height: "0px", overflow: "hidden" }
-    open   = css
-      { height: "40px", overflow: "hidden"
-      , transition: css { type: "spring", stiffness: 160, damping: 24, mass: 1.0, delay: 0.55 }
-      }
-    headerVariants =
-      { "page-hero": closed
-      , playground:  open
-      , player:      open
-      , render:      open
-      , ai:          open
-      , embed:       open
-      , install:     open
-      }
 
 paneHeader :: String -> String -> JSX
 paneHeader dot label =
