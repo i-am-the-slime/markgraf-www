@@ -147,8 +147,8 @@ sectionStates =
     , formation: ring { radius: 7.0, speed: 0.5 }
     }
   , { id: "embed",      morph: gathered
-    , camera: home { pz = 16.0, fov = 70.0 }
-    , formation: wave { radius: 2.4, length: 22.0, speed: 1.8 }
+    , camera: home { pz = 28.0, fov = 70.0 }
+    , formation: wave { radius: 2.4, length: 36.0, speed: 1.8 }
     }
   , { id: "install",    morph: gathered
     , camera: home { pz = 6.0, fov = 90.0 }

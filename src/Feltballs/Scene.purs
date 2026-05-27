@@ -382,7 +382,7 @@ wavePos t f i = { x, y, z: 0.0 }
   rowIdxN = Int.toNumber rowIdx
   u = Int.toNumber posInRow / (Int.toNumber perRow - 1.0)
   x = (u - 0.5) * f.length
-  rowSpacing = 0.55
+  rowSpacing = 1.4
   rowY = (rowIdxN - (rowsN - 1.0) * 0.5) * rowSpacing
   rowPhase = rowIdxN * 1.7
   -- Pulse pulse: (abs sin)^4 makes a sharp positive spike. Three layered at
