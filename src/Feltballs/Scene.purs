@@ -367,21 +367,41 @@ spherePos t f i = { x, y, z }
   y = f.radius * cos phi
   z = f.radius * sin phi * sin theta
 
--- Fake audio waveform: balls strung along X, y is a sum of three sines with
--- mismatched frequencies and counter-scrolling phases — reads like a scope
--- trace. `length` sets horizontal extent, `radius` the peak amplitude,
--- `speed` how fast the wave scrolls.
+-- Joy Division "Unknown Pleasures" pulsar-trace look: balls are distributed
+-- into stacked horizontal scan lines, each line tracing pulse-shaped peaks
+-- of varying heights, denser toward the centre, sparser at the edges. Each
+-- row has its own phase so the peaks don't line up vertically.
+-- `length` sets horizontal extent, `radius` the peak amplitude, `speed` how
+-- fast the trace scrolls.
 wavePos :: Number -> Formation -> Int -> Vec3
 wavePos t f i = { x, y, z: 0.0 }
   where
-  fi = Int.toNumber i
-  n = Int.toNumber totalBalls
-  u = fi / (n - 1.0)
+  rows = 14
+  perRow = totalBalls / rows
+  rowIdx = i / perRow
+  posInRow = i - rowIdx * perRow
+  rowsN = Int.toNumber rows
+  rowIdxN = Int.toNumber rowIdx
+  u = Int.toNumber posInRow / (Int.toNumber perRow - 1.0)
   x = (u - 0.5) * f.length
-  s1 = sin (x * 1.1 + t * f.speed)
-  s2 = sin (x * 3.7 - t * f.speed * 1.6) * 0.45
-  s3 = sin (x * 7.3 + t * f.speed * 0.7) * 0.22
-  y = (s1 + s2 + s3) * f.radius
+  rowSpacing = 0.55
+  rowY = (rowIdxN - (rowsN - 1.0) * 0.5) * rowSpacing
+  rowPhase = rowIdxN * 1.7
+  -- Pulse pulse: (abs sin)^4 makes a sharp positive spike. Three layered at
+  -- mismatched frequencies + phases gives Joy-Division-y random-looking peaks
+  -- that drift slowly with t.
+  pulse k = q * q * q * q
+    where
+    s = sin k
+    q = if s < 0.0 then -s else s
+  p1 = pulse (x * 0.62 + rowPhase + t * f.speed * 0.45)
+  p2 = pulse (x * 1.27 - rowPhase * 0.7 + t * f.speed * 0.31) * 0.65
+  p3 = pulse (x * 2.11 + rowPhase * 1.3 - t * f.speed * 0.23) * 0.35
+  spike = p1 + p2 + p3
+  -- Bell-shaped center fade: tall in the middle, near-zero at the edges.
+  xc = x * 0.11
+  centerFade = 1.0 / (1.0 + xc * xc)
+  y = rowY + spike * centerFade * f.radius
 
 -- Multi-turn helix along Y. `length` is the total Y extent.
 helixPos :: Number -> Formation -> Int -> Vec3
