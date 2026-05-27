@@ -2,9 +2,10 @@ module Components.Scene (sceneJSX, sceneComponent) where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (toNullable)
 import Data.Number (cos, floor, pi, sin)
+import Data.Number as Number
 import Data.Foldable (traverse_)
 import Effect (Effect)
 import Effect.Unsafe (unsafePerformEffect)

@@ -106,6 +106,11 @@ sphere p = { kind: 2.0, radius: p.radius, length: 0.0, speed: p.speed, order: 1.
 helix :: { radius :: Number, length :: Number, speed :: Number } -> FormationPose
 helix p = { kind: 3.0, radius: p.radius, length: p.length, speed: p.speed, order: 1.0 }
 
+-- Fake sound-wave: balls strung along a horizontal axis, y traces a multi-
+-- harmonic sine that scrolls with time.
+wave :: { radius :: Number, length :: Number, speed :: Number } -> FormationPose
+wave p = { kind: 4.0, radius: p.radius, length: p.length, speed: p.speed, order: 1.0 }
+
 type SectionState =
   { id :: String
   , morph :: Morph
@@ -142,8 +147,8 @@ sectionStates =
     , formation: ring { radius: 7.0, speed: 0.5 }
     }
   , { id: "embed",      morph: gathered
-    , camera: home { pz = 14.0, lx = 1.8, fov = 70.0 }
-    , formation: helix { radius: 5.0, length: 18.0, speed: 0.4 }
+    , camera: home { pz = 16.0, fov = 70.0 }
+    , formation: wave { radius: 2.4, length: 22.0, speed: 1.8 }
     }
   , { id: "install",    morph: gathered
     , camera: home { pz = 6.0, fov = 90.0 }
@@ -546,9 +551,8 @@ editorAndPreview p =
     , initial: cast (VariantLabel "page-hero") :: Motion.Initial
     , animate: cast (VariantLabel p.section) :: Motion.Animate
     , transition: markgrafSpring
-    , style: css { backgroundColor: "rgb(10 14 26 / var(--bg-a))" }
     , className:
-        "grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto"
+        "grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto bg-[#0a0e1a]"
     }
     [ editorPane p.src p.setSrc (p.active == SourcePane)
     , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
@@ -557,16 +561,13 @@ editorAndPreview p =
     floatingCss = css
       { y: "-95vh", x: "0px"
       , gridTemplateColumns: "0px 560px"
-      , "--bg-a": 0
       }
     settledCss = css
       { y: "0vh", x: "0px"
       , gridTemplateColumns: "560px 560px"
-      , "--bg-a": 1
       , transition: css
           { default: markgrafSpringRecord
           , gridTemplateColumns: delayedSpring
-          , "--bg-a": delayedSpring
           }
       }
     delayedSpring = css

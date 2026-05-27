@@ -1,42 +1,33 @@
-import React from "react"
 import { Float, Trail, Environment, Lightformer } from "@react-three/drei"
 import { EffectComposer, Bloom, ChromaticAberration } from "@react-three/postprocessing"
 import { Vector3, CatmullRomCurve3, BufferGeometry, LineCurve3, TubeGeometry } from "three"
 
-// ---- drei components ----
 export const floatImpl = Float
 export const trailImpl = Trail
 export const environmentImpl = Environment
 export const lightformerImpl = Lightformer
 
-// ---- postprocessing ----
 export const effectComposerImpl = EffectComposer
 export const bloomImpl = Bloom
 export const chromaticAberrationImpl = ChromaticAberration
 
-// ---- inline geometries backed by three.js objects ----
-export const lineGeometryImpl = (from) => (to) => {
-  const points = [
+export const mkLineGeometryImpl = (from) => (to) => () =>
+  new BufferGeometry().setFromPoints([
     new Vector3(from[0], from[1], from[2]),
     new Vector3(to[0], to[1], to[2]),
-  ]
-  const geo = new BufferGeometry().setFromPoints(points)
-  return React.createElement("primitive", { object: geo, attach: "geometry" })
-}
+  ])
 
-export const tubeGeometryImpl = (from) => (to) => (radius) => {
+export const mkTubeGeometryImpl = (from) => (to) => (tubularSegments) => (radius) => (radialSegments) => (closed) => () => {
   const curve = new LineCurve3(
     new Vector3(from[0], from[1], from[2]),
     new Vector3(to[0], to[1], to[2]),
   )
-  const geo = new TubeGeometry(curve, 8, radius, 6, false)
-  return React.createElement("primitive", { object: geo, attach: "geometry" })
+  return new TubeGeometry(curve, tubularSegments, radius, radialSegments, closed)
 }
 
-// ---- CatmullRom curve helpers ----
-export const makeCurveImpl = (positions) => () => {
+export const mkCatmullRomCurveImpl = (positions) => (closed) => (curveType) => (tension) => () => {
   const pts = positions.map((p) => new Vector3(p[0], p[1], p[2]))
-  return new CatmullRomCurve3(pts, true, "catmullrom", 0.1)
+  return new CatmullRomCurve3(pts, closed, curveType, tension)
 }
 
 export const curvePointAtImpl = (curve) => (t) => () => {
@@ -44,12 +35,9 @@ export const curvePointAtImpl = (curve) => (t) => () => {
   return [p.x, p.y, p.z]
 }
 
-// ---- Scroll progress, camera helpers ----
-export const readSceneProgress = () => {
-  if (typeof document === "undefined") return 0
-  return parseFloat(
-    document.documentElement.style.getPropertyValue("--scene-progress"),
-  ) || 0
+export const readCssVarImpl = (name) => () => {
+  if (typeof document === "undefined") return ""
+  return document.documentElement.style.getPropertyValue(name)
 }
 
 export const readClockElapsed = (state) => state.clock.getElapsedTime()

@@ -247,7 +247,7 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
 
       morph <- lerpMorph
       formation <- lerpFormation
-      lerpAndApplyCamera t rs
+      lerpAndApplyCamera rs
       hold <- readRef holdRef
       refreshConnected hold
       for_ (range 0 (totalBalls - 1)) (paintBall t morph formation)
@@ -317,6 +317,7 @@ formationPos t f i = applyDance t i basePos
     if kindInt == 1 then ringPos t f i
     else if kindInt == 2 then spherePos t f i
     else if kindInt == 3 then helixPos t f i
+    else if kindInt == 4 then wavePos t f i
     else { x: 0.0, y: 0.0, z: 0.0 }
   kindInt = Int.round f.kind
 
@@ -324,14 +325,19 @@ formationPos t f i = applyDance t i basePos
 -- their own phase, plus a slow whole-cluster sideways drift so the formation
 -- travels across the camera left ↔ right. Without this the rotations look
 -- static and metronomic.
+-- The whole cluster sweeps across in a sine wave: a large globalX traces left
+-- to right, a smaller globalY bobs at a faster, mismatched frequency so the
+-- path reads as a wave rather than a flat horizontal pan.
 applyDance :: Number -> Int -> Vec3 -> Vec3
-applyDance t i p = { x: p.x + sx + globalX, y: p.y + sy, z: p.z + sz }
+applyDance t i p =
+  { x: p.x + sx + globalX, y: p.y + sy + globalY, z: p.z + sz }
   where
   fi = Int.toNumber i
   sx = sin (t * 0.85 + fi * 0.31) * 0.55
   sy = cos (t * 0.55 + fi * 0.27) * 0.40
   sz = sin (t * 0.65 + fi * 0.19) * 0.35
-  globalX = sin (t * 0.28) * 1.6
+  globalX = sin (t * 0.32) * 7.5
+  globalY = sin (t * 0.64 + 1.2) * 1.4
 
 -- Five concentric rings of 27 balls, slowly rotating. Each ring is offset in
 -- y so the whole thing stacks into a short column.
@@ -360,6 +366,22 @@ spherePos t f i = { x, y, z }
   x = f.radius * sin phi * cos theta
   y = f.radius * cos phi
   z = f.radius * sin phi * sin theta
+
+-- Fake audio waveform: balls strung along X, y is a sum of three sines with
+-- mismatched frequencies and counter-scrolling phases — reads like a scope
+-- trace. `length` sets horizontal extent, `radius` the peak amplitude,
+-- `speed` how fast the wave scrolls.
+wavePos :: Number -> Formation -> Int -> Vec3
+wavePos t f i = { x, y, z: 0.0 }
+  where
+  fi = Int.toNumber i
+  n = Int.toNumber totalBalls
+  u = fi / (n - 1.0)
+  x = (u - 0.5) * f.length
+  s1 = sin (x * 1.1 + t * f.speed)
+  s2 = sin (x * 3.7 - t * f.speed * 1.6) * 0.45
+  s3 = sin (x * 7.3 + t * f.speed * 0.7) * 0.22
+  y = (s1 + s2 + s3) * f.radius
 
 -- Multi-turn helix along Y. `length` is the total Y extent.
 helixPos :: Number -> Formation -> Int -> Vec3
@@ -393,12 +415,8 @@ lerpMorph = do
   writeF32 morphBuf 7 nam
   pure { dx: ndx, dy: ndy, dz: ndz, amount: nam }
 
--- The lerped lx/ly is treated as a *bias* the camera drifts around. A slow
--- sine on lx (period ~13s) and a faster, shallower sine on ly (~8.5s) keep
--- the cluster gliding from one third to the other so sections that share a
--- formation kind (the two helixes) don't read as identical parked shots.
-lerpAndApplyCamera :: forall r. Number -> { | r } -> Effect Unit
-lerpAndApplyCamera t rs = do
+lerpAndApplyCamera :: forall r. { | r } -> Effect Unit
+lerpAndApplyCamera rs = do
   let step ti ci = do
         target <- readF32 cameraBuf ti
         cur <- readF32 cameraBuf ci
@@ -412,9 +430,7 @@ lerpAndApplyCamera t rs = do
   ly <- step 4 11
   lz <- step 5 12
   fov <- step 6 13
-  let driftX = sin (t * 0.48) * 2.6
-      driftY = cos (t * 0.74) * 0.9
-  applyCamera rs px py pz (lx + driftX) (ly + driftY) lz fov
+  applyCamera rs px py pz lx ly lz fov
 
 paintBall :: Number -> Morph -> Formation -> Int -> Effect Unit
 paintBall t morph formation i = do
