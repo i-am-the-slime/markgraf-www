@@ -287,7 +287,7 @@ mkPlayground = component "Playground" \_ -> Hooks.do
   src /\ setSrc <- useState' defaultSource
   debounced /\ setDebounced <- useState' defaultSource
   size /\ setSize <- useState' { w: 0.0, h: 0.0 }
-  visible /\ setVisible <- useState' false
+  visible /\ setVisible <- useState' true
   active /\ setActive <- useState' RenderPane
   gen /\ setGen <- useState' 0
   useEffect src do
