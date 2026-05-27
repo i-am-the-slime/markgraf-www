@@ -73,7 +73,7 @@ heroLockup =
                     }
                 , D.p
                     { className: "max-w-xl text-lg sm:text-xl leading-snug text-[#c8cdd9]"
-                    , style: D.css { fontFamily: "ui-serif, Georgia, 'Times New Roman', serif", fontStyle: "italic" }
+                    , style: D.css { fontFamily: "ui-serif, Georgia, 'Times New Roman', serif" }
                     , children:
                         [ D.text "Animated graph diagrams from a tiny declarative source language. "
                         , D.span
