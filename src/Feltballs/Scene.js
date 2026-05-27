@@ -130,6 +130,17 @@ export const installMorphListenerImpl = (handler) => () => {
   return () => self.removeEventListener("message", onMsg)
 }
 
+export const installFormationListenerImpl = (handler) => () => {
+  if (typeof self === "undefined" || typeof self.addEventListener !== "function") return () => {}
+  const onMsg = (e) => {
+    if (!e.data || e.data.type !== "formation" || !e.data.payload) return
+    const p = e.data.payload
+    handler(p.kind)(p.radius)(p.length)(p.speed)(p.order)()
+  }
+  self.addEventListener("message", onMsg)
+  return () => self.removeEventListener("message", onMsg)
+}
+
 export const installCameraListenerImpl = (handler) => () => {
   if (typeof self === "undefined" || typeof self.addEventListener !== "function") return () => {}
   const onMsg = (e) => {

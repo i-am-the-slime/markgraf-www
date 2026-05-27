@@ -7,7 +7,7 @@ import Data.Foldable (for_, sum, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Nullable (Nullable, toNullable)
-import Data.Number (cos, floor, pi, sin, sqrt)
+import Data.Number (acos, cos, floor, pi, sin, sqrt)
 import Effect (Effect)
 import Effect.Random (randomInt)
 import Effect.Unsafe (unsafePerformEffect)
@@ -153,6 +153,15 @@ morphBuf = unsafePerformEffect do
   for_ (range 0 7) \i -> writeF32 a i 0.0
   pure a
 
+-- formationBuf: [0..4] target (kind, radius, length, speed, order),
+--               [5..9] current (kind, radius, length, speed, order).
+-- kind is snapped (Int-valued); the other four lerp.
+formationBuf :: F32Array
+formationBuf = unsafePerformEffect do
+  a <- newF32 10
+  for_ (range 0 9) \i -> writeF32 a i 0.0
+  pure a
+
 -- cameraBuf layout: [0..6] target (px, py, pz, lx, ly, lz, fov),
 --                   [7..13] current. Init from the default camera so the
 -- first morph lerps from the home pose.
@@ -207,6 +216,15 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
     writeF32 morphBuf 3 amount
     when (amount > 0.5) (writeRef holdRef Nothing)
 
+  useEffectOnce $ installFormationListener \kind radius length speed order -> do
+    writeF32 formationBuf 0 kind
+    writeF32 formationBuf 1 radius
+    writeF32 formationBuf 2 length
+    writeF32 formationBuf 3 speed
+    writeF32 formationBuf 4 order
+    -- Snap kind in the current slot so we never lerp through nonsense kinds.
+    writeF32 formationBuf 5 kind
+
   useEffectOnce $ installCameraListener \px py pz lx ly lz fov -> do
     writeF32 cameraBuf 0 px
     writeF32 cameraBuf 1 py
@@ -228,12 +246,14 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
         { "uniforms-u_time-value": t }
 
       morph <- lerpMorph
+      formation <- lerpFormation
       lerpAndApplyCamera rs
       hold <- readRef holdRef
       refreshConnected hold
-      for_ (range 0 (totalBalls - 1)) (paintBall t morph)
+      for_ (range 0 (totalBalls - 1)) (paintBall t morph formation)
 
-      when (morph.amount < 0.01) (advanceHoldEffect holdRef t)
+      when (morph.amount < 0.01 && formation.order < 0.01)
+        (advanceHoldEffect holdRef t)
 
   pure $ element (threejs "Group")
     { children:
@@ -269,6 +289,89 @@ refreshConnected hold = do
     Just h -> for_ h.chain \n -> writeU8 connectedBuf n.idx 1
 
 type Morph = { dx :: Number, dy :: Number, dz :: Number, amount :: Number }
+
+type Formation =
+  { kind :: Number, radius :: Number, length :: Number, speed :: Number, order :: Number }
+
+lerpFormation :: Effect Formation
+lerpFormation = do
+  -- kind doesn't lerp — snap from the listener so we never blend two shapes.
+  kind <- readF32 formationBuf 5
+  radius <- step 1 6
+  length <- step 2 7
+  speed <- step 3 8
+  order <- step 4 9
+  pure { kind, radius, length, speed, order }
+  where
+  step ti ci = do
+    target <- readF32 formationBuf ti
+    cur <- readF32 formationBuf ci
+    let n = cur + (target - cur) * lerpRate
+    writeF32 formationBuf ci n
+    pure n
+
+formationPos :: Number -> Formation -> Int -> Vec3
+formationPos t f i = applyDance t i basePos
+  where
+  basePos =
+    if kindInt == 1 then ringPos t f i
+    else if kindInt == 2 then spherePos t f i
+    else if kindInt == 3 then helixPos t f i
+    else { x: 0.0, y: 0.0, z: 0.0 }
+  kindInt = Int.round f.kind
+
+-- Layered on top of every formation: per-ball micro-sway so each dancer has
+-- their own phase, plus a slow whole-cluster sideways drift so the formation
+-- travels across the camera left ↔ right. Without this the rotations look
+-- static and metronomic.
+applyDance :: Number -> Int -> Vec3 -> Vec3
+applyDance t i p = { x: p.x + sx + globalX, y: p.y + sy, z: p.z + sz }
+  where
+  fi = Int.toNumber i
+  sx = sin (t * 0.85 + fi * 0.31) * 0.55
+  sy = cos (t * 0.55 + fi * 0.27) * 0.40
+  sz = sin (t * 0.65 + fi * 0.19) * 0.35
+  globalX = sin (t * 0.28) * 1.6
+
+-- Five concentric rings of 27 balls, slowly rotating. Each ring is offset in
+-- y so the whole thing stacks into a short column.
+ringPos :: Number -> Formation -> Int -> Vec3
+ringPos t f i = { x, y, z }
+  where
+  fi = Int.toNumber i
+  per = 27.0
+  ringIdx = floor (fi / per)
+  posInRing = fi - ringIdx * per
+  theta = 2.0 * pi * posInRing / per + t * f.speed
+  r = f.radius + ringIdx * 0.6
+  x = r * cos theta
+  y = ringIdx * 0.7 - 1.4
+  z = r * sin theta
+
+-- Fibonacci sphere: deterministic, evenly distributed. Slow rotation about Y.
+spherePos :: Number -> Formation -> Int -> Vec3
+spherePos t f i = { x, y, z }
+  where
+  fi = Int.toNumber i
+  n = Int.toNumber totalBalls
+  goldenRatio = 1.6180339887
+  theta = 2.0 * pi * fi / goldenRatio + t * f.speed
+  phi = acos (1.0 - 2.0 * (fi + 0.5) / n)
+  x = f.radius * sin phi * cos theta
+  y = f.radius * cos phi
+  z = f.radius * sin phi * sin theta
+
+-- Multi-turn helix along Y. `length` is the total Y extent.
+helixPos :: Number -> Formation -> Int -> Vec3
+helixPos t f i = { x, y, z }
+  where
+  fi = Int.toNumber i
+  n = Int.toNumber totalBalls
+  turns = 5.0
+  theta = 2.0 * pi * turns * fi / n + t * f.speed
+  y = (fi / n) * f.length - f.length / 2.0
+  x = f.radius * cos theta
+  z = f.radius * sin theta
 
 lerpMorph :: Effect Morph
 lerpMorph = do
@@ -307,10 +410,11 @@ lerpAndApplyCamera rs = do
   fov <- step 6 13
   applyCamera rs px py pz lx ly lz fov
 
-paintBall :: Number -> Morph -> Int -> Effect Unit
-paintBall t morph i = do
+paintBall :: Number -> Morph -> Formation -> Int -> Effect Unit
+paintBall t morph formation i = do
   popMul <- popMultiplierAt t i
-  let scale = baseScale * envelope * popMul
+  let envBlended = envelope * (1.0 - ord) + ord
+      scale = baseScale * envBlended * popMul
   readRefMaybe (ballRefAt i) # withJust \o -> do
     applyProps o
       { position: [ px, py, pz ]
@@ -332,7 +436,12 @@ paintBall t morph i = do
       , rotation: [ spin, spin * 0.7, 0.0 ]
       }
   where
-  p = ballPos t i
+  streamP = ballPos t i
+  formP = formationPos t formation i
+  ord = clamp01 formation.order
+  baseX = streamP.x + (formP.x - streamP.x) * ord
+  baseY = streamP.y + (formP.y - streamP.y) * ord
+  baseZ = streamP.z + (formP.z - streamP.z) * ord
   fi = Int.toNumber i
   travel = (t + hash01 (fi * 37.719) * corridorDepth / streamSpeed) * streamSpeed
   cycles = floor (travel / corridorDepth)
@@ -345,9 +454,9 @@ paintBall t morph i = do
   jy = (hash01 (fi * 17.37) - 0.5) * 0.35
   jz = (hash01 (fi * 23.71) - 0.5) * 0.35
   off = morph.amount * explodeMagnitude
-  px = p.x + (morph.dx + jx) * off
-  py = p.y + (morph.dy + jy) * off
-  pz = p.z + (morph.dz + jz) * off
+  px = baseX + (morph.dx + jx) * off
+  py = baseY + (morph.dy + jy) * off
+  pz = baseZ + (morph.dz + jz) * off
 
 metaballBackground :: Ref (Nullable Object3D) -> JSX
 metaballBackground matRef = element (threejs "Mesh")
@@ -893,6 +1002,11 @@ installStartChainListener = installStartChainListenerImpl
 installMorphListener :: (Number -> Number -> Number -> Number -> Effect Unit) -> Effect (Effect Unit)
 installMorphListener = installMorphListenerImpl
 
+installFormationListener
+  :: (Number -> Number -> Number -> Number -> Number -> Effect Unit)
+  -> Effect (Effect Unit)
+installFormationListener = installFormationListenerImpl
+
 installCameraListener
   :: (Number -> Number -> Number -> Number -> Number -> Number -> Number -> Effect Unit)
   -> Effect (Effect Unit)
@@ -911,6 +1025,8 @@ foreign import roundedRectGeometryImpl :: Number -> Number -> Number -> Number -
 foreign import installStartChainListenerImpl :: Effect Unit -> Effect (Effect Unit)
 foreign import installMorphListenerImpl
   :: (Number -> Number -> Number -> Number -> Effect Unit) -> Effect (Effect Unit)
+foreign import installFormationListenerImpl
+  :: (Number -> Number -> Number -> Number -> Number -> Effect Unit) -> Effect (Effect Unit)
 foreign import installCameraListenerImpl
   :: (Number -> Number -> Number -> Number -> Number -> Number -> Number -> Effect Unit)
   -> Effect (Effect Unit)

@@ -84,8 +84,35 @@ type CameraArm =
   , fov :: Number
   }
 
+-- Formations are declared per section. kind 0=stream (disorder), 1=ring,
+-- 2=sphere, 3=helix. `order` blends between the stream and the formation
+-- in the worker — 0 means the original wandering, 1 means fully choreographed.
+type FormationPose =
+  { kind :: Number
+  , radius :: Number
+  , length :: Number
+  , speed :: Number
+  , order :: Number
+  }
+
+stream :: FormationPose
+stream = { kind: 0.0, radius: 0.0, length: 0.0, speed: 0.0, order: 0.0 }
+
+ring :: { radius :: Number, speed :: Number } -> FormationPose
+ring p = { kind: 1.0, radius: p.radius, length: 0.0, speed: p.speed, order: 1.0 }
+
+sphere :: { radius :: Number, speed :: Number } -> FormationPose
+sphere p = { kind: 2.0, radius: p.radius, length: 0.0, speed: p.speed, order: 1.0 }
+
+helix :: { radius :: Number, length :: Number, speed :: Number } -> FormationPose
+helix p = { kind: 3.0, radius: p.radius, length: p.length, speed: p.speed, order: 1.0 }
+
 type SectionState =
-  { id :: String, morph :: Morph, camera :: CameraArm }
+  { id :: String
+  , morph :: Morph
+  , camera :: CameraArm
+  , formation :: FormationPose
+  }
 
 home :: CameraArm
 home = { px: 0.0, py: -3.0, pz: 9.0, lx: 0.0, ly: 0.0, lz: 0.0, fov: 85.0 }
@@ -97,24 +124,31 @@ sectionStates :: Array SectionState
 sectionStates =
   [ { id: "page-hero",  morph: gathered
     , camera: home
+    , formation: stream
     }
-  , { id: "playground", morph: { dx:  0.0, dy: -1.0, dz:  0.0, amount: 1.0 }
+  , { id: "playground", morph: gathered
     , camera: home { py = -1.0, pz = 12.0, ly = -5.0, fov = 75.0 }
+    , formation: ring { radius: 5.0, speed: 0.35 }
     }
-  , { id: "player",     morph: { dx:  1.0, dy:  0.0, dz:  0.0, amount: 1.0 }
+  , { id: "player",     morph: gathered
     , camera: home { px = -4.0, fov = 80.0 }
+    , formation: helix { radius: 4.0, length: 12.0, speed: 0.6 }
     }
-  , { id: "render",     morph: { dx:  0.0, dy:  1.0, dz:  0.0, amount: 1.0 }
+  , { id: "render",     morph: gathered
     , camera: home { py = -6.0, ly = 2.0 }
+    , formation: sphere { radius: 5.0, speed: 0.25 }
     }
-  , { id: "ai",         morph: { dx: -1.0, dy:  0.0, dz:  0.0, amount: 1.0 }
+  , { id: "ai",         morph: gathered
     , camera: home { px = 4.0, fov = 80.0 }
+    , formation: ring { radius: 7.0, speed: 0.5 }
     }
-  , { id: "embed",      morph: { dx:  0.0, dy:  0.0, dz: -1.0, amount: 1.0 }
+  , { id: "embed",      morph: gathered
     , camera: home { pz = 14.0, fov = 70.0 }
+    , formation: helix { radius: 5.0, length: 18.0, speed: 0.4 }
     }
   , { id: "install",    morph: gathered
     , camera: home { pz = 6.0, fov = 90.0 }
+    , formation: stream
     }
   ]
 
@@ -369,6 +403,30 @@ mkPlayground = component "Playground" \_ -> Hooks.do
   size /\ setSize <- useState' { w: 0.0, h: 0.0 }
   active /\ setActive <- useState' RenderPane
   gen /\ setGen <- useState' 0
+
+  -- Scroll observation: the playground's position within #magazine drives the
+  -- card's translate, the editor-column drawer, and the preview pane header.
+  containerRef <- useRef (toNullable (Nothing :: Maybe Node))
+  targetRef <- useRef (toNullable (Nothing :: Maybe Node))
+  useEffectOnce do
+    c <- lookupNode "magazine"
+    t <- lookupNode "playground"
+    writeRef containerRef c
+    writeRef targetRef t
+    pure (pure unit)
+  scroll <- useScroll
+    { container: (cast containerRef :: Ref (Nullable Node) |+| Undefined)
+    , target: (cast targetRef :: Ref (Nullable Node) |+| Undefined)
+    , offset: (cast [ "start end", "start start" ] :: Array String |+| Undefined)
+    }
+  let progress = unsafeCoerce scroll.scrollYProgress :: MotionValue String
+  cardY <- useTransform progress
+    (TwoOrMore.twoOrMore (0.0 /\ "-95vh") (1.0 /\ "0vh") []) Nothing
+  gridCols <- useTransform progress
+    (TwoOrMore.twoOrMore (0.0 /\ "0px 560px") (1.0 /\ "560px 560px") []) Nothing
+  headerH <- useTransform progress
+    (TwoOrMore.twoOrMore (0.0 /\ "0px") (1.0 /\ "40px") []) Nothing
+
   useEffect src do
     launchAff_ do
       delay (Milliseconds 250.0)
@@ -381,7 +439,7 @@ mkPlayground = component "Playground" \_ -> Hooks.do
   useEffect debounced do
     setGen (gen + 1)
     pure (pure unit)
-  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen })
+  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, cardY, gridCols, headerH })
 
 type PlaygroundProps =
   { src :: String
@@ -392,6 +450,9 @@ type PlaygroundProps =
   , active :: Pane
   , setActive :: Pane -> Effect Unit
   , gen :: Int
+  , cardY :: MotionValue String
+  , gridCols :: MotionValue String
+  , headerH :: MotionValue String
   }
 
 playgroundView :: PlaygroundProps -> JSX
@@ -498,22 +559,17 @@ paneTabs active setActive =
 
 editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
-  settleCard
-    { containerId: "magazine"
-    , targetId: "playground"
-    , fromY: "-95vh"
-    , toY: "0vh"
-    , children:
-        [ D.div
-            { className:
-                "grid grid-cols-1 sm:grid-cols-[560px_560px] gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-full sm:w-fit sm:mx-auto shadow-2xl"
-            , children:
-                [ editorPane p.src p.setSrc (p.active == SourcePane)
-                , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
-                ]
-            }
-        ]
+  Motion.div
+    { style: css
+        { y: p.cardY
+        , gridTemplateColumns: p.gridCols
+        }
+    , className:
+        "grid gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto shadow-2xl"
     }
+    [ editorPane p.src p.setSrc (p.active == SourcePane)
+    , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane) p.headerH
+    ]
 
 editorPane :: String -> (String -> Effect Unit) -> Boolean -> JSX
 editorPane src setSrc activeOnMobile =
@@ -585,14 +641,16 @@ editorPane src setSrc activeOnMobile =
         ]
     }
 
-previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> JSX
-previewPane src size visible gen activeOnMobile =
+previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> MotionValue String -> JSX
+previewPane src size visible gen activeOnMobile headerH =
   D.div
     { className:
         (if activeOnMobile then "flex " else "hidden ")
           <> "sm:flex flex-col overflow-hidden bg-[#0a0e1a]"
     , children:
-        [ paneHeader "#69dcaa" "live render"
+        [ Motion.div
+            { style: css { height: headerH, overflow: "hidden" } }
+            [ paneHeader "#69dcaa" "live render" ]
         , D.div
             { id: "markgraf-preview"
             , style: D.css
@@ -1100,43 +1158,6 @@ foreign import markgrafPlayerComponent
        }
 foreign import lookupNode :: String -> Effect (Nullable Node)
 
--- Scroll-linked wrapper: applies a translateY interpolated between fromY and
--- toY as `targetId` scrolls through `containerId`'s viewport.  Range maps
--- [target top at scrollport bottom] → [target top at scrollport top] to [0,1].
-settleCard :: SettleProps -> JSX
-settleCard = unsafePerformEffect mkSettleCard
-
-type SettleProps =
-  { containerId :: String
-  , targetId :: String
-  , fromY :: String
-  , toY :: String
-  , children :: Array JSX
-  }
-
-mkSettleCard :: Component SettleProps
-mkSettleCard = component "SettleCard" \props -> Hooks.do
-  containerRef <- useRef (toNullable (Nothing :: Maybe Node))
-  targetRef <- useRef (toNullable (Nothing :: Maybe Node))
-  useEffectOnce do
-    container <- lookupNode props.containerId
-    target <- lookupNode props.targetId
-    writeRef containerRef container
-    writeRef targetRef target
-    pure (pure unit)
-  scroll <- useScroll
-    { container: (cast containerRef :: Ref (Nullable Node) |+| Undefined)
-    , target: (cast targetRef :: Ref (Nullable Node) |+| Undefined)
-    , offset: (cast [ "start end", "start start" ] :: Array String |+| Undefined)
-    }
-  -- `useTransform`'s row constrains input and keyframe types to the same `a`;
-  -- here we map a Number progress to a string `<length>`, which motion handles
-  -- correctly at runtime by inspecting the keyframes.  Coerce away the PS-side
-  -- type so the call typechecks; semantics are identical.
-  y <- useTransform (unsafeCoerce scroll.scrollYProgress :: MotionValue String)
-    (TwoOrMore.twoOrMore (0.0 /\ props.fromY) (1.0 /\ props.toY) [])
-    Nothing
-  pure $ Motion.div { style: css { y } } props.children
 foreign import onElementResize :: String -> ({ w :: Number, h :: Number } -> Effect Unit) -> Effect (Effect Unit)
 foreign import onIntersect :: String -> (Boolean -> Effect Unit) -> Effect (Effect Unit)
 foreign import installScrollSync :: String -> String -> Effect (Effect Unit)
@@ -1156,6 +1177,7 @@ dispatchActive activeRef ratios = case mostVisible ratios of
         writeRef activeRef section.id
         postWorkerMessage "morph" section.morph
         postWorkerMessage "camera" section.camera
+        postWorkerMessage "formation" section.formation
 
 mostVisible
   :: Array { id :: String, ratio :: Number }
