@@ -247,7 +247,7 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
 
       morph <- lerpMorph
       formation <- lerpFormation
-      lerpAndApplyCamera rs
+      lerpAndApplyCamera t rs
       hold <- readRef holdRef
       refreshConnected hold
       for_ (range 0 (totalBalls - 1)) (paintBall t morph formation)
@@ -393,8 +393,12 @@ lerpMorph = do
   writeF32 morphBuf 7 nam
   pure { dx: ndx, dy: ndy, dz: ndz, amount: nam }
 
-lerpAndApplyCamera :: forall r. { | r } -> Effect Unit
-lerpAndApplyCamera rs = do
+-- The lerped lx/ly is treated as a *bias* the camera drifts around. A slow
+-- sine on lx (period ~13s) and a faster, shallower sine on ly (~8.5s) keep
+-- the cluster gliding from one third to the other so sections that share a
+-- formation kind (the two helixes) don't read as identical parked shots.
+lerpAndApplyCamera :: forall r. Number -> { | r } -> Effect Unit
+lerpAndApplyCamera t rs = do
   let step ti ci = do
         target <- readF32 cameraBuf ti
         cur <- readF32 cameraBuf ci
@@ -408,7 +412,9 @@ lerpAndApplyCamera rs = do
   ly <- step 4 11
   lz <- step 5 12
   fov <- step 6 13
-  applyCamera rs px py pz lx ly lz fov
+  let driftX = sin (t * 0.48) * 2.6
+      driftY = cos (t * 0.74) * 0.9
+  applyCamera rs px py pz (lx + driftX) (ly + driftY) lz fov
 
 paintBall :: Number -> Morph -> Formation -> Int -> Effect Unit
 paintBall t morph formation i = do

@@ -127,23 +127,23 @@ sectionStates =
     , formation: stream
     }
   , { id: "playground", morph: gathered
-    , camera: home { py = -1.0, pz = 12.0, lx = 2.2, ly = -5.0, fov = 75.0 }
+    , camera: home { py = -1.0, pz = 12.0, lx = 1.0, ly = -5.0, fov = 75.0 }
     , formation: ring { radius: 5.0, speed: 0.35 }
     }
   , { id: "player",     morph: gathered
-    , camera: home { px = -4.0, lx = -3.5, fov = 80.0 }
+    , camera: home { px = -4.0, lx = -1.8, fov = 80.0 }
     , formation: helix { radius: 4.0, length: 12.0, speed: 0.6 }
     }
   , { id: "render",     morph: gathered
-    , camera: home { py = -6.0, lx = -1.8, ly = 2.0 }
+    , camera: home { py = -6.0, lx = -0.8, ly = 2.0 }
     , formation: sphere { radius: 5.0, speed: 0.25 }
     }
   , { id: "ai",         morph: gathered
-    , camera: home { px = 4.0, lx = 3.0, fov = 80.0 }
+    , camera: home { px = 4.0, lx = 1.4, fov = 80.0 }
     , formation: ring { radius: 7.0, speed: 0.5 }
     }
   , { id: "embed",      morph: gathered
-    , camera: home { pz = 14.0, lx = 3.5, fov = 70.0 }
+    , camera: home { pz = 14.0, lx = 1.8, fov = 70.0 }
     , formation: helix { radius: 5.0, length: 18.0, speed: 0.4 }
     }
   , { id: "install",    morph: gathered
