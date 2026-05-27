@@ -325,19 +325,17 @@ formationPos t f i = applyDance t i basePos
 -- their own phase, plus a slow whole-cluster sideways drift so the formation
 -- travels across the camera left ↔ right. Without this the rotations look
 -- static and metronomic.
--- The whole cluster sweeps across in a sine wave: a large globalX traces left
--- to right, a smaller globalY bobs at a faster, mismatched frequency so the
--- path reads as a wave rather than a flat horizontal pan.
+-- Per-ball micro-sway only: each dancer has their own phase so the cluster
+-- ripples in place. No cluster-wide drift — the section's camera arm decides
+-- where the formation sits in frame, and it stays parked there.
 applyDance :: Number -> Int -> Vec3 -> Vec3
 applyDance t i p =
-  { x: p.x + sx + globalX, y: p.y + sy + globalY, z: p.z + sz }
+  { x: p.x + sx, y: p.y + sy, z: p.z + sz }
   where
   fi = Int.toNumber i
   sx = sin (t * 0.85 + fi * 0.31) * 0.55
   sy = cos (t * 0.55 + fi * 0.27) * 0.40
   sz = sin (t * 0.65 + fi * 0.19) * 0.35
-  globalX = sin (t * 0.32) * 7.5
-  globalY = sin (t * 0.64 + 1.2) * 1.4
 
 -- Five concentric rings of 27 balls, slowly rotating. Each ring is offset in
 -- y so the whole thing stacks into a short column.
