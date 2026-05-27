@@ -127,23 +127,23 @@ sectionStates =
     , formation: stream
     }
   , { id: "playground", morph: gathered
-    , camera: home { py = -1.0, pz = 12.0, ly = -5.0, fov = 75.0 }
+    , camera: home { py = -1.0, pz = 12.0, lx = 2.2, ly = -5.0, fov = 75.0 }
     , formation: ring { radius: 5.0, speed: 0.35 }
     }
   , { id: "player",     morph: gathered
-    , camera: home { px = -4.0, fov = 80.0 }
+    , camera: home { px = -4.0, lx = -3.5, fov = 80.0 }
     , formation: helix { radius: 4.0, length: 12.0, speed: 0.6 }
     }
   , { id: "render",     morph: gathered
-    , camera: home { py = -6.0, ly = 2.0 }
+    , camera: home { py = -6.0, lx = -1.8, ly = 2.0 }
     , formation: sphere { radius: 5.0, speed: 0.25 }
     }
   , { id: "ai",         morph: gathered
-    , camera: home { px = 4.0, fov = 80.0 }
+    , camera: home { px = 4.0, lx = 3.0, fov = 80.0 }
     , formation: ring { radius: 7.0, speed: 0.5 }
     }
   , { id: "embed",      morph: gathered
-    , camera: home { pz = 14.0, fov = 70.0 }
+    , camera: home { pz = 14.0, lx = 3.5, fov = 70.0 }
     , formation: helix { radius: 5.0, length: 18.0, speed: 0.4 }
     }
   , { id: "install",    morph: gathered
@@ -421,11 +421,13 @@ mkPlayground = component "Playground" \_ -> Hooks.do
     }
   let progress = unsafeCoerce scroll.scrollYProgress :: MotionValue String
   cardY <- useTransform progress
-    (TwoOrMore.twoOrMore (0.0 /\ "-95vh") (1.0 /\ "0vh") []) Nothing
+    (TwoOrMore.twoOrMore (0.0 /\ "-95vh") (0.5 /\ "0vh") [ 1.0 /\ "0vh" ]) Nothing
   gridCols <- useTransform progress
-    (TwoOrMore.twoOrMore (0.0 /\ "0px 560px") (1.0 /\ "560px 560px") []) Nothing
+    (TwoOrMore.twoOrMore (0.0 /\ "0px 560px") (0.5 /\ "0px 560px") [ 1.0 /\ "560px 560px" ]) Nothing
   headerH <- useTransform progress
-    (TwoOrMore.twoOrMore (0.0 /\ "0px") (1.0 /\ "40px") []) Nothing
+    (TwoOrMore.twoOrMore (0.0 /\ "0px") (0.5 /\ "0px") [ 1.0 /\ "40px" ]) Nothing
+  bgColor <- useTransform progress
+    (TwoOrMore.twoOrMore (0.0 /\ "rgba(10,14,26,0)") (0.5 /\ "rgba(10,14,26,0)") [ 1.0 /\ "rgba(10,14,26,1)" ]) Nothing
 
   useEffect src do
     launchAff_ do
@@ -439,7 +441,7 @@ mkPlayground = component "Playground" \_ -> Hooks.do
   useEffect debounced do
     setGen (gen + 1)
     pure (pure unit)
-  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, cardY, gridCols, headerH })
+  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, cardY, gridCols, headerH, bgColor })
 
 type PlaygroundProps =
   { src :: String
@@ -453,6 +455,7 @@ type PlaygroundProps =
   , cardY :: MotionValue String
   , gridCols :: MotionValue String
   , headerH :: MotionValue String
+  , bgColor :: MotionValue String
   }
 
 playgroundView :: PlaygroundProps -> JSX
@@ -563,12 +566,13 @@ editorAndPreview p =
     { style: css
         { y: p.cardY
         , gridTemplateColumns: p.gridCols
+        , backgroundColor: p.bgColor
         }
     , className:
-        "grid gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto shadow-2xl"
+        "grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto"
     }
     [ editorPane p.src p.setSrc (p.active == SourcePane)
-    , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane) p.headerH
+    , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane) p.headerH p.bgColor
     ]
 
 editorPane :: String -> (String -> Effect Unit) -> Boolean -> JSX
@@ -641,40 +645,40 @@ editorPane src setSrc activeOnMobile =
         ]
     }
 
-previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> MotionValue String -> JSX
-previewPane src size visible gen activeOnMobile headerH =
-  D.div
-    { className:
+previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> MotionValue String -> MotionValue String -> JSX
+previewPane src size visible gen activeOnMobile headerH bgColor =
+  Motion.div
+    { style: css { backgroundColor: bgColor }
+    , className:
         (if activeOnMobile then "flex " else "hidden ")
-          <> "sm:flex flex-col overflow-hidden bg-[#0a0e1a]"
-    , children:
-        [ Motion.div
-            { style: css { height: headerH, overflow: "hidden" } }
-            [ paneHeader "#69dcaa" "live render" ]
-        , D.div
-            { id: "markgraf-preview"
-            , style: D.css
-                { flex: "1"
-                , minHeight: "0"
-                , position: "relative"
-                , overflow: "hidden"
-                }
-            , children:
-                if not visible || size.w <= 0.0 || size.h <= 0.0
-                  then []
-                  else
-                    [ keyed (show gen) $ element markgrafPlayerComponent
-                        { src
-                        , renderer: "svg"
-                        , theme: "dark"
-                        , transparent: true
-                        , width: size.w
-                        , height: size.h
-                        }
-                    ]
-            }
-        ]
+          <> "sm:flex flex-col overflow-hidden"
     }
+    [ Motion.div
+        { style: css { height: headerH, overflow: "hidden" } }
+        [ paneHeader "#69dcaa" "live render" ]
+    , D.div
+        { id: "markgraf-preview"
+        , style: D.css
+            { flex: "1"
+            , minHeight: "0"
+            , position: "relative"
+            , overflow: "hidden"
+            }
+        , children:
+            if not visible || size.w <= 0.0 || size.h <= 0.0
+              then []
+              else
+                [ keyed (show gen) $ element markgrafPlayerComponent
+                    { src
+                    , renderer: "svg"
+                    , theme: "dark"
+                    , transparent: true
+                    , width: size.w
+                    , height: size.h
+                    }
+                ]
+        }
+    ]
 
 paneHeader :: String -> String -> JSX
 paneHeader dot label =
