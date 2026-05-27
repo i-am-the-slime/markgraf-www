@@ -548,7 +548,7 @@ editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
   D.div
     { className:
-        "grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto"
+        "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit"
     , style: D.css { gridTemplateColumns: "560px 560px" }
     , children:
         [ editorPane p.src p.setSrc (p.active == SourcePane)
