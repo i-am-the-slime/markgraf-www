@@ -546,6 +546,7 @@ editorAndPreview p =
     , initial: cast (VariantLabel "page-hero") :: Motion.Initial
     , animate: cast (VariantLabel p.section) :: Motion.Animate
     , transition: markgrafSpring
+    , style: css { backgroundColor: "rgb(10 14 26 / var(--bg-a))" }
     , className:
         "grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto"
     }
@@ -556,16 +557,16 @@ editorAndPreview p =
     floatingCss = css
       { y: "-95vh", x: "0px"
       , gridTemplateColumns: "0px 560px"
-      , backgroundColor: "rgba(10,14,26,0)"
+      , "--bg-a": 0
       }
     settledCss = css
       { y: "0vh", x: "0px"
       , gridTemplateColumns: "560px 560px"
-      , backgroundColor: "rgba(10,14,26,1)"
+      , "--bg-a": 1
       , transition: css
           { default: markgrafSpringRecord
           , gridTemplateColumns: delayedSpring
-          , backgroundColor: delayedSpring
+          , "--bg-a": delayedSpring
           }
       }
     delayedSpring = css
