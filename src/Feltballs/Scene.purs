@@ -145,17 +145,44 @@ lastColorBuf = unsafePerformEffect do
 popStartBuf :: F32Array
 popStartBuf = unsafePerformEffect (newF32 totalBalls)
 
--- explodeBuf[0] = target (0 gathered, 1 exploded), explodeBuf[1] = current.
--- newF32 fills with -1 so write 0s explicitly.
-explodeBuf :: F32Array
-explodeBuf = unsafePerformEffect do
-  a <- newF32 2
-  writeF32 a 0 0.0
-  writeF32 a 1 0.0
+-- morphBuf layout: [0..3] target (dx, dy, dz, amount), [4..7] current.
+-- Direction is unit-ish; amount in 0..1; explodeMagnitude scales the offset.
+morphBuf :: F32Array
+morphBuf = unsafePerformEffect do
+  a <- newF32 8
+  for_ (range 0 7) \i -> writeF32 a i 0.0
+  pure a
+
+-- cameraBuf layout: [0..6] target (px, py, pz, lx, ly, lz, fov),
+--                   [7..13] current. Init from the default camera so the
+-- first morph lerps from the home pose.
+cameraBuf :: F32Array
+cameraBuf = unsafePerformEffect do
+  a <- newF32 14
+  let init i v = writeF32 a i v
+  -- target = current = home pose: position (0,-3,9), lookAt origin, fov 85.
+  -- Matches HeroPreview's `home` so the first frame doesn't snap.
+  init 0 0.0
+  init 1 (-3.0)
+  init 2 9.0
+  init 3 0.0
+  init 4 0.0
+  init 5 0.0
+  init 6 85.0
+  init 7 0.0
+  init 8 (-3.0)
+  init 9 9.0
+  init 10 0.0
+  init 11 0.0
+  init 12 0.0
+  init 13 85.0
   pure a
 
 explodeMagnitude :: Number
 explodeMagnitude = 80.0
+
+lerpRate :: Number
+lerpRate = 0.05
 
 sceneJSX :: JSX
 sceneJSX = animatedField {}
@@ -173,9 +200,21 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
   useEffectOnce $
     installStartChainListener (startChainFromRandom holdRef frameRef)
 
-  useEffectOnce $ installExplodeListener \v -> do
-    writeF32 explodeBuf 0 v
-    when (v > 0.5) (writeRef holdRef Nothing)
+  useEffectOnce $ installMorphListener \dx dy dz amount -> do
+    writeF32 morphBuf 0 dx
+    writeF32 morphBuf 1 dy
+    writeF32 morphBuf 2 dz
+    writeF32 morphBuf 3 amount
+    when (amount > 0.5) (writeRef holdRef Nothing)
+
+  useEffectOnce $ installCameraListener \px py pz lx ly lz fov -> do
+    writeF32 cameraBuf 0 px
+    writeF32 cameraBuf 1 py
+    writeF32 cameraBuf 2 pz
+    writeF32 cameraBuf 3 lx
+    writeF32 cameraBuf 4 ly
+    writeF32 cameraBuf 5 lz
+    writeF32 cameraBuf 6 fov
 
   useFrame \rs _ -> do
     let t = readClockElapsed rs
@@ -188,16 +227,13 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
       readRefMaybe noiseMatRef # withJust \m -> applyProps m
         { "uniforms-u_time-value": t }
 
-      target <- readF32 explodeBuf 0
-      cur <- readF32 explodeBuf 1
-      let nextCur = cur + (target - cur) * 0.06
-      writeF32 explodeBuf 1 nextCur
-
+      morph <- lerpMorph
+      lerpAndApplyCamera rs
       hold <- readRef holdRef
       refreshConnected hold
-      for_ (range 0 (totalBalls - 1)) (paintBall t nextCur)
+      for_ (range 0 (totalBalls - 1)) (paintBall t morph)
 
-      when (nextCur < 0.01) (advanceHoldEffect holdRef t)
+      when (morph.amount < 0.01) (advanceHoldEffect holdRef t)
 
   pure $ element (threejs "Group")
     { children:
@@ -232,8 +268,47 @@ refreshConnected hold = do
     Nothing -> pure unit
     Just h -> for_ h.chain \n -> writeU8 connectedBuf n.idx 1
 
-paintBall :: Number -> Number -> Int -> Effect Unit
-paintBall t explode i = do
+type Morph = { dx :: Number, dy :: Number, dz :: Number, amount :: Number }
+
+lerpMorph :: Effect Morph
+lerpMorph = do
+  tdx <- readF32 morphBuf 0
+  tdy <- readF32 morphBuf 1
+  tdz <- readF32 morphBuf 2
+  tam <- readF32 morphBuf 3
+  cdx <- readF32 morphBuf 4
+  cdy <- readF32 morphBuf 5
+  cdz <- readF32 morphBuf 6
+  cam <- readF32 morphBuf 7
+  let ndx = cdx + (tdx - cdx) * lerpRate
+      ndy = cdy + (tdy - cdy) * lerpRate
+      ndz = cdz + (tdz - cdz) * lerpRate
+      nam = cam + (tam - cam) * lerpRate
+  writeF32 morphBuf 4 ndx
+  writeF32 morphBuf 5 ndy
+  writeF32 morphBuf 6 ndz
+  writeF32 morphBuf 7 nam
+  pure { dx: ndx, dy: ndy, dz: ndz, amount: nam }
+
+lerpAndApplyCamera :: forall r. { | r } -> Effect Unit
+lerpAndApplyCamera rs = do
+  let step ti ci = do
+        target <- readF32 cameraBuf ti
+        cur <- readF32 cameraBuf ci
+        let n = cur + (target - cur) * lerpRate
+        writeF32 cameraBuf ci n
+        pure n
+  px <- step 0 7
+  py <- step 1 8
+  pz <- step 2 9
+  lx <- step 3 10
+  ly <- step 4 11
+  lz <- step 5 12
+  fov <- step 6 13
+  applyCamera rs px py pz lx ly lz fov
+
+paintBall :: Number -> Morph -> Int -> Effect Unit
+paintBall t morph i = do
   popMul <- popMultiplierAt t i
   let scale = baseScale * envelope * popMul
   readRefMaybe (ballRefAt i) # withJust \o -> do
@@ -266,13 +341,13 @@ paintBall t explode i = do
   baseScale = 0.55 + 0.45 * hash01 (fi * 1.61803)
   envelope = plopEnvelope u
   spin = t * (0.3 + hash01 (fi * 4.27) * 0.6) + fi
-  dirx = (hash01 (fi * 9.13) - 0.5) * 0.6
-  diry = -1.0 - hash01 (fi * 17.37) * 0.4
-  dirz = (hash01 (fi * 23.71) - 0.5) * 0.4
-  off = explode * explodeMagnitude
-  px = p.x + dirx * off
-  py = p.y + diry * off
-  pz = p.z + dirz * off
+  jx = (hash01 (fi * 9.13) - 0.5) * 0.35
+  jy = (hash01 (fi * 17.37) - 0.5) * 0.35
+  jz = (hash01 (fi * 23.71) - 0.5) * 0.35
+  off = morph.amount * explodeMagnitude
+  px = p.x + (morph.dx + jx) * off
+  py = p.y + (morph.dy + jy) * off
+  pz = p.z + (morph.dz + jz) * off
 
 metaballBackground :: Ref (Nullable Object3D) -> JSX
 metaballBackground matRef = element (threejs "Mesh")
@@ -815,15 +890,34 @@ roundedRectGeometry = roundedRectGeometryImpl
 installStartChainListener :: Effect Unit -> Effect (Effect Unit)
 installStartChainListener = installStartChainListenerImpl
 
-installExplodeListener :: (Number -> Effect Unit) -> Effect (Effect Unit)
-installExplodeListener = installExplodeListenerImpl
+installMorphListener :: (Number -> Number -> Number -> Number -> Effect Unit) -> Effect (Effect Unit)
+installMorphListener = installMorphListenerImpl
+
+installCameraListener
+  :: (Number -> Number -> Number -> Number -> Number -> Number -> Number -> Effect Unit)
+  -> Effect (Effect Unit)
+installCameraListener = installCameraListenerImpl
+
+applyCamera
+  :: forall r. { | r }
+  -> Number -> Number -> Number -> Number -> Number -> Number -> Number
+  -> Effect Unit
+applyCamera = applyCameraImpl
 
 foreign import readClockElapsed :: forall r. { | r } -> Number
 foreign import readAspect :: forall r. { | r } -> Number
 foreign import parallelogramGeometryImpl :: Number -> Number -> Number -> Number -> JSX
 foreign import roundedRectGeometryImpl :: Number -> Number -> Number -> Number -> JSX
 foreign import installStartChainListenerImpl :: Effect Unit -> Effect (Effect Unit)
-foreign import installExplodeListenerImpl :: (Number -> Effect Unit) -> Effect (Effect Unit)
+foreign import installMorphListenerImpl
+  :: (Number -> Number -> Number -> Number -> Effect Unit) -> Effect (Effect Unit)
+foreign import installCameraListenerImpl
+  :: (Number -> Number -> Number -> Number -> Number -> Number -> Number -> Effect Unit)
+  -> Effect (Effect Unit)
+foreign import applyCameraImpl
+  :: forall r. { | r }
+  -> Number -> Number -> Number -> Number -> Number -> Number -> Number
+  -> Effect Unit
 foreign import newU8Impl :: Int -> Effect U8Array
 foreign import readU8Impl :: U8Array -> Int -> Effect Int
 foreign import writeU8Impl :: U8Array -> Int -> Int -> Effect Unit

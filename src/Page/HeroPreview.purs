@@ -18,17 +18,26 @@ import React.Basic.DOM as D
 import React.Basic.DOM.SVG as S
 import React.Basic.DOM.Events (targetValue)
 import React.Basic.Events (handler, handler_)
-import React.Basic.Hooks (Component, component, useEffect, useState')
+import React.Basic.Hooks (Component, component, readRef, useEffectOnce, useEffect, useRef, useState', writeRef)
 import React.Basic.Hooks as Hooks
 
 mkHeroPreview :: Component {}
 mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
+  ratiosRef <- useRef ([] :: Array { id :: String, ratio :: Number })
+  activeRef <- useRef ""
+  useEffectOnce $
+    observeRatios "magazine" (_.id <$> sectionStates) \id ratio -> do
+      ratios <- readRef ratiosRef
+      let ratios' = Array.snoc (Array.filter (\x -> x.id /= id) ratios) { id, ratio }
+      writeRef ratiosRef ratios'
+      dispatchActive activeRef ratios'
   pure $
     D.main
       { id: "magazine"
-      , className: "bg-[#0a0e1a] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
+      , className: "relative bg-[#0a0e1a] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
       , children:
-          [ topBar
+          [ feltballsBackground
+          , topBar
           , pageRail
           , heroPage
           , playground {}
@@ -40,6 +49,66 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
           ]
       }
 
+-- Fixed full-viewport layer that the offscreen WebGL canvas paints into. Sits
+-- behind every section so per-section camera arms + ball morphs are visible
+-- as the user scrolls between spreads.
+feltballsBackground :: JSX
+feltballsBackground =
+  D.div
+    { className: "fixed inset-0 z-0 pointer-events-none"
+    , children: [ element feltballsComponent {} ]
+    }
+
+-- ---------------------------------------------------------------------------
+-- Per-section declarative state: each section declares both a ball morph
+-- direction/amount and a camera arm pose. The controller watches which section
+-- is most visible and posts both to the worker; the worker lerps current
+-- toward target each frame.
+-- ---------------------------------------------------------------------------
+
+type Morph =
+  { dx :: Number, dy :: Number, dz :: Number, amount :: Number }
+
+type CameraArm =
+  { px :: Number, py :: Number, pz :: Number
+  , lx :: Number, ly :: Number, lz :: Number
+  , fov :: Number
+  }
+
+type SectionState =
+  { id :: String, morph :: Morph, camera :: CameraArm }
+
+home :: CameraArm
+home = { px: 0.0, py: -3.0, pz: 9.0, lx: 0.0, ly: 0.0, lz: 0.0, fov: 85.0 }
+
+gathered :: Morph
+gathered = { dx: 0.0, dy: 0.0, dz: 0.0, amount: 0.0 }
+
+sectionStates :: Array SectionState
+sectionStates =
+  [ { id: "page-hero",  morph: gathered
+    , camera: home
+    }
+  , { id: "playground", morph: { dx:  0.0, dy: -1.0, dz:  0.0, amount: 1.0 }
+    , camera: home { py = -1.0, pz = 12.0, ly = -5.0, fov = 75.0 }
+    }
+  , { id: "player",     morph: { dx:  1.0, dy:  0.0, dz:  0.0, amount: 1.0 }
+    , camera: home { px = -4.0, fov = 80.0 }
+    }
+  , { id: "render",     morph: { dx:  0.0, dy:  1.0, dz:  0.0, amount: 1.0 }
+    , camera: home { py = -6.0, ly = 2.0 }
+    }
+  , { id: "ai",         morph: { dx: -1.0, dy:  0.0, dz:  0.0, amount: 1.0 }
+    , camera: home { px = 4.0, fov = 80.0 }
+    }
+  , { id: "embed",      morph: { dx:  0.0, dy:  0.0, dz: -1.0, amount: 1.0 }
+    , camera: home { pz = 14.0, fov = 70.0 }
+    }
+  , { id: "install",    morph: gathered
+    , camera: home { pz = 6.0, fov = 90.0 }
+    }
+  ]
+
 -- ---------------------------------------------------------------------------
 -- Page 0 — hero spread. One screen, no scroll-driven captions; the 3D scene
 -- only paints behind this page, not the ones that follow.
@@ -49,10 +118,9 @@ heroPage :: JSX
 heroPage =
   D.section
     { id: "page-hero"
-    , className: "relative snap-start snap-always h-screen w-full overflow-hidden"
+    , className: "relative z-10 snap-start snap-always h-screen w-full overflow-hidden"
     , children:
-        [ D.div { className: "absolute inset-0", children: [ element feltballsComponent {} ] }
-        , D.div { className: "absolute inset-0", children: [ element sceneComponent {} ] }
+        [ D.div { className: "absolute inset-0", children: [ element sceneComponent {} ] }
         , heroLockup
         , spreadFolio "00" "hero"
         ]
@@ -321,7 +389,7 @@ playgroundView :: PlaygroundProps -> JSX
 playgroundView p =
   D.section
     { id: "playground"
-    , className: "relative snap-start snap-always h-screen flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
     , children:
         [ D.div
             { className: "max-w-5xl mx-auto w-full"
@@ -421,12 +489,21 @@ paneTabs active setActive =
 
 editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
-  D.div
-    { className:
-        "scroll-settle grid grid-cols-1 sm:grid-cols-[560px_560px] gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-full sm:w-fit sm:mx-auto shadow-2xl"
+  element settleCardComponent
+    { containerId: "magazine"
+    , targetId: "playground"
+    , fromY: "-95vh"
+    , toY: "0vh"
+    , className: "block"
     , children:
-        [ editorPane p.src p.setSrc (p.active == SourcePane)
-        , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
+        [ D.div
+            { className:
+                "grid grid-cols-1 sm:grid-cols-[560px_560px] gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-full sm:w-fit sm:mx-auto shadow-2xl"
+            , children:
+                [ editorPane p.src p.setSrc (p.active == SourcePane)
+                , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
+                ]
+            }
         ]
     }
 
@@ -522,7 +599,7 @@ previewPane src size visible gen activeOnMobile =
                   else
                     [ keyed (show gen) $ element markgrafPlayerComponent
                         { src
-                        , renderer: "canvas"
+                        , renderer: "svg"
                         , theme: "dark"
                         , transparent: true
                         , width: size.w
@@ -746,7 +823,7 @@ playerSection :: JSX
 playerSection =
   D.section
     { id: "player"
-    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
     , children:
         [ D.div
             { className: "max-w-5xl mx-auto w-full"
@@ -796,7 +873,7 @@ renderSection :: JSX
 renderSection =
   D.section
     { id: "render"
-    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
     , children:
         [ D.div
             { className: "max-w-5xl mx-auto w-full"
@@ -850,7 +927,7 @@ aiSection :: JSX
 aiSection =
   D.section
     { id: "ai"
-    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
     , children:
         [ D.div
             { className: "max-w-5xl mx-auto w-full"
@@ -886,7 +963,7 @@ embedSection :: JSX
 embedSection =
   D.section
     { id: "embed"
-    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
     , children:
         [ D.div
             { className: "max-w-5xl mx-auto w-full"
@@ -952,7 +1029,7 @@ footerSection :: JSX
 footerSection =
   D.section
     { id: "install"
-    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center bg-[#0a0e1a] border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
     , children:
         [ D.div
             { className: "max-w-5xl mx-auto w-full flex flex-col gap-10"
@@ -1013,6 +1090,52 @@ foreign import markgrafPlayerComponent
        , width :: Number
        , height :: Number
        }
+foreign import settleCardComponent
+  :: ReactComponent
+       { containerId :: String
+       , targetId :: String
+       , fromY :: String
+       , toY :: String
+       , className :: String
+       , children :: Array JSX
+       }
 foreign import onElementResize :: String -> ({ w :: Number, h :: Number } -> Effect Unit) -> Effect (Effect Unit)
 foreign import onIntersect :: String -> (Boolean -> Effect Unit) -> Effect (Effect Unit)
 foreign import installScrollSync :: String -> String -> Effect (Effect Unit)
+-- Picks the most-visible section from the ratios so far and, when it changes,
+-- posts its declared morph + camera arm to the worker.
+dispatchActive
+  :: Hooks.Ref String
+  -> Array { id :: String, ratio :: Number }
+  -> Effect Unit
+dispatchActive activeRef ratios = case mostVisible ratios of
+  Nothing -> pure unit
+  Just best -> case Array.find (\s -> s.id == best.id) sectionStates of
+    Nothing -> pure unit
+    Just section -> do
+      last <- readRef activeRef
+      when (section.id /= last) do
+        writeRef activeRef section.id
+        postWorkerMessage "morph" section.morph
+        postWorkerMessage "camera" section.camera
+
+mostVisible
+  :: Array { id :: String, ratio :: Number }
+  -> Maybe { id :: String, ratio :: Number }
+mostVisible = Array.foldl pick Nothing
+  where
+  pick Nothing x = Just x
+  pick (Just best) x = Just (if x.ratio > best.ratio then x else best)
+
+observeRatios
+  :: String -> Array String -> (String -> Number -> Effect Unit)
+  -> Effect (Effect Unit)
+observeRatios root ids cb = observeRatiosImpl root ids cb
+
+postWorkerMessage :: forall a. String -> a -> Effect Unit
+postWorkerMessage = postWorkerMessageImpl
+
+foreign import observeRatiosImpl
+  :: String -> Array String -> (String -> Number -> Effect Unit)
+  -> Effect (Effect Unit)
+foreign import postWorkerMessageImpl :: forall a. String -> a -> Effect Unit

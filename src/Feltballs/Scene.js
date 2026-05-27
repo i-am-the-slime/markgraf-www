@@ -116,16 +116,39 @@ export const installStartChainListenerImpl = (handler) => () => {
   return () => self.removeEventListener("message", onMsg)
 }
 
-// Same pattern but for explode / gather. Host posts these as the hero scrolls
-// out of / back into view. Handler receives the target amount (1 = exploded,
-// 0 = gathered); Scene.purs lerps the current value toward it each frame.
-export const installExplodeListenerImpl = (handler) => () => {
+// Generic message listeners — host pages declare per-section morph and camera
+// state and post it via `window.__feltballsPost`. The worker lerps current
+// toward target each frame.
+export const installMorphListenerImpl = (handler) => () => {
   if (typeof self === "undefined" || typeof self.addEventListener !== "function") return () => {}
   const onMsg = (e) => {
-    if (!e.data) return
-    if (e.data.type === "explode") handler(1.0)()
-    else if (e.data.type === "gather") handler(0.0)()
+    if (!e.data || e.data.type !== "morph" || !e.data.payload) return
+    const p = e.data.payload
+    handler(p.dx)(p.dy)(p.dz)(p.amount)()
   }
   self.addEventListener("message", onMsg)
   return () => self.removeEventListener("message", onMsg)
+}
+
+export const installCameraListenerImpl = (handler) => () => {
+  if (typeof self === "undefined" || typeof self.addEventListener !== "function") return () => {}
+  const onMsg = (e) => {
+    if (!e.data || e.data.type !== "camera" || !e.data.payload) return
+    const p = e.data.payload
+    handler(p.px)(p.py)(p.pz)(p.lx)(p.ly)(p.lz)(p.fov)()
+  }
+  self.addEventListener("message", onMsg)
+  return () => self.removeEventListener("message", onMsg)
+}
+
+// Mutates the R3F default camera in place, called each frame from Scene.purs.
+// Lerp happens on the PureScript side so the camera math stays declarative.
+export const applyCameraImpl = (state) => (px) => (py) => (pz) => (lx) => (ly) => (lz) => (fov) => () => {
+  const c = state.camera
+  c.position.set(px, py, pz)
+  c.lookAt(lx, ly, lz)
+  if (Math.abs(c.fov - fov) > 0.01) {
+    c.fov = fov
+    c.updateProjectionMatrix()
+  }
 }
