@@ -69,7 +69,7 @@
   view-timeline-axis: block;
 }
 @keyframes scroll-settle {
-  from { transform: translateY(-55vh); }
+  from { transform: translateY(-85vh); }
   to   { transform: translateY(0); }
 }
 .scroll-settle {

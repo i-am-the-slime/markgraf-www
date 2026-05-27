@@ -58,7 +58,7 @@ heroPage =
 heroLockup :: JSX
 heroLockup =
   D.div
-    { className: "absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none px-6"
+    { className: "absolute inset-0 z-10 flex flex-col items-center justify-start pt-[12vh] pointer-events-none px-6"
     , children:
         [ D.div
             { className: "flex flex-col items-center gap-10 max-w-3xl text-center"
