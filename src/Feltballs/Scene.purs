@@ -397,7 +397,13 @@ wavePos t f i = { x, y, z: 0.0 }
   p1 = pulse (x * 0.62 + rowPhase + t * f.speed * 0.45)
   p2 = pulse (x * 1.27 - rowPhase * 0.7 + t * f.speed * 0.31) * 0.65
   p3 = pulse (x * 2.11 + rowPhase * 1.3 - t * f.speed * 0.23) * 0.35
-  spike = p1 + p2 + p3
+  -- Per-x amplitude envelope (low-frequency, row-dependent) so peaks in
+  -- "loud" stretches tower over peaks in "quiet" ones. Without this every
+  -- spike caps near the same height because (abs sin)^4 maxes at 1.
+  ampWiggle = sin (x * 0.083 + rowPhase * 2.3 + t * 0.07)
+            + sin (x * 0.197 - rowPhase * 1.1 + t * 0.05) * 0.6
+  amp = 0.32 + 0.68 * (0.5 + 0.5 * ampWiggle)
+  spike = (p1 + p2 + p3) * amp
   -- Bell-shaped center fade: tall in the middle, near-zero at the edges.
   xc = x * 0.11
   centerFade = 1.0 / (1.0 + xc * xc)
