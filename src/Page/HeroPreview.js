@@ -76,6 +76,24 @@ export const observeRatiosImpl = (rootId) => (sectionIds) => (onRatio) => () => 
   return () => obs.disconnect();
 };
 
+// Track scroll inside the magazine container and hand back a y offset (in px)
+// that interpolates from -95vh at scrollTop 0 to 0 once the second page is
+// fully in view. Clamped at both ends so further scrolling doesn't drift the
+// diagram below its settled spot.
+export const onMagazineScrollImpl = (cb) => () => {
+  if (typeof window === "undefined") return () => {};
+  const el = document.getElementById("magazine");
+  if (!el) return () => {};
+  const fire = () => {
+    const vh = window.innerHeight || 1;
+    const p = Math.max(0, Math.min(1, el.scrollTop / vh));
+    cb((-0.95 + 0.95 * p) * vh)();
+  };
+  el.addEventListener("scroll", fire, { passive: true });
+  fire();
+  return () => el.removeEventListener("scroll", fire);
+};
+
 // Forward a typed message to the feltballs worker. The offscreen setup
 // installs window.__feltballsPost; if it hasn't yet, the call is a no-op and
 // the next ratio fire will retry naturally.

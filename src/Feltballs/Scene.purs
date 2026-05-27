@@ -374,13 +374,20 @@ spherePos t f i = { x, y, z }
 wavePos :: Number -> Formation -> Int -> Vec3
 wavePos t f i = { x, y, z: 0.0 }
   where
-  rows = 14
+  rows = 9
   perRow = totalBalls / rows
   rowIdx = i / perRow
   posInRow = i - rowIdx * perRow
   rowsN = Int.toNumber rows
   rowIdxN = Int.toNumber rowIdx
-  u = Int.toNumber posInRow / (Int.toNumber perRow - 1.0)
+  perRowN = Int.toNumber perRow
+  -- Per-row horizontal stagger breaks the column alignment that otherwise
+  -- makes the formation read as vertical bars instead of horizontal scan
+  -- lines. Offset is a fraction of one ball-step, varied per row by an
+  -- irrational-ish sine so no two rows line up.
+  step = 1.0 / (perRowN - 1.0)
+  rowOffsetU = sin (rowIdxN * 1.732) * step * 0.5
+  u = Int.toNumber posInRow / (perRowN - 1.0) + rowOffsetU
   x = (u - 0.5) * f.length
   rowSpacing = 1.4
   rowY = (rowIdxN - (rowsN - 1.0) * 0.5) * rowSpacing

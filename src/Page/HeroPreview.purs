@@ -14,6 +14,8 @@ import Data.Nullable (Nullable)
 import Framer.Motion.MotionComponent as Motion
 import Framer.Motion.Types as Motion
 import Framer.Motion.Types (VariantLabel(..))
+import MotionValue (MotionValue)
+import MotionValue as MV
 import Yoga.React.DOM.Internal (css)
 import React.Basic (JSX, ReactComponent, element, keyed)
 import React.Basic.DOM as D
@@ -407,6 +409,7 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
   size /\ setSize <- useState' { w: 0.0, h: 0.0 }
   active /\ setActive <- useState' RenderPane
   gen /\ setGen <- useState' 0
+  yMv <- MV.useMotionValue 0.0
   useEffect src do
     launchAff_ do
       delay (Milliseconds 250.0)
@@ -416,10 +419,12 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
     onElementResize "markgraf-preview" setSize
   useEffect unit do
     installScrollSync "mg-textarea" "mg-pre"
+  useEffect unit do
+    onMagazineScroll \y -> MV.set y yMv
   useEffect debounced do
     setGen (gen + 1)
     pure (pure unit)
-  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, section })
+  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, section, yMv })
 
 type PlaygroundProps =
   { src :: String
@@ -431,6 +436,7 @@ type PlaygroundProps =
   , setActive :: Pane -> Effect Unit
   , gen :: Int
   , section :: String
+  , yMv :: MotionValue Number
   }
 
 playgroundView :: PlaygroundProps -> JSX
@@ -557,14 +563,15 @@ editorAndPreview p =
             , initial: cast (VariantLabel "page-hero") :: Motion.Initial
             , animate: cast (VariantLabel p.section) :: Motion.Animate
             , transition: markgrafSpring
+            , style: css { y: p.yMv }
             , className: "h-full"
             }
             [ previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane) ]
         ]
     }
   where
-    floatingCss = css { y: "-95vh", x: "-280px" }
-    settledCss  = css { y: "0vh", x: "0px" }
+    floatingCss = css { x: "-280px" }
+    settledCss  = css { x: "0px" }
     previewVariants =
       { "page-hero": floatingCss
       , playground:  settledCss
@@ -1199,3 +1206,8 @@ foreign import observeRatiosImpl
   :: String -> Array String -> (String -> Number -> Effect Unit)
   -> Effect (Effect Unit)
 foreign import postWorkerMessageImpl :: forall a. String -> a -> Effect Unit
+
+onMagazineScroll :: (Number -> Effect Unit) -> Effect (Effect Unit)
+onMagazineScroll = onMagazineScrollImpl
+
+foreign import onMagazineScrollImpl :: (Number -> Effect Unit) -> Effect (Effect Unit)

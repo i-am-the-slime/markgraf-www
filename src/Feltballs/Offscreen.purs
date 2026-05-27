@@ -2,17 +2,16 @@ module Feltballs.Offscreen (feltballsOffscreen) where
 
 import Prelude
 
-import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..))
-import Data.Nullable (Nullable, toNullable)
+import Data.Nullable (toNullable)
 import Effect (Effect)
 import Effect.Unsafe (unsafePerformEffect)
-import React.Basic (JSX, Ref, ReactComponent, element)
-import React.Basic.DOM as D
-import React.Basic.DOM.Internal (css)
+import React.Basic (ReactComponent)
 import React.Basic.Hooks (Component, component, readRefMaybe, useEffectOnce, useRef)
 import React.Basic.Hooks as Hooks
 import Unsafe.Coerce (unsafeCoerce)
+import Yoga.React.DOM.HTML.Canvas (canvas)
+import Yoga.React.DOM.Internal (css, noJSX)
 
 foreign import data CanvasEl :: Type
 foreign import setupFeltballsImpl :: Int -> CanvasEl -> Effect (Effect Unit)
@@ -32,7 +31,7 @@ feltballsOffscreenComponent = component "FeltballsOffscreen" \_ -> Hooks.do
       Just c -> setupFeltballsImpl pixelBudget c
       Nothing -> pure (pure unit)
 
-  pure $ D.canvas
+  pure $ canvas
     { ref: unsafeCoerce canvasRef
     , style: css
         { position: "absolute"
@@ -44,3 +43,4 @@ feltballsOffscreenComponent = component "FeltballsOffscreen" \_ -> Hooks.do
         , background: "transparent"
         }
     }
+    noJSX
