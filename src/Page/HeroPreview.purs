@@ -531,9 +531,13 @@ paneTabs active setActive =
     }
 
 -- The house spring. One feel everywhere the playground card morphs.
+markgrafSpringRecord ::
+  { type :: String, stiffness :: Int, damping :: Int, mass :: Number, restDelta :: Number }
+markgrafSpringRecord =
+  { type: "spring", stiffness: 140, damping: 20, mass: 1.0, restDelta: 0.001 }
+
 markgrafSpring :: Motion.Transition
-markgrafSpring =
-  cast (css { type: "spring", stiffness: 140, damping: 20, mass: 1.0, restDelta: 0.001 })
+markgrafSpring = cast (css markgrafSpringRecord)
 
 editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
@@ -558,7 +562,14 @@ editorAndPreview p =
       { y: "0vh", x: "0px"
       , gridTemplateColumns: "560px 560px"
       , backgroundColor: "rgba(10,14,26,1)"
+      , transition: css
+          { default: markgrafSpringRecord
+          , gridTemplateColumns: delayedSpring
+          , backgroundColor: delayedSpring
+          }
       }
+    delayedSpring = css
+      { type: "spring", stiffness: 160, damping: 24, mass: 1.0, delay: 0.55 }
     cardVariants =
       { "page-hero": floatingCss
       , playground:  settledCss
@@ -676,7 +687,10 @@ previewPane src size visible gen activeOnMobile =
     }
   where
     closed = css { height: "0px", overflow: "hidden" }
-    open   = css { height: "40px", overflow: "hidden" }
+    open   = css
+      { height: "40px", overflow: "hidden"
+      , transition: css { type: "spring", stiffness: 160, damping: 24, mass: 1.0, delay: 0.55 }
+      }
     headerVariants =
       { "page-hero": closed
       , playground:  open
