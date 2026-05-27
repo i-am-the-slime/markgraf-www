@@ -649,7 +649,7 @@ previewPane src size visible gen activeOnMobile =
   D.div
     { className:
         (if activeOnMobile then "flex " else "hidden ")
-          <> "sm:flex flex-col overflow-hidden"
+          <> "sm:flex flex-col overflow-hidden h-full"
     , children:
         [ D.div
             { id: "markgraf-preview"
