@@ -60,25 +60,6 @@
   display: block;
 }
 
-/* Scroll-driven entrance: the playground "card" peeks into the hero and
-   settles into place as the playground section scrolls into view.  Driven
-   by the playground section's own view-timeline so the transform isn't
-   feeding back into the timeline calculation. */
-#playground {
-  view-timeline-name: --playground-view;
-  view-timeline-axis: block;
-}
-@keyframes scroll-settle {
-  from { transform: translateY(-85vh); }
-  to   { transform: translateY(0); }
-}
-.scroll-settle {
-  animation: scroll-settle linear both;
-  animation-timeline: --playground-view;
-  animation-range: entry 0% cover 50%;
-  will-change: transform;
-}
-
 @layer base {
   *,
   ::before,

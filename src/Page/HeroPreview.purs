@@ -10,6 +10,9 @@ import Effect (Effect)
 import Effect.Aff (Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Unsafe (unsafePerformEffect)
+import Framer.Motion.MotionComponent as Motion
+import Framer.Motion.Types as Motion
+import Yoga.React.DOM.Internal (css)
 import React.Basic (JSX, ReactComponent, element, keyed)
 import React.Basic.DOM as D
 import React.Basic.DOM.SVG as S
@@ -426,7 +429,7 @@ editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
   D.div
     { className:
-        "scroll-settle grid grid-cols-1 sm:grid-cols-[500px_500px] gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[400px] w-full sm:w-fit sm:mx-auto"
+        "grid grid-cols-1 sm:grid-cols-[500px_500px] gap-px bg-[#1a1f2e] border border-[#1a1f2e] rounded-xl overflow-hidden h-[60vh] sm:h-[400px] w-full sm:w-fit sm:mx-auto"
     , children:
         [ editorPane p.src p.setSrc (p.active == SourcePane)
         , previewPane p.rendered p.size p.visible p.gen (p.active == RenderPane)
@@ -505,36 +508,38 @@ editorPane src setSrc activeOnMobile =
 
 previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> JSX
 previewPane src size visible gen activeOnMobile =
-  D.div
+  Motion.div
     { className:
         (if activeOnMobile then "flex " else "hidden ")
           <> "sm:flex flex-col overflow-hidden bg-[#0a0e1a]"
-    , children:
-        [ paneHeader "#69dcaa" "live render"
-        , D.div
-            { id: "markgraf-preview"
-            , style: D.css
-                { flex: "1"
-                , minHeight: "0"
-                , position: "relative"
-                , overflow: "hidden"
-                }
-            , children:
-                if not visible || size.w <= 0.0 || size.h <= 0.0
-                  then []
-                  else
-                    [ keyed (show gen) $ element markgrafPlayerComponent
-                        { src
-                        , renderer: "svg"
-                        , theme: "dark"
-                        , transparent: true
-                        , width: size.w
-                        , height: size.h
-                        }
-                    ]
-            }
-        ]
+    , initial: Motion.initial (css { y: -60.0, opacity: 0.0, scale: 0.9 })
+    , whileInView: Motion.whileInView (css { y: 0.0, opacity: 1.0, scale: 1.0 })
+    , transition: Motion.transition { type: "spring", stiffness: 90, damping: 12, mass: 0.6 }
     }
+    [ paneHeader "#69dcaa" "live render"
+    , D.div
+        { id: "markgraf-preview"
+        , style: D.css
+            { flex: "1"
+            , minHeight: "0"
+            , position: "relative"
+            , overflow: "hidden"
+            }
+        , children:
+            if not visible || size.w <= 0.0 || size.h <= 0.0
+              then []
+              else
+                [ keyed (show gen) $ element markgrafPlayerComponent
+                    { src
+                    , renderer: "svg"
+                    , theme: "dark"
+                    , transparent: true
+                    , width: size.w
+                    , height: size.h
+                    }
+                ]
+        }
+    ]
 
 paneHeader :: String -> String -> JSX
 paneHeader dot label =

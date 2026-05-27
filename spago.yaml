@@ -1,7 +1,7 @@
 workspace:
-  package_set:
+  packageSet:
     registry: 77.3.1
-  extra_packages:
+  extraPackages:
     react-r3f:
       git: https://github.com/edwardw/purescript-react-r3f.git
       ref: main
@@ -43,23 +43,24 @@ workspace:
 package:
   name: markgraf-www
   dependencies:
-    - prelude
-    - effect
-    - react-basic
-    - react-basic-hooks
-    - react-basic-dom
     - arrays
+    - effect
     - either
     - foldable-traversable
     - foreign
     - foreign-object
+    - framer-motion
     - functions
     - integers
     - lists
     - maybe
     - newtype
     - numbers
+    - prelude
     - random
+    - react-basic
+    - react-basic-dom
+    - react-basic-hooks
     - react-r3f
     - refs
     - st

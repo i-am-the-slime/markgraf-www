@@ -11,6 +11,7 @@
             "foldable-traversable",
             "foreign",
             "foreign-object",
+            "framer-motion",
             "functions",
             "integers",
             "lists",
@@ -984,6 +985,42 @@
         "unsafe-coerce"
       ]
     },
+    "forgetmenot": {
+      "type": "registry",
+      "version": "0.1.0",
+      "integrity": "sha256-YYLWpHQwJ1zKmPxLo7sZOk+kYuKOpOpRhdz9vwI/p7Q=",
+      "dependencies": []
+    },
+    "framer-motion": {
+      "type": "registry",
+      "version": "3.1.0",
+      "integrity": "sha256-qxCYRngntp1qI20w34qW5YTdN474SxQy9djjJu6NAH8=",
+      "dependencies": [
+        "aff",
+        "aff-promise",
+        "arrays",
+        "effect",
+        "foreign",
+        "foreign-object",
+        "heterogeneous",
+        "literals",
+        "maybe",
+        "nullable",
+        "prelude",
+        "react-basic",
+        "react-basic-hooks",
+        "record",
+        "tuples",
+        "two-or-more",
+        "typelevel-prelude",
+        "unsafe-coerce",
+        "untagged-union",
+        "web-dom",
+        "web-events",
+        "web-uievents",
+        "yoga-react-dom"
+      ]
+    },
     "functions": {
       "type": "registry",
       "version": "6.0.0",
@@ -1558,6 +1595,19 @@
         "prelude"
       ]
     },
+    "two-or-more": {
+      "type": "registry",
+      "version": "1.0.0",
+      "integrity": "sha256-N6e7f5JJS9temyVtgvyikVnBHls1le3WoSEc4vHlctY=",
+      "dependencies": [
+        "arrays",
+        "foldable-traversable",
+        "maybe",
+        "partial",
+        "prelude",
+        "tuples"
+      ]
+    },
     "type-equality": {
       "type": "registry",
       "version": "4.0.1",
@@ -1727,6 +1777,58 @@
         "prelude",
         "unsafe-coerce",
         "web-events"
+      ]
+    },
+    "web-touchevents": {
+      "type": "registry",
+      "version": "4.0.0",
+      "integrity": "sha256-H02c53BJlHDlAgogj/x8bM7PagJjhMMrMPYy9I7Rf0s=",
+      "dependencies": [
+        "functions",
+        "maybe",
+        "nullable",
+        "prelude",
+        "unsafe-coerce",
+        "web-events",
+        "web-uievents"
+      ]
+    },
+    "web-uievents": {
+      "type": "registry",
+      "version": "5.0.0",
+      "integrity": "sha256-yh9uVLIGu8wE1+jwLehtfsRfR1eyiShhIMMhBPqKybE=",
+      "dependencies": [
+        "effect",
+        "enums",
+        "maybe",
+        "nullable",
+        "prelude",
+        "unsafe-coerce",
+        "web-events",
+        "web-html"
+      ]
+    },
+    "yoga-react-dom": {
+      "type": "registry",
+      "version": "2.0.1",
+      "integrity": "sha256-Gb/GW4UD9t2bqM3VSCaTqruvjukirGFZtww7a2ZWXB0=",
+      "dependencies": [
+        "datetime",
+        "effect",
+        "forgetmenot",
+        "functions",
+        "nullable",
+        "prelude",
+        "react-basic",
+        "react-basic-hooks",
+        "record",
+        "type-equality",
+        "typelevel-prelude",
+        "unsafe-coerce",
+        "web-dom",
+        "web-events",
+        "web-html",
+        "web-touchevents"
       ]
     }
   }
