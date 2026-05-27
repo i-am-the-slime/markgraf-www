@@ -422,6 +422,8 @@ mkPlayground = component "Playground" \_ -> Hooks.do
   let progress = unsafeCoerce scroll.scrollYProgress :: MotionValue String
   cardY <- useTransform progress
     (TwoOrMore.twoOrMore (0.0 /\ "-95vh") (0.5 /\ "0vh") [ 1.0 /\ "0vh" ]) Nothing
+  cardX <- useTransform progress
+    (TwoOrMore.twoOrMore (0.0 /\ "0px") (0.8 /\ "0px") [ 1.0 /\ "-280px" ]) Nothing
   gridCols <- useTransform progress
     (TwoOrMore.twoOrMore (0.0 /\ "0px 560px") (0.8 /\ "0px 560px") [ 1.0 /\ "560px 560px" ]) Nothing
   headerH <- useTransform progress
@@ -441,7 +443,7 @@ mkPlayground = component "Playground" \_ -> Hooks.do
   useEffect debounced do
     setGen (gen + 1)
     pure (pure unit)
-  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, cardY, gridCols, headerH, bgColor })
+  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, cardY, cardX, gridCols, headerH, bgColor })
 
 type PlaygroundProps =
   { src :: String
@@ -453,6 +455,7 @@ type PlaygroundProps =
   , setActive :: Pane -> Effect Unit
   , gen :: Int
   , cardY :: MotionValue String
+  , cardX :: MotionValue String
   , gridCols :: MotionValue String
   , headerH :: MotionValue String
   , bgColor :: MotionValue String
@@ -564,7 +567,8 @@ editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
   Motion.div
     { style: css
-        { y: p.cardY
+        { x: p.cardX
+        , y: p.cardY
         , gridTemplateColumns: p.gridCols
         , backgroundColor: p.bgColor
         }
