@@ -1,24 +1,7 @@
 import React from "react"
-import { Canvas } from "@react-three/fiber"
 import { Float, Trail, Environment, Lightformer } from "@react-three/drei"
 import { EffectComposer, Bloom, ChromaticAberration } from "@react-three/postprocessing"
 import { Vector3, CatmullRomCurve3, BufferGeometry, LineCurve3, TubeGeometry } from "three"
-
-import { sceneJSX } from "../../output/Components.Scene/index.js"
-
-// ---- Canvas wrapper exposed to PS as a ReactComponent ----
-export const sceneComponent = function MarkgrafScene() {
-  return React.createElement(
-    Canvas,
-    {
-      camera: { position: [0, 1.5, 9], fov: 42 },
-      dpr: [1, 2],
-      gl: { antialias: true, alpha: true },
-      style: { position: "absolute", inset: 0, background: "transparent" },
-    },
-    sceneJSX,
-  )
-}
 
 // ---- drei components ----
 export const floatImpl = Float

@@ -15,7 +15,9 @@ import React.Basic.Hooks as Hooks
 import React.R3F.Hooks (applyProps, useFrame)
 import React.R3F.Three.Internal (threejs)
 import React.R3F.Three.Types (Object3D)
+import React.R3F.Web (canvas)
 import Unsafe.Coerce (unsafeCoerce)
+import Yoga.React.DOM.Internal (css)
 
 -- Palette ---------------------------------------------------------------------
 
@@ -311,12 +313,26 @@ sceneJSX = fragment
 withJust :: forall a. (a -> Effect Unit) -> Effect (Maybe a) -> Effect Unit
 withJust f m = m >>= traverse_ f
 
+-- Canvas wrapper --------------------------------------------------------------
+
+sceneComponent :: ReactComponent {}
+sceneComponent = unsafePerformEffect sceneComp
+  where
+  sceneComp :: Effect (ReactComponent {})
+  sceneComp = Hooks.reactComponent "MarkgrafScene" \(_ :: {}) -> Hooks.do
+    pure $ canvas
+      { camera: { position: [ 0.0, 1.5, 9.0 ], fov: 42 }
+      , dpr: [ 1, 2 ]
+      , gl: { antialias: true, alpha: true }
+      , style: css
+          { position: "absolute", inset: 0, background: "transparent" }
+      , children: [ sceneJSX ]
+      }
+
 -- FFI -------------------------------------------------------------------------
 
 foreign import data ThreeCurve :: Type
 foreign import data ThreeCamera :: Type
-
-foreign import sceneComponent :: ReactComponent {}
 
 foreign import floatImpl :: forall a. ReactComponent { | a }
 foreign import trailImpl :: forall a. ReactComponent { | a }
