@@ -34,7 +34,8 @@
             "typelevel-prelude",
             "unsafe-coerce",
             "untagged-union",
-            "web-dom"
+            "web-dom",
+            "yoga-react-dom"
           ]
         },
         "test": {
@@ -726,6 +727,28 @@
           "typelevel-prelude",
           "typelevel-regex",
           "untagged-union"
+        ]
+      },
+      "yoga-react-dom": {
+        "git": "https://github.com/rowtype-yoga/purescript-yoga-react-dom.git",
+        "ref": "fb7454979280f51676b37f39e16c02ff762cc3e0",
+        "dependencies": [
+          "datetime",
+          "effect",
+          "forgetmenot",
+          "functions",
+          "nullable",
+          "prelude",
+          "react-basic",
+          "react-basic-hooks",
+          "record",
+          "type-equality",
+          "typelevel-prelude",
+          "unsafe-coerce",
+          "web-dom",
+          "web-events",
+          "web-html",
+          "web-touchevents"
         ]
       }
     }
@@ -1814,9 +1837,9 @@
       ]
     },
     "yoga-react-dom": {
-      "type": "registry",
-      "version": "2.0.1",
-      "integrity": "sha256-Gb/GW4UD9t2bqM3VSCaTqruvjukirGFZtww7a2ZWXB0=",
+      "type": "git",
+      "url": "https://github.com/rowtype-yoga/purescript-yoga-react-dom.git",
+      "rev": "fb7454979280f51676b37f39e16c02ff762cc3e0",
       "dependencies": [
         "datetime",
         "effect",

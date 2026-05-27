@@ -22,6 +22,26 @@ workspace:
         - typelevel-prelude
         - typelevel-regex
         - untagged-union
+    yoga-react-dom:
+      git: https://github.com/rowtype-yoga/purescript-yoga-react-dom.git
+      ref: fb7454979280f51676b37f39e16c02ff762cc3e0
+      dependencies:
+        - datetime
+        - effect
+        - forgetmenot
+        - functions
+        - nullable
+        - prelude
+        - react-basic
+        - react-basic-hooks
+        - record
+        - type-equality
+        - typelevel-prelude
+        - unsafe-coerce
+        - web-dom
+        - web-events
+        - web-html
+        - web-touchevents
     js-object:
       git: https://github.com/purescript-codegen/purescript-js-object
       ref: baba9598f114062dfaa4025b79eca0e06245a0c6
@@ -73,5 +93,6 @@ package:
     - web-dom
     - two-or-more
     - literals
+    - yoga-react-dom
   build:
     censorProjectWarnings: all
