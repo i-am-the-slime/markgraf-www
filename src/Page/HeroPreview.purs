@@ -530,13 +530,18 @@ paneTabs active setActive =
         ]
     }
 
+-- The house spring. One feel everywhere the playground card morphs.
+markgrafSpring :: Motion.Transition
+markgrafSpring =
+  cast (css { type: "spring", stiffness: 140, damping: 20, mass: 1.0, restDelta: 0.001 })
+
 editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview p =
   Motion.div
     { variants: Motion.variants cardVariants
     , initial: cast (VariantLabel "page-hero") :: Motion.Initial
     , animate: cast (VariantLabel p.section) :: Motion.Animate
-    , transition: cast (css { type: "spring", stiffness: 120, damping: 22, mass: 1.0 }) :: Motion.Transition
+    , transition: markgrafSpring
     , className:
         "grid gap-px rounded-xl overflow-hidden h-[60vh] sm:h-[520px] w-fit mx-auto"
     }
@@ -550,7 +555,7 @@ editorAndPreview p =
       , backgroundColor: "rgba(10,14,26,0)"
       }
     settledCss = css
-      { y: "0vh", x: "-280px"
+      { y: "0vh", x: "0px"
       , gridTemplateColumns: "560px 560px"
       , backgroundColor: "rgba(10,14,26,1)"
       }
