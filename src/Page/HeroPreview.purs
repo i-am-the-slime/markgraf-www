@@ -563,8 +563,8 @@ editorAndPreview p =
         ]
     }
   where
-    floatingCss = css { y: "-95vh" }
-    settledCss  = css { y: "0vh" }
+    floatingCss = css { y: "-95vh", x: "-280px" }
+    settledCss  = css { y: "0vh", x: "0px" }
     previewVariants =
       { "page-hero": floatingCss
       , playground:  settledCss
