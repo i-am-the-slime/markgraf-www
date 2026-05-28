@@ -521,11 +521,14 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   suckEnd = 0.4
   helixU = clamp01 ((u - suckEnd) / (1.0 - suckEnd))
   turns = 5.0
-  -- Bell-shaped funnel: walls bow outward like )(. sqrt gives a pointy tip
-  -- with fast initial flare that eases off toward the crown.
-  funnel = 0.05 + sqrt helixU * 1.2
+  -- Cartoon-tornado silhouette: very pointy tip from a low-pow curve, plus a
+  -- slight mid bulge so the walls read as bowed rather than straight V.
+  funnel = 0.05 + sqrt helixU * 0.95 + sin (helixU * pi) * 0.25
   helixTheta = spawnAngle + 2.0 * pi * turns * helixU
-  helixX = cos helixTheta * f.radius * funnel
+  -- Bent centerline: the funnel curves to one side like a real tornado.
+  bendAmp = f.radius * 0.35
+  bendX = bendAmp * helixU * helixU
+  helixX = cos helixTheta * f.radius * funnel + bendX
   helixZ = sin helixTheta * f.radius * funnel
   helixY = helixU * f.length - f.length / 2.0
   -- Suction blend: 0 while on floor, smoothly 1 once fully in the funnel.
