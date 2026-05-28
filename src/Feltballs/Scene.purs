@@ -896,8 +896,9 @@ noiseFrag =
   void main(){
     vec2 c = floor(gl_FragCoord.xy / 3.0);
     float ti = floor(u_time * 24.0);
-    float u1 = max(hash(c + vec2(ti, 0.0)), 0.0001);
-    float u2 = hash(c + vec2(ti, 1.0));
+    vec2 tj = vec2(fract(ti * 0.7235), fract(ti * 0.9117));
+    float u1 = max(hash(c + tj), 0.0001);
+    float u2 = hash(c + tj + vec2(17.31, 41.91));
     float n = sqrt(-2.0 * log(u1)) * cos(6.28318530718 * u2);
     float v = clamp(n * 0.5 + 0.5, 0.0, 1.0);
     gl_FragColor = vec4(vec3(v) * 0.18, 1.0);
