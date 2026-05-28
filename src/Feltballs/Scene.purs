@@ -632,8 +632,8 @@ codeGapBump t f i =
   else strokeScale
   where
   cs = codeSegment t f i
-  strokeScale = 0.5
-  dip = 0.45
+  strokeScale = 0.3
+  dip = 0.27
 
 type CodeSeg =
   { isGap :: Boolean
