@@ -473,16 +473,32 @@ helixPos t f i = { x, y, z }
 -- top, with a faster spin and a slight per-ball wobble so the cone looks
 -- turbulent. `radius` is the top width; `length` is the total height.
 tornadoPos :: Number -> Formation -> Int -> Vec3
-tornadoPos t f i = { x, y, z }
+tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
   u = fi / n
   funnel = 0.2 + u
   theta = 2.0 * pi * 5.0 * fi / n + t * f.speed
-  y = u * f.length - f.length / 2.0
-  x = f.radius * funnel * cos theta
-  z = f.radius * funnel * sin theta
+  by = u * f.length - f.length / 2.0
+  bx = f.radius * funnel * cos theta
+  bz = f.radius * funnel * sin theta
+  -- Turbulence: three mismatched-frequency sines per axis, each with its own
+  -- phase keyed off `fi` so neighbouring balls jitter independently. Scaled
+  -- by funnel so the bottom (tight) stays cleaner and the top spews wider.
+  jAmp = funnel * f.radius * 0.18
+  jx = ( sin (t * 3.7 + fi * 1.13)
+       + sin (t * 5.1 - fi * 0.71) * 0.6
+       + sin (t * 8.3 + fi * 2.37) * 0.35
+       ) * jAmp
+  jy = ( sin (t * 2.9 + fi * 0.83)
+       + sin (t * 4.7 - fi * 1.51) * 0.6
+       + sin (t * 7.1 + fi * 3.11) * 0.35
+       ) * jAmp * 0.7
+  jz = ( cos (t * 3.3 + fi * 1.41)
+       + cos (t * 5.7 - fi * 0.97) * 0.6
+       + cos (t * 8.9 + fi * 2.73) * 0.35
+       ) * jAmp
 
 lerpMorph :: Effect Morph
 lerpMorph = do
