@@ -53,6 +53,74 @@
   --radius-lg: 0.75rem;
 }
 
+/* VHS chromatic-aberration title effect — adapted from
+   https://codepen.io/shorinamaria/pen/egJmeY */
+.vhs-text {
+  position: relative;
+  display: inline-block;
+  color: #ff2a2a;
+  mix-blend-mode: screen;
+  filter: blur(1px);
+  white-space: nowrap;
+  animation: vhs-skew 2s infinite, vhs-flash 0.04s infinite;
+}
+.vhs-text::before,
+.vhs-text::after {
+  content: var(--vhs-text, "");
+  position: absolute;
+  top: 0;
+  left: 0;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.vhs-text::before {
+  color: #32cd32;
+  transform: translate(0.045em, -0.03em);
+}
+.vhs-text::after {
+  color: #2a6cff;
+  transform: translate(0.075em, 0);
+  animation: vhs-move 1.5s infinite;
+}
+.vhs-text-wrap {
+  position: relative;
+  display: inline-block;
+}
+.vhs-text-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(42, 108, 255, 0.18) 0,
+    rgba(42, 108, 255, 0.18) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  mix-blend-mode: screen;
+  filter: blur(0.6px);
+  animation: vhs-lines 2.5s infinite;
+}
+@keyframes vhs-skew {
+  0%, 30%, 31%, 100% { transform: none; }
+  30.2% { transform: skewX(50deg); }
+  30.4% { transform: skewX(-50deg); }
+}
+@keyframes vhs-move {
+  0%, 30%, 33%, 98% { transform: translate(0.075em, 0); }
+  31% { transform: translate(-0.025em, 0); }
+  100% { transform: translate(0.175em, 0); }
+}
+@keyframes vhs-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes vhs-lines {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
 /* markgraf-react paints a <svg class="markgraf-player"> with intrinsic width
    and height attributes from the layout viewport.  Force it to scale to its
    container so it fits the playground pane instead of overflowing.  */

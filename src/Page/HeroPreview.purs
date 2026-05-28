@@ -224,13 +224,18 @@ heroLockup =
   div { className: "absolute inset-0 z-10 flex flex-col items-center justify-start pt-[12vh] pointer-events-none px-6" }
     [ div { className: "flex flex-col items-center gap-10 max-w-3xl text-center" }
         [ h1
-            { className: "text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold text-[#f5f1e8]"
+            { className: "vhs-text-wrap text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold"
             , style: css
                 { fontFamily: "'Sinistre', serif"
                 , textShadow: "0 0 80px rgba(10,14,26,0.7)"
                 }
             }
-            [ text "markgraf" ]
+            [ span
+                { className: "vhs-text"
+                , style: css { "--vhs-text": "\"markgraf\"" }
+                }
+                [ text "markgraf" ]
+            ]
         , p
             { className: "max-w-xl text-lg sm:text-xl leading-snug text-[#c8cdd9]"
             , style: css { fontFamily: "'Ilisarniq', ui-sans-serif, system-ui, sans-serif" }
