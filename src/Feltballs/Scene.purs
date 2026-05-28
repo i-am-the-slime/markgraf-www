@@ -533,7 +533,7 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   turns = 9.0
   -- Cartoon-tornado silhouette: very pointy tip from a low-pow curve, plus a
   -- slight mid bulge so the walls read as bowed rather than straight V.
-  funnel = 0.05 + sqrt helixU * 0.95 + sin (helixU * pi) * 0.25
+  funnel = 0.05 + helixU * 0.85 + sin (helixU * pi) * 0.2
   -- Spin is decoupled from climb: balls whip around the funnel axis fast even
   -- when individual particles rise slowly. That's what reads as "tornado".
   spinRate = 4.5
