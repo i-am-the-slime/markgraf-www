@@ -56,7 +56,7 @@ writeF32 a i v = writeF32Impl a i v
 -- Frame cadence — backdrop renders at this rate, not 60. useFrame still fires
 -- every rAF, we just bail early when not enough time has passed.
 frameInterval :: Number
-frameInterval = 1.0 / 30.0
+frameInterval = 1.0 / 120.0
 
 -- Adaptive fallbacks. If the measured rAF cadence (full-tick fps, before our
 -- paint gate) drops below `fpsDownThreshold` for a while, we bump the gate
