@@ -1332,8 +1332,8 @@ labRightHangSection =
     { id: "lab-right-hang"
     , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-6xl mx-auto w-full h-full grid grid-cols-12 gap-6 items-center" }
-        [ div { className: "col-span-12 md:col-span-3 flex flex-col gap-6 md:pr-6 md:border-r border-[#2a3142]" }
+    [ labStage "max-w-6xl mx-auto w-full h-full grid grid-cols-12 gap-6 items-center"
+        [ labItem "col-span-12 md:col-span-3 flex flex-col gap-6 md:pr-6 md:border-r border-[#2a3142]"
             [ sectionLabel "lab-f / right hang"
             , div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#8a94a8] flex flex-col gap-1" }
                 [ div {} [ text "Issue 01" ]
@@ -1349,7 +1349,7 @@ labRightHangSection =
             , div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#5a6478]" }
                 [ text "by mark" ]
             ]
-        , div { className: "col-span-12 md:col-span-9 flex flex-col gap-10" }
+        , labItem "col-span-12 md:col-span-9 flex flex-col gap-10"
             [ h2
                 { className: "text-[14vw] sm:text-[9vw] leading-[0.88] tracking-[-0.035em] font-bold"
                 , style: css { fontFamily: "'Sinistre', serif" }
