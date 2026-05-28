@@ -76,6 +76,9 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       , embedSection
       , playSection
       , footerSection
+      , labColumnsSection
+      , labQuoteSection
+      , labHangSection
       ]
 
 -- Fixed full-viewport layer that the offscreen WebGL canvas paints into. Sits
@@ -284,6 +287,9 @@ pageRail =
       , "#embed"
       , "#play"
       , "#install"
+      , "#lab-columns"
+      , "#lab-quote"
+      , "#lab-hang"
       ]
 
 railDot :: String -> JSX
@@ -1056,6 +1062,100 @@ footerSection =
 footerLink :: String -> String -> JSX
 footerLink href label =
   a { href, className: "hover:text-[#f5f1e8] transition-colors" } label
+
+-- ---------------------------------------------------------------------------
+-- Lab pages — experimental magazine typesetting. Non-destructive, appended at
+-- the bottom of the magazine so existing sections are untouched. Each one
+-- tries a different idea: three-column body, pull-quote spread, hanging
+-- asymmetric headline.
+-- ---------------------------------------------------------------------------
+
+labColumnsSection :: JSX
+labColumnsSection =
+  H.section
+    { id: "lab-columns"
+    , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
+    }
+    [ div { className: "max-w-6xl mx-auto w-full h-full flex flex-col justify-center gap-12" }
+        [ sectionLabel "lab-a / three columns"
+        , h2
+            { className: "text-[10vw] sm:text-[6.5vw] leading-[0.88] tracking-[-0.03em] font-bold max-w-[14ch]"
+            , style: css { fontFamily: "'Sinistre', serif" }
+            }
+            "A few words, a thousand pictures."
+        , div
+            { className: "columns-1 sm:columns-2 lg:columns-3 gap-10 text-[15px] leading-[1.6] text-[#c8cdd9]"
+            , style: css { fontFamily: "'Ilisarniq', sans-serif" }
+            }
+            [ p { className: "mb-4" }
+                [ text "Markgraf is a small declarative language for short animated diagrams. You describe the nodes and the edges; markgraf works out the layout, the morphs, and the camera so the picture moves itself." ]
+            , p { className: "mb-4" }
+                [ text "The compiler reads a fenced code block, builds an ELK layout, and emits an SVG together with a timeline. Embed the timeline in the player and the diagram plays back like a short film — pause, scrub, replay." ]
+            , p { className: "mb-4" }
+                [ text "The same source runs in your README, in your docs, and in your slides. No frames to draw, no tweens to author, no design tools to learn. A few lines of text and the picture follows." ]
+            ]
+        ]
+    , spreadFolio "lab-a" "three-columns"
+    ]
+
+labQuoteSection :: JSX
+labQuoteSection =
+  H.section
+    { id: "lab-quote"
+    , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16 flex items-center"
+    }
+    [ div { className: "max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-12 gap-10" }
+        [ div { className: "md:col-span-8 flex flex-col gap-10" }
+            [ sectionLabel "lab-b / pull-quote"
+            , div
+                { className: "text-[9vw] sm:text-[6vw] leading-[0.95] tracking-[-0.02em] font-bold"
+                , style: css { fontFamily: "'Sinistre', serif" }
+                }
+                [ text "“A diagram is an argument that hasn’t finished moving.”" ]
+            ]
+        , div { className: "md:col-span-4 md:pt-32 flex flex-col gap-6 max-w-[28ch]" }
+            [ div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff3b1a] pb-3 border-b border-[#2a3142]" }
+                [ text "On motion" ]
+            , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
+                [ text "Static pictures ask the reader to do the work. Animation lets the diagram explain itself: this node arrives, this edge resolves, this cluster settles." ]
+            , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
+                [ text "Markgraf treats motion as the primary medium and the still frame as a fallback, not the other way around." ]
+            ]
+        ]
+    , spreadFolio "lab-b" "pull-quote"
+    ]
+
+labHangSection :: JSX
+labHangSection =
+  H.section
+    { id: "lab-hang"
+    , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
+    }
+    [ div { className: "max-w-6xl mx-auto w-full h-full grid grid-cols-12 gap-6 items-center" }
+        [ div { className: "col-span-12 md:col-span-7 flex flex-col gap-10" }
+            [ sectionLabel "lab-c / hang"
+            , h2
+                { className: "text-[14vw] sm:text-[9vw] leading-[0.88] tracking-[-0.035em] font-bold -ml-1"
+                , style: css { fontFamily: "'Sinistre', serif" }
+                }
+                "Markgraf."
+            , p
+                { className: "text-[22px] sm:text-[26px] leading-[1.35] max-w-[28ch] italic text-[#e8e4d8]"
+                , style: css { fontFamily: "'Sinistre', serif", fontWeight: "300" }
+                }
+                [ text "A grammar of motion for the kind of pictures that argue, explain, and refuse to sit still." ]
+            ]
+        , div { className: "col-span-12 md:col-span-4 md:col-start-9 flex flex-col gap-4" }
+            [ div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff3b1a] pb-3 border-b border-[#2a3142]" }
+                [ text "Standfirst" ]
+            , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
+                [ text "The compiler is small enough to read in an afternoon and powerful enough to draw the rest of your documentation." ]
+            , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
+                [ text "It runs on the CLI, in the browser, and inside Claude — and treats every surface as another stage for the same short film." ]
+            ]
+        ]
+    , spreadFolio "lab-c" "hang"
+    ]
 
 sectionLabel :: String -> JSX
 sectionLabel label =
