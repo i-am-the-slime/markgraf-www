@@ -496,7 +496,8 @@ formationScale t f i =
   floorScale = 0.07
   climbScale = 0.18 + helixU * 0.27
   fadeOut = clamp01 ((1.0 - u) / 0.06)
-  scale = (floorScale * (1.0 - s) + climbScale * s) * fadeOut
+  fadeIn = clamp01 (u / 0.06)
+  scale = (floorScale * (1.0 - s) + climbScale * s) * fadeOut * fadeIn
 
 -- Funnel-shaped helix: radius narrows toward the bottom, widens toward the
 -- top, with a faster spin and a slight per-ball wobble so the cone looks
@@ -512,7 +513,10 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   -- Per-ball spawn point on the floor — scattered angle and radius, fixed
   -- across the ball's lifetime so it appears to "sit" on the floor until the
   -- tornado picks it up.
-  spawnAngle = hash01 (fi * 13.7) * 2.0 * pi
+  -- Bias floor spawns to the left half-plane (angles pi/2..3pi/2). The
+  -- tornado sits on the right of the camera; spawning balls all around the
+  -- visible floor reads as "popping in", so we keep the disc off-camera left.
+  spawnAngle = pi * 0.5 + hash01 (fi * 13.7) * pi
   spawnR = f.radius * (1.4 + hash01 (fi * 7.31) * 1.6)
   floorY = -f.length / 2.0
   -- Slow inward drift during the floor phase so the disc looks like it's

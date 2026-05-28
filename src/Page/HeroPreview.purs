@@ -190,7 +190,7 @@ sectionStates =
   , { id: "play"
     , morph: gathered
     , camera: home { py = 0.0, pz = 26.0, fov = 55.0 }
-    , formation: playButton { radius: 10.0, speed: 0.6 }
+    , formation: playButton { radius: 5.0, speed: 0.6 }
     }
   , { id: "install"
     , morph: gathered
