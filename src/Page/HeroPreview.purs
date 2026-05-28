@@ -80,6 +80,8 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       , labColumnsSection
       , labQuoteSection
       , labHangSection
+      , labIconsSection
+      , labPhotoSection
       ]
 
 -- Fixed full-viewport layer that the offscreen WebGL canvas paints into. Sits
@@ -291,6 +293,8 @@ pageRail =
       , "#lab-columns"
       , "#lab-quote"
       , "#lab-hang"
+      , "#lab-icons"
+      , "#lab-photo"
       ]
 
 railDot :: String -> JSX
@@ -1150,9 +1154,9 @@ labHangSection =
             [ div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff3b1a] pb-3 border-b border-[#2a3142]" }
                 [ text "Standfirst" ]
             , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
-                [ text "The compiler is small enough to read in an afternoon and powerful enough to draw the rest of your documentation." ]
+                [ text "The compiler is small. You can read it in an afternoon. It draws the rest of your documentation." ]
             , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
-                [ text "It runs on the CLI, in the browser, and inside Claude — and treats every surface as another stage for the same short film." ]
+                [ text "It runs on the command line. It runs in the browser. It runs inside Claude. Same source. Same film." ]
             ]
         ]
     , spreadFolio "lab-c" "hang"
