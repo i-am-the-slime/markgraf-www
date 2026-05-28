@@ -520,7 +520,7 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   floorEnd = 0.25
   suckEnd = 0.4
   helixU = clamp01 ((u - suckEnd) / (1.0 - suckEnd))
-  turns = 5.0
+  turns = 9.0
   -- Cartoon-tornado silhouette: very pointy tip from a low-pow curve, plus a
   -- slight mid bulge so the walls read as bowed rather than straight V.
   funnel = 0.05 + sqrt helixU * 0.95 + sin (helixU * pi) * 0.25

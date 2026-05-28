@@ -174,7 +174,7 @@ sectionStates =
   , { id: "ai"
     , morph: gathered
     , camera: home { px = 1.5, lx = -3.0, fov = 80.0 }
-    , formation: tornado { radius: 5.0, length: 10.0, speed: 6.0 }
+    , formation: tornado { radius: 3.5, length: 8.0, speed: 6.0 }
     }
   , { id: "embed"
     , morph: gathered
