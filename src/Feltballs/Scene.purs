@@ -559,7 +559,9 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   -- world space and get sucked up when the tip passes near them.
   pathW = 0.6
   pathAmp = 1.6
-  pathX = pathAmp * sin (t * pathW)
+  -- Offset by +pathAmp so the leftmost point of the 8 sits at the home center;
+  -- the funnel only wanders right of where it starts, never further left.
+  pathX = pathAmp + pathAmp * sin (t * pathW)
   pathZ = pathAmp * 0.5 * sin (2.0 * t * pathW)
   bx = driftX * (1.0 - s) + (helixX + pathX) * s
   bz = driftZ * (1.0 - s) + (helixZ + pathZ) * s
