@@ -82,11 +82,10 @@
   transition: opacity 500ms ease;
 }
 .vhs-text::before {
-  color: #32cd32;
-  transform: translate(0.045em, -0.03em);
+  display: none;
 }
 .vhs-text::after {
-  color: #2a6cff;
+  color: #8a94a8;
   transform: translate(0.075em, 0);
   animation: vhs-move 1.5s infinite;
   animation-play-state: paused;
@@ -100,8 +99,8 @@
   transition: opacity 500ms ease;
   background: repeating-linear-gradient(
     to bottom,
-    rgba(42, 108, 255, 0.18) 0,
-    rgba(42, 108, 255, 0.18) 1px,
+    rgba(138, 148, 168, 0.22) 0,
+    rgba(138, 148, 168, 0.22) 1px,
     transparent 1px,
     transparent 4px
   );
@@ -111,7 +110,7 @@
   animation-play-state: paused;
 }
 .vhs-text-wrap.vhs-on .vhs-text {
-  color: #ff2a2a;
+  color: #ff3b1a;
   mix-blend-mode: screen;
   filter: blur(1px);
   animation-play-state: running;
