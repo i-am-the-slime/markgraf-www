@@ -17,7 +17,7 @@ foreign import data CanvasEl :: Type
 foreign import setupFeltballsImpl :: Int -> CanvasEl -> Effect (Effect Unit)
 
 pixelBudget :: Int
-pixelBudget = 640 * 480
+pixelBudget = 400 * 300
 
 feltballsOffscreen :: ReactComponent {}
 feltballsOffscreen = unsafeCoerce (unsafePerformEffect feltballsOffscreenComponent)

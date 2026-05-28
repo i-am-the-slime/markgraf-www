@@ -488,7 +488,8 @@ playgroundView pp =
     { id: "playground"
     , className: "relative snap-start snap-always h-screen flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-5xl mx-auto w-full" }
+    [ scrim (pp.section == "playground")
+    , div { className: "max-w-5xl mx-auto w-full" }
         [ div { className: "flex items-baseline justify-between mb-8 gap-6 flex-wrap" }
             [ div {}
                 [ sectionLabel "01 / playground"
@@ -505,6 +506,19 @@ playgroundView pp =
         ]
     , spreadFolio "01" "playground"
     ]
+
+-- Blurred black overlay that fades in when the section is active. Sits behind
+-- the section's content (first child + DOM order) so text/editor paint over
+-- it, but in front of the fixed 3D canvas so the backdrop reads darker and
+-- softer when the user is on this page.
+scrim :: Boolean -> JSX
+scrim isActive =
+  div
+    { className:
+        "absolute inset-0 bg-black/55 backdrop-blur-md transition-opacity duration-700 pointer-events-none "
+          <> (if isActive then "opacity-100" else "opacity-0")
+    }
+    noJSX
 
 exampleStrip :: String -> (String -> Effect Unit) -> JSX
 exampleStrip current setSrc =
