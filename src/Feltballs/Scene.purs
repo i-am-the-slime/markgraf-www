@@ -474,18 +474,23 @@ helixPos t f i = { x, y, z }
 -- the noisy top reads as the bulkier part.
 formationScale :: Number -> Formation -> Int -> Number
 formationScale t f i =
-  if Int.round f.kind == 5 then (0.35 + u * 0.65) * fade else 1.0
+  if Int.round f.kind == 5 then scale else 1.0
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
-  uRaw = fi / n + t * 0.18
+  uRaw = fi / n + t * 0.11
   u = uRaw - floor uRaw
-  -- Fade in over the first 8% of the climb and out over the last 8% so the
-  -- u=1→u=0 wrap is invisible — looks like balls bloom in at the bottom and
-  -- evaporate at the top.
-  fadeIn = clamp01 (u / 0.08)
-  fadeOut = clamp01 ((1.0 - u) / 0.08)
-  fade = fadeIn * fadeOut
+  -- Same phase split as tornadoPos: tiny on the floor, grow during suction,
+  -- full size while climbing.
+  floorEnd = 0.6
+  suckEnd = 0.72
+  sRaw = clamp01 ((u - floorEnd) / (suckEnd - floorEnd))
+  s = sRaw * sRaw * (3.0 - 2.0 * sRaw)
+  helixU = clamp01 ((u - suckEnd) / (1.0 - suckEnd))
+  floorScale = 0.15
+  climbScale = 0.4 + helixU * 0.6
+  fadeOut = clamp01 ((1.0 - u) / 0.06)
+  scale = (floorScale * (1.0 - s) + climbScale * s) * fadeOut
 
 -- Funnel-shaped helix: radius narrows toward the bottom, widens toward the
 -- top, with a faster spin and a slight per-ball wobble so the cone looks
