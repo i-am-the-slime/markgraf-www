@@ -58,6 +58,21 @@ writeF32 a i v = writeF32Impl a i v
 frameInterval :: Number
 frameInterval = 1.0 / 30.0
 
+-- Adaptive fallbacks. If the measured rAF cadence (full-tick fps, before our
+-- paint gate) drops below `fpsDownThreshold` for a while, we bump the gate
+-- to a slower target so the device has time to breathe.
+fpsDownThreshold :: Number
+fpsDownThreshold = 45.0
+
+fpsDownThreshold2 :: Number
+fpsDownThreshold2 = 25.0
+
+intervalSlow :: Number
+intervalSlow = 1.0 / 20.0
+
+intervalCrawl :: Number
+intervalCrawl = 1.0 / 15.0
+
 -- Color indices written into the last-color buffer; the index matches the
 -- branch in `ballColor` so we can compare cheaply before deciding to repaint.
 colorNormal :: Int
@@ -204,6 +219,9 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
   noiseMatRef <- useRef (toNullable (Nothing :: Maybe Object3D))
   frameRef <- useRef initFrame
   lastPaintRef <- useRef (-1.0)
+  prevTickRef <- useRef (-1.0)
+  fpsAvgRef <- useRef 60.0
+  intervalRef <- useRef frameInterval
   holdRef <- useRef (Nothing :: Maybe HoldState)
 
   useEffectOnce $
@@ -236,8 +254,24 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
 
   useFrame \rs _ -> do
     let t = readClockElapsed rs
+    prevTick <- readRef prevTickRef
+    writeRef prevTickRef t
+    when (prevTick > 0.0) do
+      let dt = t - prevTick
+      when (dt > 0.0) do
+        prevAvg <- readRef fpsAvgRef
+        let inst = 1.0 / dt
+            avg = prevAvg * 0.9 + inst * 0.1
+        writeRef fpsAvgRef avg
+        curInterval <- readRef intervalRef
+        let nextInterval =
+              if avg < fpsDownThreshold2 then intervalCrawl
+              else if avg < fpsDownThreshold then intervalSlow
+              else frameInterval
+        when (nextInterval /= curInterval) (writeRef intervalRef nextInterval)
+    interval <- readRef intervalRef
     lastT <- readRef lastPaintRef
-    when (t - lastT >= frameInterval) do
+    when (t - lastT >= interval) do
       let aspect = readAspect rs
       writeRef lastPaintRef t
       writeRef frameRef { t, aspect }
