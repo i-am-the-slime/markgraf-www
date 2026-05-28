@@ -345,7 +345,9 @@ lerpFormation = do
     pure n
 
 formationPos :: Number -> Formation -> Int -> Vec3
-formationPos t f i = applyDance t i basePos
+formationPos t f i =
+  if kindInt == 6 then applyDanceScaled 0.18 t i basePos
+  else applyDance t i basePos
   where
   basePos =
     if kindInt == 1 then ringPos t f i
@@ -365,13 +367,16 @@ formationPos t f i = applyDance t i basePos
 -- ripples in place. No cluster-wide drift — the section's camera arm decides
 -- where the formation sits in frame, and it stays parked there.
 applyDance :: Number -> Int -> Vec3 -> Vec3
-applyDance t i p =
+applyDance = applyDanceScaled 1.0
+
+applyDanceScaled :: Number -> Number -> Int -> Vec3 -> Vec3
+applyDanceScaled k t i p =
   { x: p.x + sx, y: p.y + sy, z: p.z + sz }
   where
   fi = Int.toNumber i
-  sx = sin (t * 0.85 + fi * 0.31) * 0.55
-  sy = cos (t * 0.55 + fi * 0.27) * 0.40
-  sz = sin (t * 0.65 + fi * 0.19) * 0.35
+  sx = sin (t * 0.85 + fi * 0.31) * 0.55 * k
+  sy = cos (t * 0.55 + fi * 0.27) * 0.40 * k
+  sz = sin (t * 0.65 + fi * 0.19) * 0.35 * k
 
 -- Five concentric rings of 27 balls, slowly rotating. Each ring is offset in
 -- y so the whole thing stacks into a short column.

@@ -189,8 +189,8 @@ sectionStates =
     }
   , { id: "play"
     , morph: gathered
-    , camera: home { py = 0.0, pz = 12.0, fov = 60.0 }
-    , formation: playButton { radius: 4.5, speed: 1.0 }
+    , camera: home { py = 0.0, pz = 26.0, fov = 55.0 }
+    , formation: playButton { radius: 10.0, speed: 0.6 }
     }
   , { id: "install"
     , morph: gathered
