@@ -487,8 +487,8 @@ formationScale t f i =
   sRaw = clamp01 ((u - floorEnd) / (suckEnd - floorEnd))
   s = sRaw * sRaw * (3.0 - 2.0 * sRaw)
   helixU = clamp01 ((u - suckEnd) / (1.0 - suckEnd))
-  floorScale = 0.15
-  climbScale = 0.4 + helixU * 0.6
+  floorScale = 0.07
+  climbScale = 0.18 + helixU * 0.27
   fadeOut = clamp01 ((1.0 - u) / 0.06)
   scale = (floorScale * (1.0 - s) + climbScale * s) * fadeOut
 
