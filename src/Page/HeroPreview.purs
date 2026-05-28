@@ -1376,12 +1376,9 @@ labRightHangSection =
     ]
 
 sectionLabel :: String -> JSX
-sectionLabel label =
-  div { className: "flex items-center gap-4 mb-8 font-mono text-[10px] uppercase tracking-[0.35em]" }
-    [ span { className: "h-px w-10 bg-[#ff3b1a]" } noJSX
-    , span { className: "text-[#ff3b1a]" } label
-    ]
+sectionLabel label = element sectionLabelComponent { label }
 
+foreign import sectionLabelComponent :: ReactComponent { label :: String }
 foreign import sceneComponent :: ReactComponent {}
 foreign import feltballsComponent :: ReactComponent {}
 foreign import markgrafPlayerImpl :: forall a. ReactComponent { | a }

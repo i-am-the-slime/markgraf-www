@@ -1,10 +1,72 @@
 import { MarkgrafPlayer } from "@markgrafhq/markgraf-react";
 import { feltballsOffscreen as FeltballsOffscreen } from "../../output/Feltballs.Offscreen/index.js";
 import { sceneComponent as markgrafScene } from "../../output/Components.Scene/index.js";
+import React, { useEffect, useRef, useState } from "react";
+import { motion, useInView } from "motion/react";
 
 export const sceneComponent = markgrafScene;
 export const feltballsComponent = FeltballsOffscreen;
 export const markgrafPlayerImpl = MarkgrafPlayer;
+
+// Editorial eyebrow: a short red rule that draws in left-to-right, then mono
+// text that scrambles through random characters before settling on the real
+// label. Fires every time the element scrolls into view (snap-mandatory pages
+// retrigger on re-entry).
+const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const literal = (ch) => ch === " " || ch === "/" || ch === "-";
+
+export const sectionLabelComponent = ({ label }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { amount: 0.5, once: false });
+  const [text, setText] = useState(label);
+
+  useEffect(() => {
+    if (!inView) return;
+    const upper = label.toUpperCase();
+    let frame = 0;
+    const stepsPerChar = 3;
+    const total = upper.length * stepsPerChar;
+    const id = setInterval(() => {
+      frame += 1;
+      const reveal = Math.floor(frame / stepsPerChar);
+      let out = "";
+      for (let i = 0; i < upper.length; i += 1) {
+        const ch = upper[i];
+        if (i < reveal || literal(ch)) {
+          out += ch;
+        } else {
+          out += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+        }
+      }
+      setText(out);
+      if (frame >= total) {
+        setText(upper);
+        clearInterval(id);
+      }
+    }, 32);
+    return () => clearInterval(id);
+  }, [inView, label]);
+
+  return React.createElement(
+    "div",
+    {
+      ref,
+      className:
+        "flex items-center gap-4 mb-8 font-mono text-[10px] uppercase tracking-[0.35em]",
+    },
+    React.createElement(motion.span, {
+      className: "h-px bg-[#ff3b1a] block",
+      initial: { width: 0 },
+      animate: { width: inView ? "2.5rem" : 0 },
+      transition: { duration: 0.35, ease: [0.65, 0, 0.35, 1] },
+    }),
+    React.createElement(
+      "span",
+      { className: "text-[#ff3b1a]" },
+      text,
+    ),
+  );
+};
 
 // FFI: lookup a DOM node by id, returns the Element or null.
 export const lookupNode = (id) => () => document.getElementById(id);
