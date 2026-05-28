@@ -450,7 +450,7 @@ playgroundView :: PlaygroundProps -> JSX
 playgroundView pp =
   H.section
     { id: "playground"
-    , className: "relative snap-start snap-always h-screen flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
     [ div { className: "max-w-5xl mx-auto w-full" }
         [ div { className: "flex items-baseline justify-between mb-8 gap-6 flex-wrap" }
@@ -854,7 +854,7 @@ playerSection :: JSX
 playerSection =
   H.section
     { id: "player"
-    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
     [ div { className: "max-w-5xl mx-auto w-full" }
         [ sectionLabel "02 / player"
@@ -886,7 +886,7 @@ renderSection :: JSX
 renderSection =
   H.section
     { id: "render"
-    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
     [ div { className: "max-w-5xl mx-auto w-full" }
         [ sectionLabel "03 / render"
@@ -920,7 +920,7 @@ aiSection :: JSX
 aiSection =
   H.section
     { id: "ai"
-    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
     [ div { className: "max-w-5xl mx-auto w-full" }
         [ sectionLabel "04 / ai authoring"
@@ -946,7 +946,7 @@ embedSection :: JSX
 embedSection =
   H.section
     { id: "embed"
-    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
     [ div { className: "max-w-5xl mx-auto w-full" }
         [ sectionLabel "05 / integrations"
@@ -990,7 +990,7 @@ footerSection :: JSX
 footerSection =
   H.section
     { id: "install"
-    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 bg-[#0a0e1a]/60 backdrop-blur-sm border-t border-[#1a1f2e] px-6 sm:px-12 py-16"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
     [ div { className: "max-w-5xl mx-auto w-full flex flex-col gap-10" }
         [ sectionLabel "06 / install"
