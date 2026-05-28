@@ -173,8 +173,8 @@ sectionStates =
     }
   , { id: "ai"
     , morph: gathered
-    , camera: home { px = 4.0, lx = 1.4, fov = 80.0 }
-    , formation: tornado { radius: 5.0, length: 7.0, speed: 6.0 }
+    , camera: home { px = 1.5, lx = -3.0, fov = 80.0 }
+    , formation: tornado { radius: 5.0, length: 10.0, speed: 6.0 }
     }
   , { id: "embed"
     , morph: gathered
