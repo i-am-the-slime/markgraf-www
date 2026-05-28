@@ -469,6 +469,15 @@ helixPos t f i = { x, y, z }
   x = f.radius * cos theta
   z = f.radius * sin theta
 
+-- Per-formation scale multiplier. Default 1.0; the tornado tapers ball size
+-- from ~0.35× at the tip to 1.0× at the crown so the funnel looks pointy and
+-- the noisy top reads as the bulkier part.
+formationScale :: Formation -> Int -> Number
+formationScale f i =
+  if Int.round f.kind == 5 then 0.35 + u * 0.65 else 1.0
+  where
+  u = Int.toNumber i / Int.toNumber totalBalls
+
 -- Funnel-shaped helix: radius narrows toward the bottom, widens toward the
 -- top, with a faster spin and a slight per-ball wobble so the cone looks
 -- turbulent. `radius` is the top width; `length` is the total height.
@@ -547,7 +556,8 @@ paintBall :: Number -> Morph -> Formation -> Int -> Effect Unit
 paintBall t morph formation i = do
   popMul <- popMultiplierAt t i
   let envBlended = envelope * (1.0 - ord) + ord
-      scale = baseScale * envBlended * popMul
+      scale = baseScale * envBlended * popMul * formScale
+      formScale = 1.0 + (formationScale formation i - 1.0) * ord
   readRefMaybe (ballRefAt i) # withJust \o -> do
     applyProps o
       { position: [ px, py, pz ]
