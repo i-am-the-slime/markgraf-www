@@ -481,7 +481,9 @@ helixPos t f i = { x, y, z }
 -- the noisy top reads as the bulkier part.
 formationScale :: Number -> Formation -> Int -> Number
 formationScale t f i =
-  if Int.round f.kind == 5 then scale else 1.0
+  if Int.round f.kind == 5 then scale
+  else if Int.round f.kind == 7 then codeGapBump t f i
+  else 1.0
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
@@ -616,42 +618,59 @@ playButtonPos t f i = pointOn d
 -- by `k = radius / 12` (the half-extent of the icon), with SVG y flipped to
 -- match our y-up world.
 codePos :: Number -> Formation -> Int -> Vec3
-codePos t f i = pointOnSegs d
+codePos t f i = onEdge cs.x0 cs.y0 cs.x1 cs.y1 cs.u
+  where
+  cs = codeSegment t f i
+
+-- Per-ball scale bump for the code formation: balls dip to ~0.35× as they
+-- traverse a gap (bell-shaped, full at both ends, smallest at the midpoint)
+-- so the eye reads them as fast in-transit particles rather than the steady
+-- outline. Strokes return 1.0.
+codeGapBump :: Number -> Formation -> Int -> Number
+codeGapBump t f i =
+  if cs.isGap then 1.0 - 0.65 * 4.0 * cs.u * (1.0 - cs.u)
+  else 1.0
+  where
+  cs = codeSegment t f i
+
+type CodeSeg =
+  { isGap :: Boolean
+  , x0 :: Number, y0 :: Number
+  , x1 :: Number, y1 :: Number
+  , u :: Number
+  }
+
+-- Shared segment lookup for codePos and codeGapBump: figures out which of the
+-- 8 segments (5 strokes + 3 gaps) the ball is currently on and the local
+-- progress along it. Lets the scale function reuse the same budgets as the
+-- position function without duplicating the geometry.
+codeSegment :: Number -> Formation -> Int -> CodeSeg
+codeSegment t f i = seg
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
   k = f.radius / 12.0
-  -- `>` right chevron: (17.25,6.75) → (22.5,12) → (17.25,17.25)
   a1x = 5.25 * k
   a1y = 5.25 * k
   a2x = 10.5 * k
   a2y = 0.0
   a3x = 5.25 * k
   a3y = -5.25 * k
-  -- `<` left chevron: (6.75,17.25) → (1.5,12) → (6.75,6.75)
   b1x = -5.25 * k
   b1y = -5.25 * k
   b2x = -10.5 * k
   b2y = 0.0
   b3x = -5.25 * k
   b3y = 5.25 * k
-  -- `/` slash: (14.25,3.75) → (9.75,20.25)
   c1x = 2.25 * k
   c1y = 8.25 * k
   c2x = -2.25 * k
   c2y = -8.25 * k
-  -- Stroke budgets = real arc length. Gap budgets are deliberately tiny so the
-  -- few balls crossing a subpath boundary at any moment cover real geometric
-  -- distance fast — they read as a quick fly-over rather than a teleport.
   e1 = edgeLen a1x a1y a2x a2y
   e2 = edgeLen a2x a2y a3x a3y
   e3 = edgeLen b1x b1y b2x b2y
   e4 = edgeLen b2x b2y b3x b3y
   e5 = edgeLen c1x c1y c2x c2y
-  -- Gap budgets are a fraction of real arc length. Lower fraction → fewer
-  -- balls on the connector at any time, each moving proportionally faster.
-  -- 0.2 leaves the strokes reading as the icon while still letting the eye
-  -- track individual balls flying across the gaps.
   gapShare = 0.2
   g1 = edgeLen a3x a3y b1x b1y * gapShare
   g2 = edgeLen b3x b3y c1x c1y * gapShare
@@ -665,17 +684,17 @@ codePos t f i = pointOnSegs d
   s7 = s6 + e5
   total = s7 + g3
   uRaw = fi / n + t * f.speed * 0.05
-  u = uRaw - floor uRaw
-  d = u * total
-  pointOnSegs s =
-    if s < s1 then onEdge a1x a1y a2x a2y (s / e1)
-    else if s < s2 then onEdge a2x a2y a3x a3y ((s - s1) / e2)
-    else if s < s3 then onEdge a3x a3y b1x b1y ((s - s2) / g1)
-    else if s < s4 then onEdge b1x b1y b2x b2y ((s - s3) / e3)
-    else if s < s5 then onEdge b2x b2y b3x b3y ((s - s4) / e4)
-    else if s < s6 then onEdge b3x b3y c1x c1y ((s - s5) / g2)
-    else if s < s7 then onEdge c1x c1y c2x c2y ((s - s6) / e5)
-    else onEdge c2x c2y a1x a1y ((s - s7) / g3)
+  uu = uRaw - floor uRaw
+  d = uu * total
+  seg =
+    if d < s1 then { isGap: false, x0: a1x, y0: a1y, x1: a2x, y1: a2y, u: d / e1 }
+    else if d < s2 then { isGap: false, x0: a2x, y0: a2y, x1: a3x, y1: a3y, u: (d - s1) / e2 }
+    else if d < s3 then { isGap: true, x0: a3x, y0: a3y, x1: b1x, y1: b1y, u: (d - s2) / g1 }
+    else if d < s4 then { isGap: false, x0: b1x, y0: b1y, x1: b2x, y1: b2y, u: (d - s3) / e3 }
+    else if d < s5 then { isGap: false, x0: b2x, y0: b2y, x1: b3x, y1: b3y, u: (d - s4) / e4 }
+    else if d < s6 then { isGap: true, x0: b3x, y0: b3y, x1: c1x, y1: c1y, u: (d - s5) / g2 }
+    else if d < s7 then { isGap: false, x0: c1x, y0: c1y, x1: c2x, y1: c2y, u: (d - s6) / e5 }
+    else { isGap: true, x0: c2x, y0: c2y, x1: a1x, y1: a1y, u: (d - s7) / g3 }
 
 edgeLen :: Number -> Number -> Number -> Number -> Number
 edgeLen x0 y0 x1 y1 = sqrt (dx * dx + dy * dy)
