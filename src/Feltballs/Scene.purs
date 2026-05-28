@@ -524,7 +524,10 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   -- Cartoon-tornado silhouette: very pointy tip from a low-pow curve, plus a
   -- slight mid bulge so the walls read as bowed rather than straight V.
   funnel = 0.05 + sqrt helixU * 0.95 + sin (helixU * pi) * 0.25
-  helixTheta = spawnAngle + 2.0 * pi * turns * helixU
+  -- Spin is decoupled from climb: balls whip around the funnel axis fast even
+  -- when individual particles rise slowly. That's what reads as "tornado".
+  spinRate = 4.5
+  helixTheta = spawnAngle + 2.0 * pi * turns * helixU + t * spinRate
   -- Bent centerline: the funnel curves to one side like a real tornado.
   bendAmp = f.radius * 0.35
   bendX = bendAmp * helixU * helixU
