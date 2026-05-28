@@ -474,12 +474,18 @@ helixPos t f i = { x, y, z }
 -- the noisy top reads as the bulkier part.
 formationScale :: Number -> Formation -> Int -> Number
 formationScale t f i =
-  if Int.round f.kind == 5 then 0.35 + u * 0.65 else 1.0
+  if Int.round f.kind == 5 then (0.35 + u * 0.65) * fade else 1.0
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
   uRaw = fi / n + t * 0.18
   u = uRaw - floor uRaw
+  -- Fade in over the first 8% of the climb and out over the last 8% so the
+  -- u=1→u=0 wrap is invisible — looks like balls bloom in at the bottom and
+  -- evaporate at the top.
+  fadeIn = clamp01 (u / 0.08)
+  fadeOut = clamp01 ((1.0 - u) / 0.08)
+  fade = fadeIn * fadeOut
 
 -- Funnel-shaped helix: radius narrows toward the bottom, widens toward the
 -- top, with a faster spin and a slight per-ball wobble so the cone looks
@@ -489,18 +495,32 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
-  -- Each ball climbs a fixed helix from bottom to top, wrapping around. The
-  -- angle is a function of u — so balls trace the helix path itself as they
-  -- rise, rather than the whole funnel spinning around its own axis.
-  upSpeed = 0.18
+  upSpeed = 0.16
   uRaw = fi / n + t * upSpeed
   u = uRaw - floor uRaw
-  turns = 4.0
+  -- Per-ball spawn point on the floor — scattered angle and radius, fixed
+  -- across the ball's lifetime so it appears to "sit" on the floor until the
+  -- tornado picks it up.
+  spawnAngle = hash01 (fi * 13.7) * 2.0 * pi
+  spawnR = f.radius * (1.7 + hash01 (fi * 7.31) * 1.6)
+  floorX = cos spawnAngle * spawnR
+  floorZ = sin spawnAngle * spawnR
+  floorY = -f.length / 2.0
+  -- Helix climb destination. Angle resolved from the spawn angle so the ball
+  -- rotates into the funnel from where it started, not from a fixed phase.
+  turns = 3.0
   funnel = 0.15 + u * 1.1
-  theta = 2.0 * pi * turns * u
-  by = u * f.length - f.length / 2.0
-  bx = f.radius * funnel * cos theta
-  bz = f.radius * funnel * sin theta
+  helixTheta = spawnAngle + 2.0 * pi * turns * u
+  helixX = cos helixTheta * f.radius * funnel
+  helixZ = sin helixTheta * f.radius * funnel
+  helixY = u * f.length - f.length / 2.0
+  -- Suction: balls sit on the floor for the first slice of the cycle, then
+  -- accelerate inward and upward. `s` is a smoothstep over [0..0.35].
+  sRaw = clamp01 (u / 0.35)
+  s = sRaw * sRaw * (3.0 - 2.0 * sRaw)
+  bx = floorX * (1.0 - s) + helixX * s
+  bz = floorZ * (1.0 - s) + helixZ * s
+  by = floorY * (1.0 - s) + helixY * s
   -- Light per-ball jitter, stronger toward the top so the crown looks bushier.
   jAmp = u * u * u * f.radius * 0.25
   jx = ( sin (t * 3.7 + fi * 1.13)
