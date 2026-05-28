@@ -482,8 +482,8 @@ formationScale t f i =
   u = uRaw - floor uRaw
   -- Same phase split as tornadoPos: tiny on the floor, grow during suction,
   -- full size while climbing.
-  floorEnd = 0.6
-  suckEnd = 0.72
+  floorEnd = 0.25
+  suckEnd = 0.4
   sRaw = clamp01 ((u - floorEnd) / (suckEnd - floorEnd))
   s = sRaw * sRaw * (3.0 - 2.0 * sRaw)
   helixU = clamp01 ((u - suckEnd) / (1.0 - suckEnd))
@@ -517,8 +517,8 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   driftZ = sin spawnAngle * spawnR * (1.0 - driftPull)
   -- Helix climb. Parameterized by helixU so the full funnel (tip → crown)
   -- only forms during the climb phase, giving back the pointy tip.
-  floorEnd = 0.6
-  suckEnd = 0.72
+  floorEnd = 0.25
+  suckEnd = 0.4
   helixU = clamp01 ((u - suckEnd) / (1.0 - suckEnd))
   turns = 2.5
   funnel = 0.05 + helixU * 1.15
