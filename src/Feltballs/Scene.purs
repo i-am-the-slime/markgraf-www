@@ -514,11 +514,17 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   -- Per-ball spawn point on the floor — scattered angle and radius, fixed
   -- across the ball's lifetime so it appears to "sit" on the floor until the
   -- tornado picks it up.
-  -- Bias floor spawns to the left half-plane (angles pi/2..3pi/2). The
-  -- tornado sits on the right of the camera; spawning balls all around the
-  -- visible floor reads as "popping in", so we keep the disc off-camera left.
-  spawnAngle = pi * 0.5 + hash01 (fi * 13.7) * pi
-  spawnR = f.radius * (1.4 + hash01 (fi * 7.31) * 1.6)
+  -- Floor spawn distribution: mostly off-camera-left so balls don't pop in
+  -- where the viewer can see them, with a small minority hugging the tornado
+  -- on the right (close radius, narrow arc) for visual balance.
+  sideHash = hash01 (fi * 2.91)
+  onRight = sideHash < 0.18
+  spawnAngle =
+    if onRight then -(pi * 0.25) + hash01 (fi * 13.7) * (pi * 0.5)
+    else pi * 0.5 + hash01 (fi * 13.7) * pi
+  spawnR =
+    if onRight then f.radius * (1.1 + hash01 (fi * 7.31) * 0.5)
+    else f.radius * (1.4 + hash01 (fi * 7.31) * 1.6)
   floorY = -f.length / 2.0
   -- Slow inward drift during the floor phase so the disc looks like it's
   -- slowly being pulled toward the tip, not statically scattered.
