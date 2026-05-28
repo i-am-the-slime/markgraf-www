@@ -951,8 +951,7 @@ arrowsLayerComponent = component "ArrowsLayer" \props -> Hooks.do
   initSt = { hold: Nothing :: Maybe HoldState, t: 0.0 }
 
 renderArrows :: Number -> Maybe HoldState -> Array JSX
-renderArrows _ Nothing = []
-renderArrows t (Just h) = arrows t h
+renderArrows _ _ = []
 
 arrows :: Number -> HoldState -> Array JSX
 arrows t h = completed <> [ growing ]
