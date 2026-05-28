@@ -45,15 +45,8 @@
   --color-accent-foreground: hsl(40 25% 96%);
 
   /* HDR / wide-gamut accent. sRGB browsers will clamp; on P3 displays the
-     orange punches noticeably hotter than #ff3b1a can reach. */
+     :root override below punches noticeably hotter than #ff3b1a can reach. */
   --color-brand: #ff3b1a;
-}
-
-@supports (color: color(display-p3 1 0 0)) {
-  @theme {
-    --color-brand: color(display-p3 1 0.2 0.05);
-  }
-}
 
   --font-sans: "Ilisarniq", ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: "Commit Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -62,6 +55,25 @@
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
+}
+
+@supports (color: color(display-p3 1 0 0)) {
+  :root {
+    --color-brand: color(display-p3 1 0.2 0.05);
+  }
+}
+
+/* True HDR path: P3 values above 1.0 paint into the display's HDR headroom,
+   but only when the element opts in via dynamic-range-limit. Safari 17.2+
+   honours this on HDR displays; SDR browsers ignore the property and clamp
+   the colour to the [0,1] cube, so the previous block remains the fallback. */
+@supports (dynamic-range-limit: no-limit) {
+  :root {
+    --color-brand: color(display-p3 1.6 0.35 0.12);
+  }
+  body {
+    dynamic-range-limit: no-limit;
+  }
 }
 
 /* VHS chromatic-aberration title effect — adapted from
