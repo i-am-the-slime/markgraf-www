@@ -1162,6 +1162,121 @@ labHangSection =
     , spreadFolio "lab-c" "hang"
     ]
 
+-- Editorial glyphs used as marginalia / section ornaments. Stark, monochrome,
+-- 24px boxes — no library, just hand-drawn paths so they sit alongside Sinistre
+-- without fighting it.
+glyph :: String -> JSX
+glyph kind =
+  svg
+    { width: "28"
+    , height: "28"
+    , viewBox: "0 0 24 24"
+    , fill: "none"
+    , stroke: "currentColor"
+    , strokeWidth: "1.5"
+    , strokeLinecap: "square"
+    }
+    case kind of
+      "asterisk" ->
+        [ path { d: "M12 4v16M4 12h16M5.6 5.6l12.8 12.8M5.6 18.4l12.8-12.8" } noJSX ]
+      "arrow" ->
+        [ path { d: "M4 12h16M14 6l6 6-6 6" } noJSX ]
+      "ring" ->
+        [ path { d: "M12 4a8 8 0 100 16 8 8 0 000-16z" } noJSX ]
+      "square" ->
+        [ path { d: "M4 4h16v16H4z" } noJSX ]
+      "plus" ->
+        [ path { d: "M12 4v16M4 12h16" } noJSX ]
+      _ ->
+        [ path { d: "M4 12h16" } noJSX ]
+
+labIconsSection :: JSX
+labIconsSection =
+  H.section
+    { id: "lab-icons"
+    , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
+    }
+    [ div { className: "max-w-6xl mx-auto w-full h-full flex flex-col justify-center gap-14" }
+        [ sectionLabel "lab-d / iconography"
+        , div { className: "grid grid-cols-12 gap-10 items-start" }
+            [ div { className: "col-span-12 md:col-span-7" }
+                [ h2
+                    { className: "text-[10vw] sm:text-[6vw] leading-[0.9] tracking-[-0.025em] font-bold max-w-[12ch]"
+                    , style: css { fontFamily: "'Sinistre', serif" }
+                    }
+                    "Marks in the margin."
+                ]
+            , div { className: "col-span-12 md:col-span-4 md:col-start-9 flex flex-col gap-3" }
+                [ div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff3b1a] pb-3 border-b border-[#2a3142]" }
+                    [ text "Note" ]
+                , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
+                    [ text "A glyph carries weight. Use it once. Use it well." ]
+                ]
+            ]
+        , div { className: "grid grid-cols-1 sm:grid-cols-3 gap-px bg-[#2a3142] border border-[#2a3142]" }
+            [ iconCard "asterisk" "Layout" "ELK does the math. You write the edges."
+            , iconCard "arrow" "Morphs" "Nodes arrive. Edges resolve. The picture lands."
+            , iconCard "ring" "Camera" "Each section gets an arm. The arm picks the frame."
+            ]
+        ]
+    , spreadFolio "lab-d" "iconography"
+    ]
+
+iconCard :: String -> String -> String -> JSX
+iconCard kind heading body =
+  div { className: "bg-[#0a0e1a] p-8 flex flex-col gap-6 min-h-[180px]" }
+    [ div { className: "text-[#ff3b1a]" } [ glyph kind ]
+    , div { className: "flex flex-col gap-2" }
+        [ div
+            { className: "text-2xl font-bold tracking-tight"
+            , style: css { fontFamily: "'Sinistre', serif" }
+            }
+            [ text heading ]
+        , p { className: "text-[14px] leading-[1.5] text-[#8a94a8]" }
+            [ text body ]
+        ]
+    ]
+
+labPhotoSection :: JSX
+labPhotoSection =
+  H.section
+    { id: "lab-photo"
+    , className: "relative snap-start snap-always h-screen overflow-hidden z-10"
+    }
+    [ div { className: "absolute inset-0 grid grid-cols-12" }
+        [ div { className: "col-span-12 md:col-span-7 relative bg-[#11162a] overflow-hidden" }
+            [ img
+                { src: "/markgraf-www/mascot/christoph-source.png"
+                , alt: "Christoph"
+                , className: "absolute inset-0 w-full h-full object-cover grayscale contrast-125"
+                , style: css { filter: "grayscale(1) contrast(1.15)" }
+                }
+            , div
+                { className: "absolute bottom-6 left-6 font-mono text-[10px] uppercase tracking-[0.3em] text-[#f5f1e8]/70"
+                }
+                [ text "fig. 01 — christoph, source" ]
+            ]
+        , div { className: "col-span-12 md:col-span-5 flex flex-col justify-center px-8 sm:px-12 py-12 gap-10" }
+            [ sectionLabel "lab-e / photo"
+            , h2
+                { className: "text-[9vw] sm:text-[5vw] leading-[0.9] tracking-[-0.025em] font-bold"
+                , style: css { fontFamily: "'Sinistre', serif" }
+                }
+                "The mascot."
+            , div { className: "flex flex-col gap-4 max-w-[34ch]" }
+                [ p
+                    { className: "text-[18px] leading-[1.5] text-[#e8e4d8] italic"
+                    , style: css { fontFamily: "'Sinistre', serif", fontWeight: "300" }
+                    }
+                    [ text "His name is Christoph. He keeps the source." ]
+                , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
+                    [ text "He does not draw. He does not animate. He waits for the compiler. The compiler does the work." ]
+                ]
+            ]
+        ]
+    , spreadFolio "lab-e" "photo"
+    ]
+
 sectionLabel :: String -> JSX
 sectionLabel label =
   div { className: "flex items-center gap-4 mb-8 font-mono text-[10px] uppercase tracking-[0.35em]" }
