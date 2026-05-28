@@ -82,6 +82,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       , labHangSection
       , labIconsSection
       , labPhotoSection
+      , labRightHangSection
       ]
 
 -- Fixed full-viewport layer that the offscreen WebGL canvas paints into. Sits
@@ -295,6 +296,7 @@ pageRail =
       , "#lab-hang"
       , "#lab-icons"
       , "#lab-photo"
+      , "#lab-right-hang"
       ]
 
 railDot :: String -> JSX
@@ -1275,6 +1277,46 @@ labPhotoSection =
             ]
         ]
     , spreadFolio "lab-e" "photo"
+    ]
+
+-- Mirror of lab-c: skinny editorial sidebar hard-left, headline hangs right.
+labRightHangSection :: JSX
+labRightHangSection =
+  H.section
+    { id: "lab-right-hang"
+    , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
+    }
+    [ div { className: "max-w-6xl mx-auto w-full h-full grid grid-cols-12 gap-6 items-center" }
+        [ div { className: "col-span-12 md:col-span-3 flex flex-col gap-6 md:pr-6 md:border-r border-[#2a3142]" }
+            [ sectionLabel "lab-f / right hang"
+            , div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#8a94a8] flex flex-col gap-1" }
+                [ div {} [ text "Issue 01" ]
+                , div {} [ text "Spring 2026" ]
+                , div {} [ text "Berlin" ]
+                ]
+            , p
+                { className: "text-[15px] leading-[1.55] text-[#c8cdd9] max-w-[24ch]"
+                , style: css { fontFamily: "'Ilisarniq', sans-serif" }
+                }
+                [ text "A short note on what the compiler does. And what it refuses to do." ]
+            , div { className: "h-px w-12 bg-[#ff3b1a]" } noJSX
+            , div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#5a6478]" }
+                [ text "by mark" ]
+            ]
+        , div { className: "col-span-12 md:col-span-9 flex flex-col gap-10" }
+            [ h2
+                { className: "text-[14vw] sm:text-[9vw] leading-[0.88] tracking-[-0.035em] font-bold"
+                , style: css { fontFamily: "'Sinistre', serif" }
+                }
+                "It draws. You write."
+            , p
+                { className: "text-[20px] sm:text-[24px] leading-[1.4] max-w-[32ch] italic text-[#e8e4d8]"
+                , style: css { fontFamily: "'Sinistre', serif", fontWeight: "300" }
+                }
+                [ text "The compiler keeps its promises. The picture moves on its own." ]
+            ]
+        ]
+    , spreadFolio "lab-f" "right-hang"
     ]
 
 sectionLabel :: String -> JSX
