@@ -473,7 +473,7 @@ helixPos t f i = { x, y, z }
 -- top, with a faster spin and a slight per-ball wobble so the cone looks
 -- turbulent. `radius` is the top width; `length` is the total height.
 tornadoPos :: Number -> Formation -> Int -> Vec3
-tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
+tornadoPos t f i = { x: wanderX + bx + jx, y: by + jy, z: wanderZ + bz + jz }
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
@@ -483,6 +483,12 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   by = u * f.length - f.length / 2.0
   bx = f.radius * funnel * cos theta
   bz = f.radius * funnel * sin theta
+  -- Whole-funnel "Tasmanian devil" wander: mismatched sines drive the cluster
+  -- across x/z in chaotic loops. Stronger near the top (u^2) so the tip pivots
+  -- on the floor while the crown whips around it.
+  wAmp = f.radius * (0.4 + u * u * 1.6)
+  wanderX = ( sin (t * 1.3) + sin (t * 0.71 + 1.7) * 0.7 + sin (t * 2.27 - 0.4) * 0.4 ) * wAmp
+  wanderZ = ( cos (t * 1.07 + 0.9) + cos (t * 0.83 - 1.2) * 0.7 + cos (t * 1.91 + 2.1) * 0.4 ) * wAmp
   -- Turbulence: three mismatched-frequency sines per axis, each with its own
   -- phase keyed off `fi` so neighbouring balls jitter independently. Scaled
   -- by funnel so the bottom (tight) stays cleaner and the top spews wider.
