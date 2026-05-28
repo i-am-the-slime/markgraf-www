@@ -176,7 +176,7 @@ sectionStates =
     }
   , { id: "playground"
     , morph: gathered
-    , camera: home { py = -1.0, pz = 42.0, lx = -11.0, ly = -11.0, fov = 55.0 }
+    , camera: home { py = 0.0, pz = 24.0, fov = 55.0 }
     , formation: code { radius: 11.0, speed: 0.15 }
     }
   , { id: "player"
