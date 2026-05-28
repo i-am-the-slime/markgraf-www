@@ -353,6 +353,7 @@ formationPos t f i = applyDance t i basePos
     else if kindInt == 3 then helixPos t f i
     else if kindInt == 4 then wavePos t f i
     else if kindInt == 5 then tornadoPos t f i
+    else if kindInt == 6 then playButtonPos t f i
     else { x: 0.0, y: 0.0, z: 0.0 }
   kindInt = Int.round f.kind
 
@@ -554,6 +555,43 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
        + cos (t * 5.7 - fi * 0.97) * 0.6
        + cos (t * 8.9 + fi * 2.73) * 0.35
        ) * jAmp
+
+-- Right-pointing play-button outline in the x-y plane. Balls are distributed
+-- along the perimeter by cumulative arc length and scroll around it with
+-- t * speed, so each edge gets a proportional share. `radius` sets the
+-- triangle half-extent; `length` is unused.
+playButtonPos :: Number -> Formation -> Int -> Vec3
+playButtonPos t f i = pointOn d
+  where
+  fi = Int.toNumber i
+  n = Int.toNumber totalBalls
+  ax = -f.radius
+  ay = f.radius
+  bx = f.radius
+  by = 0.0
+  cx = -f.radius
+  cy = -f.radius
+  e1 = edgeLen ax ay bx by
+  e2 = edgeLen bx by cx cy
+  e3 = edgeLen cx cy ax ay
+  total = e1 + e2 + e3
+  uRaw = fi / n + t * f.speed * 0.05
+  u = uRaw - floor uRaw
+  d = u * total
+  pointOn s =
+    if s < e1 then onEdge ax ay bx by (s / e1)
+    else if s < e1 + e2 then onEdge bx by cx cy ((s - e1) / e2)
+    else onEdge cx cy ax ay ((s - e1 - e2) / e3)
+
+edgeLen :: Number -> Number -> Number -> Number -> Number
+edgeLen x0 y0 x1 y1 = sqrt (dx * dx + dy * dy)
+  where
+  dx = x1 - x0
+  dy = y1 - y0
+
+onEdge :: Number -> Number -> Number -> Number -> Number -> Vec3
+onEdge x0 y0 x1 y1 u =
+  { x: x0 + (x1 - x0) * u, y: y0 + (y1 - y0) * u, z: 0.0 }
 
 lerpMorph :: Effect Morph
 lerpMorph = do

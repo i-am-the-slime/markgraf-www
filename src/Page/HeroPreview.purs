@@ -74,6 +74,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       , renderSection
       , aiSection
       , embedSection
+      , playSection
       , footerSection
       ]
 
@@ -136,6 +137,11 @@ wave fp = { kind: 4.0, radius: fp.radius, length: fp.length, speed: fp.speed, or
 tornado :: { radius :: Number, length :: Number, speed :: Number } -> FormationPose
 tornado fp = { kind: 5.0, radius: fp.radius, length: fp.length, speed: fp.speed, order: 1.0 }
 
+-- Right-pointing play-button outline. Balls trace the triangle perimeter at
+-- `speed`; `radius` is the triangle half-extent.
+playButton :: { radius :: Number, speed :: Number } -> FormationPose
+playButton fp = { kind: 6.0, radius: fp.radius, length: 0.0, speed: fp.speed, order: 1.0 }
+
 type SectionState =
   { id :: String
   , morph :: Morph
@@ -180,6 +186,11 @@ sectionStates =
     , morph: gathered
     , camera: home { pz = 28.0, fov = 70.0 }
     , formation: wave { radius: 2.4, length: 36.0, speed: 1.8 }
+    }
+  , { id: "play"
+    , morph: gathered
+    , camera: home { py = 0.0, pz = 12.0, fov = 60.0 }
+    , formation: playButton { radius: 4.5, speed: 1.0 }
     }
   , { id: "install"
     , morph: gathered
@@ -243,6 +254,7 @@ topBar =
         , navLink "#render" "render"
         , navLink "#ai" "ai"
         , navLink "#embed" "integrations"
+        , navLink "#play" "play"
         , navLink "#install" "install"
         ]
     ]
@@ -261,6 +273,7 @@ pageRail =
       , "#render"
       , "#ai"
       , "#embed"
+      , "#play"
       , "#install"
       ]
 
@@ -968,6 +981,25 @@ embedSection =
     , spreadFolio "05" "integrations"
     ]
 
+playSection :: JSX
+playSection =
+  H.section
+    { id: "play"
+    , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
+    }
+    [ div { className: "max-w-5xl mx-auto w-full" }
+        [ sectionLabel "06 / play"
+        , h2
+            { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
+            , style: css { fontFamily: "'Sinistre', serif" }
+            }
+            "Trace any shape."
+        , p { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed" }
+            "Balls follow the play-button outline. Swap the path and the swarm traces anything — SVG next."
+        ]
+    , spreadFolio "06" "play"
+    ]
+
 embedCard :: String -> String -> JSX
 embedCard heading body =
   div { className: "bg-[#11162260] backdrop-blur-sm border border-[#2a3142] rounded-lg p-6 hover:border-[#ff3b1a] hover:bg-[#1a1f2e] transition-colors cursor-default" }
@@ -1009,7 +1041,7 @@ footerSection =
             , footerLink "https://discord.gg/tKfGrPYx" "discord"
             ]
         ]
-    , spreadFolio "06" "install"
+    , spreadFolio "07" "install"
     ]
 
 footerLink :: String -> String -> JSX
