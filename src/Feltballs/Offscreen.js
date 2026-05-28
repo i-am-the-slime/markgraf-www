@@ -58,14 +58,9 @@ export const setupFeltballsImpl = (pixelBudget) => (canvas) => () => {
   // Periodically nudge the worker to start a chain from a random ball — the
   // scene itself doesn't take user input anymore. Only fires while visible
   // (we set/clear the interval from the IntersectionObserver below).
-  let chainTimer = null
-  const startChainTicker = () => {
-    if (chainTimer) return
-    chainTimer = setInterval(() => post("startChain", {}), 4500)
-  }
-  const stopChainTicker = () => {
-    if (chainTimer) { clearInterval(chainTimer); chainTimer = null }
-  }
+  // Chain visual is disabled scene-side; don't fire chain ticks either.
+  const startChainTicker = () => {}
+  const stopChainTicker = () => {}
 
   // Pause R3F's frameloop when the canvas scrolls off-screen — the worker
   // already accepts a {type:"props"} message and re-`root.configure`s with it.
