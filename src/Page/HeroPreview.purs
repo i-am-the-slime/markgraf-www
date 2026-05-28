@@ -457,7 +457,7 @@ playgroundView pp =
                     { className: "text-3xl sm:text-5xl font-bold tracking-tight leading-[0.95] max-w-2xl"
                     , style: css { fontFamily: "'Sinistre', serif" }
                     }
-                    "“A few words are worth a thousand pictures.”"
+                    "Try it out"
                 ]
             ]
         , exampleStrip pp.src pp.setSrc
