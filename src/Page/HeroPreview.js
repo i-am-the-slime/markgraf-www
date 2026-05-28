@@ -36,28 +36,40 @@ export const sectionLabelComponent = ({ label }) => {
 
   useEffect(() => {
     if (!inView) return;
-    let frame = 0;
-    const stepsPerChar = 3;
-    const total = upper.length * stepsPerChar;
-    const id = setInterval(() => {
-      frame += 1;
-      const reveal = Math.floor(frame / stepsPerChar);
-      let out = "";
-      for (let i = 0; i < upper.length; i += 1) {
-        const ch = upper[i];
-        if (i < reveal || literal(ch)) {
-          out += ch;
-        } else {
-          out += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+    let id = null;
+    setText(" ".repeat(upper.length));
+    const tick = 40;
+    const startStagger = 90;
+    const scrambleDuration = 550;
+    const lastEnd = (upper.length - 1) * startStagger + scrambleDuration;
+    const start = setTimeout(() => {
+      let elapsed = 0;
+      id = setInterval(() => {
+        elapsed += tick;
+        let out = "";
+        for (let i = 0; i < upper.length; i += 1) {
+          const ch = upper[i];
+          if (literal(ch)) {
+            out += ch;
+          } else if (elapsed < i * startStagger) {
+            out += " ";
+          } else if (elapsed >= i * startStagger + scrambleDuration) {
+            out += ch;
+          } else {
+            out += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+          }
         }
-      }
-      setText(out);
-      if (frame >= total) {
-        setText(upper);
-        clearInterval(id);
-      }
-    }, 32);
-    return () => clearInterval(id);
+        setText(out);
+        if (elapsed >= lastEnd) {
+          setText(upper);
+          clearInterval(id);
+        }
+      }, tick);
+    }, 770);
+    return () => {
+      clearTimeout(start);
+      if (id) clearInterval(id);
+    };
   }, [inView, upper]);
 
   return React.createElement(
@@ -68,14 +80,14 @@ export const sectionLabelComponent = ({ label }) => {
         "flex items-center gap-4 mb-8 font-mono text-[10px] uppercase tracking-[0.35em]",
     },
     React.createElement(motion.span, {
-      className: "h-px bg-[#ff3b1a] block",
-      initial: { width: 0 },
-      animate: { width: inView ? 40 : 0 },
-      transition: { duration: 0.35, ease: [0.65, 0, 0.35, 1] },
+      className: "h-px w-10 bg-brand block origin-left",
+      initial: { scaleX: 0 },
+      animate: { scaleX: inView ? 1 : 0 },
+      transition: { duration: 0.4, delay: 0.35, ease: [0.65, 0, 0.35, 1] },
     }),
     React.createElement(
       "span",
-      { className: "text-[#ff3b1a]" },
+      { className: "text-brand" },
       text,
     ),
   );
