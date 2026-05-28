@@ -443,15 +443,12 @@ tornadoPos t f i = { x, y, z }
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
-  turns = 6.0
   u = fi / n
+  funnel = 0.2 + u
+  theta = 2.0 * pi * 5.0 * fi / n + t * f.speed
   y = u * f.length - f.length / 2.0
-  funnel = 0.15 + u * u
-  wobble = 1.0 + sin (t * 2.1 + fi * 0.37) * 0.12
-  r = f.radius * funnel * wobble
-  theta = 2.0 * pi * turns * u + t * f.speed * (1.6 + (1.0 - u) * 0.8)
-  x = r * cos theta
-  z = r * sin theta
+  x = f.radius * funnel * cos theta
+  z = f.radius * funnel * sin theta
 
 lerpMorph :: Effect Morph
 lerpMorph = do
