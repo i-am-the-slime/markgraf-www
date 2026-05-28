@@ -894,7 +894,7 @@ noiseFrag =
     return fract((p3.x + p3.y) * p3.z);
   }
   void main(){
-    vec2 c = gl_FragCoord.xy + vec2(sin(u_time*0.1), cos(u_time*0.13));
+    vec2 c = floor((gl_FragCoord.xy + vec2(sin(u_time*0.1), cos(u_time*0.13))) / 3.0);
     float u1 = max(hash(c), 0.0001);
     float u2 = hash(c + vec2(1.0));
     float n = sqrt(-2.0 * log(u1)) * cos(6.28318530718 * u2);
