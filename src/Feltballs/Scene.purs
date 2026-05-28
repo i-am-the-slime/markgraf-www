@@ -486,7 +486,7 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   -- Turbulence: three mismatched-frequency sines per axis, each with its own
   -- phase keyed off `fi` so neighbouring balls jitter independently. Scaled
   -- by funnel so the bottom (tight) stays cleaner and the top spews wider.
-  jAmp = funnel * f.radius * 0.18
+  jAmp = u * u * u * f.radius * 0.6
   jx = ( sin (t * 3.7 + fi * 1.13)
        + sin (t * 5.1 - fi * 0.71) * 0.6
        + sin (t * 8.3 + fi * 2.37) * 0.35
