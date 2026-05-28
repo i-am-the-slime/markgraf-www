@@ -89,16 +89,31 @@ export const onMagazineScrollImpl = (cb) => () => {
   if (typeof window === "undefined") return () => {};
   const el = document.getElementById("magazine");
   if (!el) return () => {};
+  let lastX = 0;
   const fire = () => {
     const vh = window.innerHeight || 1;
+    const vw = window.innerWidth || 1;
     const p = Math.max(0, Math.min(1, el.scrollTop / vh));
+    const preview = document.getElementById("markgraf-preview");
+    const rect = preview ? preview.getBoundingClientRect() : null;
+    // rect.left already includes the current transform (lastX), so subtract it
+    // to recover the untransformed natural center of the preview cell.
+    const naturalCenter = rect
+      ? (rect.left - lastX) + rect.width / 2
+      : vw / 2;
+    const offsetToCenter = vw / 2 - naturalCenter;
+    const x = offsetToCenter * (1 - p);
     const y = (-0.95 + 0.95 * p) * vh;
-    const x = -280 + 280 * p;
+    lastX = x;
     cb({ x, y })();
   };
   el.addEventListener("scroll", fire, { passive: true });
+  window.addEventListener("resize", fire, { passive: true });
   fire();
-  return () => el.removeEventListener("scroll", fire);
+  return () => {
+    el.removeEventListener("scroll", fire);
+    window.removeEventListener("resize", fire);
+  };
 };
 
 // Forward a typed message to the feltballs worker. The offscreen setup
