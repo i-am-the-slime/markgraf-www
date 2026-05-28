@@ -521,8 +521,9 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   suckEnd = 0.4
   helixU = clamp01 ((u - suckEnd) / (1.0 - suckEnd))
   turns = 2.5
-  -- Curved trumpet: quadratic keeps the tip pointy and flares the crown.
-  funnel = 0.05 + helixU * helixU * 1.3
+  -- Bell-shaped funnel: walls bow outward like )(. sqrt gives a pointy tip
+  -- with fast initial flare that eases off toward the crown.
+  funnel = 0.05 + sqrt helixU * 1.2
   helixTheta = spawnAngle + 2.0 * pi * turns * helixU
   helixX = cos helixTheta * f.radius * funnel
   helixZ = sin helixTheta * f.radius * funnel
