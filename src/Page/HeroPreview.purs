@@ -1084,25 +1084,30 @@ footerLink href label =
 parentVariants :: Motion.Variants
 parentVariants = Motion.variants
   { hidden: {}
-  , show: { transition: { staggerChildren: 0.09, delayChildren: 0.08 } }
+  , show: { transition: { staggerChildren: 0.22, delayChildren: 0.15 } }
   }
 
 itemVariants :: Motion.Variants
 itemVariants = Motion.variants
-  { hidden: { opacity: 0.0, y: 28.0 }
+  { hidden: { opacity: 0.0, y: 44.0 }
   , show:
       { opacity: 1.0
       , y: 0.0
-      , transition: { duration: 0.7, ease: "easeOut" }
+      , transition: { duration: 0.55, ease: "easeOut" }
       }
   }
 
+-- Drop through createMotionElement directly so we can pass `viewport` —
+-- not exposed in the typed MotionBaseAttributes binding. `amount: 0.5` waits
+-- until the section is half in view (snap settles), so the stagger doesn't
+-- run while the page is still mid-scroll.
 labStage :: String -> Array JSX -> JSX
 labStage cls kids =
-  Motion.div
+  Motion.createMotionElement "div"
     { className: cls
     , initial: Motion.initial (VariantLabel "hidden")
     , whileInView: Motion.whileInView (VariantLabel "show")
+    , viewport: { amount: 0.5, once: false }
     , variants: parentVariants
     }
     kids
