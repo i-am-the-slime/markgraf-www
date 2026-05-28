@@ -638,24 +638,37 @@ codePos t f i = pointOnSegs d
   c1y = 8.25 * k
   c2x = -2.25 * k
   c2y = -8.25 * k
+  -- Stroke budgets = real arc length. Gap budgets are deliberately tiny so the
+  -- few balls crossing a subpath boundary at any moment cover real geometric
+  -- distance fast — they read as a quick fly-over rather than a teleport.
   e1 = edgeLen a1x a1y a2x a2y
   e2 = edgeLen a2x a2y a3x a3y
   e3 = edgeLen b1x b1y b2x b2y
   e4 = edgeLen b2x b2y b3x b3y
   e5 = edgeLen c1x c1y c2x c2y
-  s2 = e1 + e2
-  s3 = s2 + e3
-  s4 = s3 + e4
-  total = s4 + e5
+  strokeTotal = e1 + e2 + e3 + e4 + e5
+  gap = strokeTotal * 0.04
+  -- Order: > strokes, gap, < strokes, gap, / stroke, gap (back to >).
+  s1 = e1
+  s2 = s1 + e2
+  s3 = s2 + gap
+  s4 = s3 + e3
+  s5 = s4 + e4
+  s6 = s5 + gap
+  s7 = s6 + e5
+  total = s7 + gap
   uRaw = fi / n + t * f.speed * 0.05
   u = uRaw - floor uRaw
   d = u * total
   pointOnSegs s =
-    if s < e1 then onEdge a1x a1y a2x a2y (s / e1)
-    else if s < s2 then onEdge a2x a2y a3x a3y ((s - e1) / e2)
-    else if s < s3 then onEdge b1x b1y b2x b2y ((s - s2) / e3)
-    else if s < s4 then onEdge b2x b2y b3x b3y ((s - s3) / e4)
-    else onEdge c1x c1y c2x c2y ((s - s4) / e5)
+    if s < s1 then onEdge a1x a1y a2x a2y (s / e1)
+    else if s < s2 then onEdge a2x a2y a3x a3y ((s - s1) / e2)
+    else if s < s3 then onEdge a3x a3y b1x b1y ((s - s2) / gap)
+    else if s < s4 then onEdge b1x b1y b2x b2y ((s - s3) / e3)
+    else if s < s5 then onEdge b2x b2y b3x b3y ((s - s4) / e4)
+    else if s < s6 then onEdge b3x b3y c1x c1y ((s - s5) / gap)
+    else if s < s7 then onEdge c1x c1y c2x c2y ((s - s6) / e5)
+    else onEdge c2x c2y a1x a1y ((s - s7) / gap)
 
 edgeLen :: Number -> Number -> Number -> Number -> Number
 edgeLen x0 y0 x1 y1 = sqrt (dx * dx + dy * dy)
