@@ -478,7 +478,7 @@ formationScale t f i =
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
-  uRaw = fi / n + t * 0.045
+  uRaw = fi / n + t * 0.015
   u = uRaw - floor uRaw
   -- Same phase split as tornadoPos: tiny on the floor, grow during suction,
   -- full size while climbing.
@@ -500,7 +500,7 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
-  upSpeed = 0.045
+  upSpeed = 0.015
   uRaw = fi / n + t * upSpeed
   u = uRaw - floor uRaw
   -- Per-ball spawn point on the floor — scattered angle and radius, fixed
