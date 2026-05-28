@@ -1026,14 +1026,14 @@ shapeGroups =
   pgGeo = parallelogramGeometry 1.8 1.1 0.6 0.18
   cylinderGeo = cylinderGeometry { args: [ 0.9, 0.9, 1.6, 8.0 ] }
   solidMat = meshStandardMaterial
-    { color: "#ffffff"
+    { color: "#6a6a6a"
     , roughness: 0.3
     , metalness: 0.55
-    , emissive: "#f5f1e8"
+    , emissive: "#5a5750"
     , emissiveIntensity: 0.04
     }
   wireMat = meshBasicMaterial
-    { color: "#ffffff"
+    { color: "#6a6a6a"
     , wireframe: true
     , transparent: true
     , opacity: 0.3
