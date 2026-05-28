@@ -554,8 +554,15 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   -- Suction blend: 0 while on floor, smoothly 1 once fully in the funnel.
   sRaw = clamp01 ((u - floorEnd) / (suckEnd - floorEnd))
   s = sRaw * sRaw * (3.0 - 2.0 * sRaw)
-  bx = driftX * (1.0 - s) + helixX * s
-  bz = driftZ * (1.0 - s) + helixZ * s
+  -- Figure-8 wander in the xz plane: the funnel itself walks a lemniscate.
+  -- Only the climbing portion follows the path; floor balls stay anchored in
+  -- world space and get sucked up when the tip passes near them.
+  pathW = 0.6
+  pathAmp = 1.6
+  pathX = pathAmp * sin (t * pathW)
+  pathZ = pathAmp * 0.5 * sin (2.0 * t * pathW)
+  bx = driftX * (1.0 - s) + (helixX + pathX) * s
+  bz = driftZ * (1.0 - s) + (helixZ + pathZ) * s
   by = floorY * (1.0 - s) + helixY * s
   -- Light per-ball jitter, stronger toward the top so the crown looks bushier.
   jAmp = helixU * helixU * helixU * f.radius * 0.25 * s
