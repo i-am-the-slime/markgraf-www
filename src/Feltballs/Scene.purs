@@ -2,7 +2,7 @@ module Feltballs.Scene (sceneJSX) where
 
 import Prelude
 
-import Data.Array (any, dropWhile, drop, foldl, index, last, range, snoc, uncons, zipWith)
+import Data.Array (any, dropWhile, drop, foldl, index, last, range, slice, snoc, sortWith, uncons, zipWith)
 import Data.Foldable (for_, sum, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
@@ -1005,6 +1005,13 @@ foldlEffect f z = foldl step (pure z)
   where
   step macc a = macc >>= \acc -> f acc a
 
+-- Deterministic shuffle of 0..totalBalls-1 by hash. Stable across frames so
+-- each ball index keeps the same geometry; randomises which shape category
+-- each ball ends up in so they don't appear as contiguous bands along the
+-- perimeter of a formation.
+shapeOrder :: Array Int
+shapeOrder = sortWith (\i -> hash01 (Int.toNumber i * 17.31)) (range 0 (totalBalls - 1))
+
 shapeGroups :: Array JSX
 shapeGroups =
   [ shapeGroup rrGeo solidMat 0 202
@@ -1033,7 +1040,7 @@ shapeGroups =
     }
 
   wireGroup geo startIdx count = instances { limit: count, range: count }
-    ([ geo, wireMat ] <> (wireInstance <$> range startIdx (startIdx + count - 1)))
+    ([ geo, wireMat ] <> (wireInstance <$> slice startIdx (startIdx + count) shapeOrder))
 
   wireInstance i = instance_ { ref: wireRefAt i }
 
@@ -1041,7 +1048,7 @@ shapeGroup :: JSX -> JSX -> Int -> Int -> JSX
 shapeGroup geo mat startIdx count = instances { limit: count, range: count }
   ([ geo, mat ] <> kids)
   where
-  kids = ballInstance <$> range startIdx (startIdx + count - 1)
+  kids = ballInstance <$> slice startIdx (startIdx + count) shapeOrder
 
 ballInstance :: Int -> JSX
 ballInstance i = instance_
