@@ -495,34 +495,40 @@ tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
-  upSpeed = 0.16
+  upSpeed = 0.11
   uRaw = fi / n + t * upSpeed
   u = uRaw - floor uRaw
   -- Per-ball spawn point on the floor — scattered angle and radius, fixed
   -- across the ball's lifetime so it appears to "sit" on the floor until the
   -- tornado picks it up.
   spawnAngle = hash01 (fi * 13.7) * 2.0 * pi
-  spawnR = f.radius * (1.7 + hash01 (fi * 7.31) * 1.6)
-  floorX = cos spawnAngle * spawnR
-  floorZ = sin spawnAngle * spawnR
+  spawnR = f.radius * (1.4 + hash01 (fi * 7.31) * 1.6)
   floorY = -f.length / 2.0
-  -- Helix climb destination. Angle resolved from the spawn angle so the ball
-  -- rotates into the funnel from where it started, not from a fixed phase.
-  turns = 3.0
-  funnel = 0.15 + u * 1.1
-  helixTheta = spawnAngle + 2.0 * pi * turns * u
+  -- Slow inward drift during the floor phase so the disc looks like it's
+  -- slowly being pulled toward the tip, not statically scattered.
+  driftU = clamp01 (u / floorEnd)
+  driftPull = 0.25 * driftU
+  driftX = cos spawnAngle * spawnR * (1.0 - driftPull)
+  driftZ = sin spawnAngle * spawnR * (1.0 - driftPull)
+  -- Helix climb. Parameterized by helixU so the full funnel (tip → crown)
+  -- only forms during the climb phase, giving back the pointy tip.
+  floorEnd = 0.6
+  suckEnd = 0.72
+  helixU = clamp01 ((u - suckEnd) / (1.0 - suckEnd))
+  turns = 2.5
+  funnel = 0.05 + helixU * 1.15
+  helixTheta = spawnAngle + 2.0 * pi * turns * helixU
   helixX = cos helixTheta * f.radius * funnel
   helixZ = sin helixTheta * f.radius * funnel
-  helixY = u * f.length - f.length / 2.0
-  -- Suction: balls sit on the floor for the first slice of the cycle, then
-  -- accelerate inward and upward. `s` is a smoothstep over [0..0.35].
-  sRaw = clamp01 (u / 0.35)
+  helixY = helixU * f.length - f.length / 2.0
+  -- Suction blend: 0 while on floor, smoothly 1 once fully in the funnel.
+  sRaw = clamp01 ((u - floorEnd) / (suckEnd - floorEnd))
   s = sRaw * sRaw * (3.0 - 2.0 * sRaw)
-  bx = floorX * (1.0 - s) + helixX * s
-  bz = floorZ * (1.0 - s) + helixZ * s
+  bx = driftX * (1.0 - s) + helixX * s
+  bz = driftZ * (1.0 - s) + helixZ * s
   by = floorY * (1.0 - s) + helixY * s
   -- Light per-ball jitter, stronger toward the top so the crown looks bushier.
-  jAmp = u * u * u * f.radius * 0.25
+  jAmp = helixU * helixU * helixU * f.radius * 0.25 * s
   jx = ( sin (t * 3.7 + fi * 1.13)
        + sin (t * 5.1 - fi * 0.71) * 0.6
        + sin (t * 8.3 + fi * 2.37) * 0.35
