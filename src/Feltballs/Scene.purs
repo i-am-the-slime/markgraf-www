@@ -472,26 +472,39 @@ helixPos t f i = { x, y, z }
 -- Per-formation scale multiplier. Default 1.0; the tornado tapers ball size
 -- from ~0.35× at the tip to 1.0× at the crown so the funnel looks pointy and
 -- the noisy top reads as the bulkier part.
-formationScale :: Formation -> Int -> Number
-formationScale f i =
+formationScale :: Number -> Formation -> Int -> Number
+formationScale t f i =
   if Int.round f.kind == 5 then 0.35 + u * 0.65 else 1.0
   where
-  u = Int.toNumber i / Int.toNumber totalBalls
+  fi = Int.toNumber i
+  n = Int.toNumber totalBalls
+  uRaw = fi / n + t * 0.18
+  u = uRaw - floor uRaw
 
 -- Funnel-shaped helix: radius narrows toward the bottom, widens toward the
 -- top, with a faster spin and a slight per-ball wobble so the cone looks
 -- turbulent. `radius` is the top width; `length` is the total height.
 tornadoPos :: Number -> Formation -> Int -> Vec3
-tornadoPos t f i = { x: wanderX + bx + jx, y: by + jy, z: wanderZ + bz + jz }
+tornadoPos t f i = { x: wanderX + bx + ejectX + jx, y: by + jy, z: wanderZ + bz + ejectZ + jz }
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
-  u = fi / n
+  -- Each ball rides the funnel from bottom to top, wrapping around. Phase is
+  -- offset by fi/n so the column stays evenly populated.
+  upSpeed = 0.18
+  uRaw = fi / n + t * upSpeed
+  u = uRaw - floor uRaw
   funnel = 0.2 + u
   theta = 2.0 * pi * 5.0 * fi / n + t * f.speed
   by = u * f.length - f.length / 2.0
   bx = f.radius * funnel * cos theta
   bz = f.radius * funnel * sin theta
+  -- Ejection: top 18% of the climb spews radially outward before wrap-back,
+  -- so the crown looks like it's flinging debris out.
+  ejectU = max 0.0 ((u - 0.82) / 0.18)
+  ejectAmp = ejectU * ejectU * f.radius * 1.4
+  ejectX = cos theta * ejectAmp
+  ejectZ = sin theta * ejectAmp
   -- Whole-funnel "Tasmanian devil" wander: mismatched sines drive the cluster
   -- across x/z in chaotic loops. Stronger near the top (u^2) so the tip pivots
   -- on the floor while the crown whips around it.
@@ -557,7 +570,7 @@ paintBall t morph formation i = do
   popMul <- popMultiplierAt t i
   let envBlended = envelope * (1.0 - ord) + ord
       scale = baseScale * envBlended * popMul * formScale
-      formScale = 1.0 + (formationScale formation i - 1.0) * ord
+      formScale = 1.0 + (formationScale t formation i - 1.0) * ord
   readRefMaybe (ballRefAt i) # withJust \o -> do
     applyProps o
       { position: [ px, py, pz ]
