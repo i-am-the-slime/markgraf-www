@@ -23,15 +23,16 @@ export const sectionLabelComponent = ({ label }) => {
 
   useEffect(() => {
     if (!ref.current) return;
+    const root = document.getElementById("magazine");
     const obs = new IntersectionObserver(
       (entries) => {
         for (const e of entries) setInView(e.isIntersecting);
       },
-      { threshold: 0.5 },
+      { root, threshold: 0.5 },
     );
     obs.observe(ref.current);
     return () => obs.disconnect();
-  }, []);
+  }, [label]);
 
   useEffect(() => {
     if (!inView) return;
@@ -69,7 +70,7 @@ export const sectionLabelComponent = ({ label }) => {
     React.createElement(motion.span, {
       className: "h-px bg-[#ff3b1a] block",
       initial: { width: 0 },
-      animate: { width: inView ? "2.5rem" : 0 },
+      animate: { width: inView ? 40 : 0 },
       transition: { duration: 0.35, ease: [0.65, 0, 0.35, 1] },
     }),
     React.createElement(

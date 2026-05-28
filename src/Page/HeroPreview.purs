@@ -515,7 +515,7 @@ scrim :: Boolean -> JSX
 scrim isActive =
   div
     { className:
-        "fixed inset-0 z-[1] bg-black/55 backdrop-blur-sm transition-opacity duration-700 pointer-events-none "
+        "fixed inset-0 z-[1] bg-black/30 backdrop-blur-sm transition-opacity duration-700 pointer-events-none "
           <> (if isActive then "opacity-100" else "opacity-0")
     }
     noJSX

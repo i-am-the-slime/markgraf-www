@@ -1033,7 +1033,7 @@ shapeGroups =
     , emissiveIntensity: 0.04
     }
   wireMat = meshBasicMaterial
-    { color: "#2a2a2a"
+    { color: "#4a4a4a"
     , wireframe: true
     , transparent: true
     , opacity: 0.3
