@@ -116,6 +116,33 @@ export const onMagazineScrollImpl = (cb) => () => {
   };
 };
 
+// Periodically toggle `vhs-on` on elements with the given class so the VHS
+// title effect bursts for ~1.6s every 40-70s.
+export const installVhsBurst = (className) => () => {
+  if (typeof window === "undefined") return () => {};
+  let burstTimeout = null;
+  let scheduleTimeout = null;
+  const scheduleNext = () => {
+    const delayMs = (40 + Math.random() * 30) * 1000;
+    scheduleTimeout = setTimeout(burst, delayMs);
+  };
+  const burst = () => {
+    const targets = document.getElementsByClassName(className);
+    for (const t of targets) t.classList.add("vhs-on");
+    burstTimeout = setTimeout(() => {
+      for (const t of targets) t.classList.remove("vhs-on");
+      scheduleNext();
+    }, 1600);
+  };
+  scheduleNext();
+  return () => {
+    if (burstTimeout) clearTimeout(burstTimeout);
+    if (scheduleTimeout) clearTimeout(scheduleTimeout);
+    const targets = document.getElementsByClassName(className);
+    for (const t of targets) t.classList.remove("vhs-on");
+  };
+};
+
 // Forward a typed message to the feltballs worker. The offscreen setup
 // installs window.__feltballsPost; if it hasn't yet, the call is a no-op and
 // the next ratio fire will retry naturally.

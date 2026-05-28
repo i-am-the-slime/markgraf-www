@@ -52,6 +52,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
   ratiosRef <- useRef ([] :: Array { id :: String, ratio :: Number })
   activeRef <- useRef ""
   activeSection /\ setActiveSection <- useState' "page-hero"
+  useEffectOnce $ installVhsBurst "vhs-text-wrap"
   useEffectOnce $
     observeRatios "magazine" (_.id <$> sectionStates) \id ratio -> do
       ratios <- readRef ratiosRef
@@ -231,7 +232,7 @@ heroLockup =
   div { className: "absolute inset-0 z-10 flex flex-col items-center justify-start pt-[12vh] pointer-events-none px-6" }
     [ div { className: "flex flex-col items-center gap-10 max-w-3xl text-center" }
         [ h1
-            { className: "vhs-text-wrap pointer-events-auto text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold"
+            { className: "vhs-text-wrap text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold"
             , style: css
                 { fontFamily: "'Sinistre', serif"
                 , textShadow: "0 0 80px rgba(10,14,26,0.7)"
@@ -1084,21 +1085,19 @@ footerLink href label =
 parentVariants :: Motion.Variants
 parentVariants = Motion.variants
   { hidden: {}
-  , show: { transition: { staggerChildren: 0.22, delayChildren: 0.15 } }
+  , show: { transition: { staggerChildren: 0.06, delayChildren: 0.0 } }
   }
 
 itemVariants :: Motion.Variants
 itemVariants = Motion.variants
-  { hidden: { opacity: 0.0, y: 60.0, filter: "blur(8px)" }
+  { hidden: { y: 18.0 }
   , show:
-      { opacity: 1.0
-      , y: 0.0
-      , filter: "blur(0px)"
+      { y: 0.0
       , transition:
           { type: "spring"
-          , stiffness: 70.0
-          , damping: 14.0
-          , mass: 0.9
+          , stiffness: 220.0
+          , damping: 22.0
+          , mass: 0.6
           }
       }
   }
@@ -1406,6 +1405,7 @@ foreign import lookupNode :: String -> Effect (Nullable Node)
 foreign import onElementResize :: String -> ({ w :: Number, h :: Number } -> Effect Unit) -> Effect (Effect Unit)
 foreign import onIntersect :: String -> (Boolean -> Effect Unit) -> Effect (Effect Unit)
 foreign import installScrollSync :: String -> String -> Effect (Effect Unit)
+foreign import installVhsBurst :: String -> Effect (Effect Unit)
 
 -- Picks the most-visible section from the ratios so far and, when it changes,
 -- posts its declared morph + camera arm to the worker.

@@ -110,20 +110,20 @@
   animation: vhs-lines 2.5s infinite;
   animation-play-state: paused;
 }
-.vhs-text-wrap:hover .vhs-text {
+.vhs-text-wrap.vhs-on .vhs-text {
   color: #ff2a2a;
   mix-blend-mode: screen;
   filter: blur(1px);
   animation-play-state: running;
 }
-.vhs-text-wrap:hover .vhs-text::before,
-.vhs-text-wrap:hover .vhs-text::after {
+.vhs-text-wrap.vhs-on .vhs-text::before,
+.vhs-text-wrap.vhs-on .vhs-text::after {
   opacity: 1;
 }
-.vhs-text-wrap:hover .vhs-text::after {
+.vhs-text-wrap.vhs-on .vhs-text::after {
   animation-play-state: running;
 }
-.vhs-text-wrap:hover::after {
+.vhs-text-wrap.vhs-on::after {
   opacity: 1;
   animation-play-state: running;
 }
