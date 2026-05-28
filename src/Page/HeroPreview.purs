@@ -30,6 +30,7 @@ import Yoga.React.DOM.HTML.Button (button)
 import Yoga.React.DOM.HTML.Code (code) as H
 import Yoga.React.DOM.HTML.Div (div)
 import Yoga.React.DOM.HTML.H (h1, h2)
+import Yoga.React.DOM.HTML.Img (img)
 import Yoga.React.DOM.HTML.Main (main)
 import Yoga.React.DOM.HTML.Nav (nav)
 import Yoga.React.DOM.HTML.P (p)
@@ -197,7 +198,7 @@ sectionStates =
   , { id: "play"
     , morph: gathered
     , camera: home { py = 0.0, pz = 18.0, fov = 55.0 }
-    , formation: code { radius: 14.0, speed: 0.3 }
+    , formation: code { radius: 14.0, speed: 0.15 }
     }
   , { id: "install"
     , morph: gathered
@@ -1088,11 +1089,11 @@ labColumnsSection =
             , style: css { fontFamily: "'Ilisarniq', sans-serif" }
             }
             [ p { className: "mb-4" }
-                [ text "Markgraf is a small declarative language for short animated diagrams. You describe the nodes and the edges; markgraf works out the layout, the morphs, and the camera so the picture moves itself." ]
+                [ text "Write the edges. The compiler does the rest. Layout, morphs, camera — all from a few lines of text." ]
             , p { className: "mb-4" }
-                [ text "The compiler reads a fenced code block, builds an ELK layout, and emits an SVG together with a timeline. Embed the timeline in the player and the diagram plays back like a short film — pause, scrub, replay." ]
+                [ text "It reads a fenced block. It writes an SVG and a timeline. The player runs the timeline back like a short film. Pause it. Scrub it. Play it again." ]
             , p { className: "mb-4" }
-                [ text "The same source runs in your README, in your docs, and in your slides. No frames to draw, no tweens to author, no design tools to learn. A few lines of text and the picture follows." ]
+                [ text "The same source runs in your README. In your docs. In your slides. No frames. No tweens. No design tools." ]
             ]
         ]
     , spreadFolio "lab-a" "three-columns"
@@ -1111,15 +1112,15 @@ labQuoteSection =
                 { className: "text-[9vw] sm:text-[6vw] leading-[0.95] tracking-[-0.02em] font-bold"
                 , style: css { fontFamily: "'Sinistre', serif" }
                 }
-                [ text "“A diagram is an argument that hasn’t finished moving.”" ]
+                [ text "“Pictures should move. Words should not.”" ]
             ]
         , div { className: "md:col-span-4 md:pt-32 flex flex-col gap-6 max-w-[28ch]" }
             [ div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff3b1a] pb-3 border-b border-[#2a3142]" }
                 [ text "On motion" ]
             , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
-                [ text "Static pictures ask the reader to do the work. Animation lets the diagram explain itself: this node arrives, this edge resolves, this cluster settles." ]
+                [ text "A still picture asks the reader to do the work. A moving one explains itself. The node arrives. The edge resolves. The cluster settles." ]
             , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
-                [ text "Markgraf treats motion as the primary medium and the still frame as a fallback, not the other way around." ]
+                [ text "Motion is the medium. The still frame is the fallback." ]
             ]
         ]
     , spreadFolio "lab-b" "pull-quote"
@@ -1143,7 +1144,7 @@ labHangSection =
                 { className: "text-[22px] sm:text-[26px] leading-[1.35] max-w-[28ch] italic text-[#e8e4d8]"
                 , style: css { fontFamily: "'Sinistre', serif", fontWeight: "300" }
                 }
-                [ text "A grammar of motion for the kind of pictures that argue, explain, and refuse to sit still." ]
+                [ text "A short language for short films." ]
             ]
         , div { className: "col-span-12 md:col-span-4 md:col-start-9 flex flex-col gap-4" }
             [ div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff3b1a] pb-3 border-b border-[#2a3142]" }
