@@ -65,7 +65,6 @@
   display: inline-block;
   white-space: nowrap;
   color: inherit;
-  mix-blend-mode: screen;
   filter: blur(0);
   animation: vhs-skew 2s infinite, vhs-flash 0.04s infinite;
   animation-play-state: paused;
@@ -113,6 +112,7 @@
 }
 .vhs-text-wrap:hover .vhs-text {
   color: #ff2a2a;
+  mix-blend-mode: screen;
   filter: blur(1px);
   animation-play-state: running;
 }
