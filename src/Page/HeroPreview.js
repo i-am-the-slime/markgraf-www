@@ -141,12 +141,6 @@ export const onElementResize = (elemId) => (cb) => () => {
   return () => ro.disconnect();
 };
 
-export const writeClipboard = (text) => () => {
-  if (typeof navigator !== "undefined" && navigator.clipboard) {
-    navigator.clipboard.writeText(text);
-  }
-};
-
 // Thin shim: observe each section inside the scrolling root container, hand
 // every intersection ratio back to PureScript. All policy (which section is
 // active, when to post) lives in HeroPreview.purs.
@@ -181,10 +175,9 @@ export const onMagazineScrollImpl = (cb) => () => {
     const vh = window.innerHeight || 1;
     const vw = window.innerWidth || 1;
     const p = Math.max(0, Math.min(1, el.scrollTop / vh));
+    const progress = p;
     const preview = document.getElementById("markgraf-preview");
     const rect = preview ? preview.getBoundingClientRect() : null;
-    // rect.left already includes the current transform (lastX), so subtract it
-    // to recover the untransformed natural center of the preview cell.
     const naturalCenter = rect
       ? (rect.left - lastX) + rect.width / 2
       : vw / 2;
@@ -192,7 +185,7 @@ export const onMagazineScrollImpl = (cb) => () => {
     const x = offsetToCenter * (1 - p);
     const y = (-0.95 + 0.95 * p) * vh;
     lastX = x;
-    cb({ x, y })();
+    cb({ x, y, progress })();
   };
   el.addEventListener("scroll", fire, { passive: true });
   window.addEventListener("resize", fire, { passive: true });
@@ -201,6 +194,51 @@ export const onMagazineScrollImpl = (cb) => () => {
     el.removeEventListener("scroll", fire);
     window.removeEventListener("resize", fire);
   };
+};
+
+// Thin shim: emit normalized pixel deltaY on the magazine and let PureScript
+// drive the snap state machine. preventDefault here so the snap-mandatory
+// container doesn't fight the programmatic scroll.
+export const onMagazineWheelImpl = (cb) => () => {
+  if (typeof window === "undefined") return () => {};
+  const root = document.getElementById("magazine");
+  if (!root) return () => {};
+  const onWheel = (e) => {
+    e.preventDefault();
+    const dy = e.deltaMode === 0 ? e.deltaY : e.deltaY * 40;
+    cb({ deltaY: dy, timeStamp: e.timeStamp || performance.now() })();
+  };
+  root.addEventListener("wheel", onWheel, { passive: false });
+  return () => root.removeEventListener("wheel", onWheel);
+};
+
+// Snap the magazine to the section at `index` (clamped). Returns the index it
+// actually scrolled to, so PureScript can update its current-index ref.
+export const snapMagazineToImpl = (index) => () => {
+  if (typeof window === "undefined") return 0;
+  const root = document.getElementById("magazine");
+  if (!root) return 0;
+  const els = Array.from(root.querySelectorAll('[class*="snap-start"]'));
+  if (els.length === 0) return 0;
+  const i = Math.max(0, Math.min(els.length - 1, index));
+  els[i].scrollIntoView({ behavior: "smooth", block: "start" });
+  return i;
+};
+
+// Index of the section closest to the magazine's current scrollTop.
+export const magazineCurrentIndexImpl = () => {
+  if (typeof window === "undefined") return 0;
+  const root = document.getElementById("magazine");
+  if (!root) return 0;
+  const els = Array.from(root.querySelectorAll('[class*="snap-start"]'));
+  const top = root.scrollTop;
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < els.length; i += 1) {
+    const d = Math.abs(els[i].offsetTop - top);
+    if (d < bestDist) { bestDist = d; best = i; }
+  }
+  return best;
 };
 
 // Periodically toggle `vhs-on` on elements with the given class so the VHS

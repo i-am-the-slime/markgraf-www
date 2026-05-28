@@ -1,4 +1,4 @@
-module Components.Scene (sceneJSX, sceneComponent) where
+module Components.Scene (sceneJSX, sceneComponent, writeSceneProgress) where
 
 import Prelude
 
@@ -126,6 +126,9 @@ readSceneProgress :: Effect Number
 readSceneProgress = readCssVarImpl "--scene-progress" <#> parse
   where
   parse s = fromMaybe 0.0 (Number.fromString s)
+
+writeSceneProgress :: Number -> Effect Unit
+writeSceneProgress = writeCssVarImpl "--scene-progress" <<< show
 
 -- drei wrappers ---------------------------------------------------------------
 
@@ -375,6 +378,7 @@ foreign import mkCatmullRomCurveImpl
 foreign import curvePointAtImpl :: ThreeCurve -> Number -> Effect Vec3
 
 foreign import readCssVarImpl :: String -> Effect String
+foreign import writeCssVarImpl :: String -> String -> Effect Unit
 foreign import readCamera :: forall r. { | r } -> ThreeCamera
 foreign import cameraPosImpl :: ThreeCamera -> { x :: Number, y :: Number, z :: Number }
 foreign import setCameraPosImpl :: ThreeCamera -> Number -> Number -> Number -> Effect Unit

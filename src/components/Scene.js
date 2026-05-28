@@ -40,6 +40,11 @@ export const readCssVarImpl = (name) => () => {
   return document.documentElement.style.getPropertyValue(name)
 }
 
+export const writeCssVarImpl = (name) => (value) => () => {
+  if (typeof document === "undefined") return
+  document.documentElement.style.setProperty(name, value)
+}
+
 export const readClockElapsed = (state) => state.clock.getElapsedTime()
 
 export const readCamera = (state) => state.camera

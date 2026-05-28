@@ -2,9 +2,13 @@ module Page.Home (mkHomePage) where
 
 import Prelude
 
+import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import React.Basic (JSX)
+import Web.Clipboard as Clipboard
+import Web.HTML (window)
+import Web.HTML.Window (navigator)
 import React.Basic.Events (handler_)
 import React.Basic.Hooks (Component, component, useState')
 import React.Basic.Hooks as Hooks
@@ -247,5 +251,11 @@ logo =
     , circle { cx: "48", cy: "44", r: "9", fill: "currentColor" } ([] :: Array JSX)
     ]
 
-foreign import writeClipboard :: String -> Effect Unit
+writeClipboard :: String -> Effect Unit
+writeClipboard value = do
+  nav <- window >>= navigator
+  Clipboard.clipboard nav >>= case _ of
+    Nothing -> pure unit
+    Just cb -> void $ Clipboard.writeText value cb
+
 foreign import scheduleReset :: Effect Unit -> Effect Unit

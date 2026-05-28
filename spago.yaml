@@ -72,9 +72,12 @@ package:
     - framer-motion
     - functions
     - integers
+    - js-promise
     - lists
+    - literals
     - maybe
     - newtype
+    - nullable
     - numbers
     - prelude
     - random
@@ -85,13 +88,12 @@ package:
     - st
     - transformers
     - tuples
+    - two-or-more
     - typelevel-prelude
     - unsafe-coerce
-    - nullable
     - untagged-union
+    - web-clipboard
     - web-dom
-    - two-or-more
-    - literals
     - yoga-react-dom
   build:
     censorProjectWarnings: all
