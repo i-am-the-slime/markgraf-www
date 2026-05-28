@@ -55,7 +55,7 @@
 
 /* VHS chromatic-aberration title effect — adapted from
    https://codepen.io/shorinamaria/pen/egJmeY
-   Triggered on hover of .vhs-text-wrap. */
+   Eases in/out on hover of .vhs-text-wrap. */
 .vhs-text-wrap {
   position: relative;
   display: inline-block;
@@ -64,15 +64,33 @@
   position: relative;
   display: inline-block;
   white-space: nowrap;
+  color: inherit;
+  mix-blend-mode: screen;
+  filter: blur(0);
+  animation: vhs-skew 2s infinite, vhs-flash 0.04s infinite;
+  animation-play-state: paused;
+  transition: color 500ms ease, filter 500ms ease;
 }
 .vhs-text::before,
 .vhs-text::after {
-  content: "";
+  content: var(--vhs-text, "");
   position: absolute;
   top: 0;
   left: 0;
   mix-blend-mode: screen;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+.vhs-text::before {
+  color: #32cd32;
+  transform: translate(0.045em, -0.03em);
+}
+.vhs-text::after {
+  color: #2a6cff;
+  transform: translate(0.075em, 0);
+  animation: vhs-move 1.5s infinite;
+  animation-play-state: paused;
 }
 .vhs-text-wrap::after {
   content: "";
@@ -80,26 +98,7 @@
   inset: 0;
   pointer-events: none;
   opacity: 0;
-}
-.vhs-text-wrap:hover .vhs-text {
-  color: #ff2a2a;
-  mix-blend-mode: screen;
-  filter: blur(1px);
-  animation: vhs-skew 2s infinite, vhs-flash 0.04s infinite;
-}
-.vhs-text-wrap:hover .vhs-text::before {
-  content: var(--vhs-text, "");
-  color: #32cd32;
-  transform: translate(0.045em, -0.03em);
-}
-.vhs-text-wrap:hover .vhs-text::after {
-  content: var(--vhs-text, "");
-  color: #2a6cff;
-  transform: translate(0.075em, 0);
-  animation: vhs-move 1.5s infinite;
-}
-.vhs-text-wrap:hover::after {
-  opacity: 1;
+  transition: opacity 500ms ease;
   background: repeating-linear-gradient(
     to bottom,
     rgba(42, 108, 255, 0.18) 0,
@@ -110,6 +109,23 @@
   mix-blend-mode: screen;
   filter: blur(0.6px);
   animation: vhs-lines 2.5s infinite;
+  animation-play-state: paused;
+}
+.vhs-text-wrap:hover .vhs-text {
+  color: #ff2a2a;
+  filter: blur(1px);
+  animation-play-state: running;
+}
+.vhs-text-wrap:hover .vhs-text::before,
+.vhs-text-wrap:hover .vhs-text::after {
+  opacity: 1;
+}
+.vhs-text-wrap:hover .vhs-text::after {
+  animation-play-state: running;
+}
+.vhs-text-wrap:hover::after {
+  opacity: 1;
+  animation-play-state: running;
 }
 @keyframes vhs-skew {
   0%, 30%, 31%, 100% { transform: none; }
