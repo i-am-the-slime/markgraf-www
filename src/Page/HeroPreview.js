@@ -2,7 +2,7 @@ import { MarkgrafPlayer } from "@markgrafhq/markgraf-react";
 import { feltballsOffscreen as FeltballsOffscreen } from "../../output/Feltballs.Offscreen/index.js";
 import { sceneComponent as markgrafScene } from "../../output/Components.Scene/index.js";
 import React, { useEffect, useRef, useState } from "react";
-import { motion, useInView } from "motion/react";
+import { motion } from "motion/react";
 
 export const sceneComponent = markgrafScene;
 export const feltballsComponent = FeltballsOffscreen;
@@ -17,12 +17,24 @@ const literal = (ch) => ch === " " || ch === "/" || ch === "-";
 
 export const sectionLabelComponent = ({ label }) => {
   const ref = useRef(null);
-  const inView = useInView(ref, { amount: 0.5, once: false });
-  const [text, setText] = useState(label);
+  const [inView, setInView] = useState(false);
+  const upper = label.toUpperCase();
+  const [text, setText] = useState(upper);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) setInView(e.isIntersecting);
+      },
+      { threshold: 0.5 },
+    );
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!inView) return;
-    const upper = label.toUpperCase();
     let frame = 0;
     const stepsPerChar = 3;
     const total = upper.length * stepsPerChar;
@@ -45,7 +57,7 @@ export const sectionLabelComponent = ({ label }) => {
       }
     }, 32);
     return () => clearInterval(id);
-  }, [inView, label]);
+  }, [inView, upper]);
 
   return React.createElement(
     "div",
