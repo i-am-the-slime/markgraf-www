@@ -231,7 +231,7 @@ heroLockup =
   div { className: "absolute inset-0 z-10 flex flex-col items-center justify-start pt-[12vh] pointer-events-none px-6" }
     [ div { className: "flex flex-col items-center gap-10 max-w-3xl text-center" }
         [ h1
-            { className: "vhs-text-wrap text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold"
+            { className: "vhs-text-wrap pointer-events-auto text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold"
             , style: css
                 { fontFamily: "'Sinistre', serif"
                 , textShadow: "0 0 80px rgba(10,14,26,0.7)"
@@ -1075,7 +1075,45 @@ footerLink href label =
 -- the bottom of the magazine so existing sections are untouched. Each one
 -- tries a different idea: three-column body, pull-quote spread, hanging
 -- asymmetric headline.
+--
+-- Each lab uses framer-motion variants to fade-and-rise its top-level blocks
+-- when the section enters the viewport. The page is snap-mandatory, so the
+-- animation replays on every re-entry, which is the desired behaviour.
 -- ---------------------------------------------------------------------------
+
+parentVariants :: Motion.Variants
+parentVariants = Motion.variants
+  { hidden: {}
+  , show: { transition: { staggerChildren: 0.09, delayChildren: 0.08 } }
+  }
+
+itemVariants :: Motion.Variants
+itemVariants = Motion.variants
+  { hidden: { opacity: 0.0, y: 28.0 }
+  , show:
+      { opacity: 1.0
+      , y: 0.0
+      , transition: { duration: 0.7, ease: "easeOut" }
+      }
+  }
+
+labStage :: String -> Array JSX -> JSX
+labStage cls kids =
+  Motion.div
+    { className: cls
+    , initial: Motion.initial (VariantLabel "hidden")
+    , whileInView: Motion.whileInView (VariantLabel "show")
+    , variants: parentVariants
+    }
+    kids
+
+labItem :: String -> Array JSX -> JSX
+labItem cls kids =
+  Motion.div
+    { className: cls
+    , variants: itemVariants
+    }
+    kids
 
 labColumnsSection :: JSX
 labColumnsSection =
@@ -1083,22 +1121,30 @@ labColumnsSection =
     { id: "lab-columns"
     , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-6xl mx-auto w-full h-full flex flex-col justify-center gap-12" }
-        [ sectionLabel "lab-a / three columns"
-        , h2
-            { className: "text-[10vw] sm:text-[6.5vw] leading-[0.88] tracking-[-0.03em] font-bold max-w-[14ch]"
-            , style: css { fontFamily: "'Sinistre', serif" }
-            }
-            "A few words, a thousand pictures."
-        , div
-            { className: "columns-1 sm:columns-2 lg:columns-3 gap-10 text-[15px] leading-[1.6] text-[#c8cdd9]"
-            , style: css { fontFamily: "'Ilisarniq', sans-serif" }
-            }
-            [ p { className: "mb-4" }
+    [ labStage "max-w-6xl mx-auto w-full h-full flex flex-col justify-center gap-12"
+        [ labItem "" [ sectionLabel "lab-a / three columns" ]
+        , labItem "" $
+            [ h2
+                { className: "text-[10vw] sm:text-[6.5vw] leading-[0.88] tracking-[-0.03em] font-bold max-w-[14ch]"
+                , style: css { fontFamily: "'Sinistre', serif" }
+                }
+                "A few words, a thousand pictures."
+            ]
+        , labItem "columns-1 sm:columns-2 lg:columns-3 gap-10 text-[15px] leading-[1.6] text-[#c8cdd9]"
+            [ p
+                { className: "mb-4"
+                , style: css { fontFamily: "'Ilisarniq', sans-serif" }
+                }
                 [ text "Write the edges. The compiler does the rest. Layout, morphs, camera — all from a few lines of text." ]
-            , p { className: "mb-4" }
+            , p
+                { className: "mb-4"
+                , style: css { fontFamily: "'Ilisarniq', sans-serif" }
+                }
                 [ text "It reads a fenced block. It writes an SVG and a timeline. The player runs the timeline back like a short film. Pause it. Scrub it. Play it again." ]
-            , p { className: "mb-4" }
+            , p
+                { className: "mb-4"
+                , style: css { fontFamily: "'Ilisarniq', sans-serif" }
+                }
                 [ text "The same source runs in your README. In your docs. In your slides. No frames. No tweens. No design tools." ]
             ]
         ]
@@ -1111,8 +1157,8 @@ labQuoteSection =
     { id: "lab-quote"
     , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16 flex items-center"
     }
-    [ div { className: "max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-12 gap-10" }
-        [ div { className: "md:col-span-8 flex flex-col gap-10" }
+    [ labStage "max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-12 gap-10"
+        [ labItem "md:col-span-8 flex flex-col gap-10"
             [ sectionLabel "lab-b / pull-quote"
             , div
                 { className: "text-[9vw] sm:text-[6vw] leading-[0.95] tracking-[-0.02em] font-bold"
@@ -1120,7 +1166,7 @@ labQuoteSection =
                 }
                 [ text "“Pictures should move. Words should not.”" ]
             ]
-        , div { className: "md:col-span-4 md:pt-32 flex flex-col gap-6 max-w-[28ch]" }
+        , labItem "md:col-span-4 md:pt-32 flex flex-col gap-6 max-w-[28ch]"
             [ div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff3b1a] pb-3 border-b border-[#2a3142]" }
                 [ text "On motion" ]
             , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
@@ -1138,8 +1184,8 @@ labHangSection =
     { id: "lab-hang"
     , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-6xl mx-auto w-full h-full grid grid-cols-12 gap-6 items-center" }
-        [ div { className: "col-span-12 md:col-span-7 flex flex-col gap-10" }
+    [ labStage "max-w-6xl mx-auto w-full h-full grid grid-cols-12 gap-6 items-center"
+        [ labItem "col-span-12 md:col-span-7 flex flex-col gap-10"
             [ sectionLabel "lab-c / hang"
             , h2
                 { className: "text-[14vw] sm:text-[9vw] leading-[0.88] tracking-[-0.035em] font-bold -ml-1"
@@ -1152,7 +1198,7 @@ labHangSection =
                 }
                 [ text "A short language for short films." ]
             ]
-        , div { className: "col-span-12 md:col-span-4 md:col-start-9 flex flex-col gap-4" }
+        , labItem "col-span-12 md:col-span-4 md:col-start-9 flex flex-col gap-4"
             [ div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff3b1a] pb-3 border-b border-[#2a3142]" }
                 [ text "Standfirst" ]
             , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
@@ -1198,9 +1244,9 @@ labIconsSection =
     { id: "lab-icons"
     , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-6xl mx-auto w-full h-full flex flex-col justify-center gap-14" }
-        [ sectionLabel "lab-d / iconography"
-        , div { className: "grid grid-cols-12 gap-10 items-start" }
+    [ labStage "max-w-6xl mx-auto w-full h-full flex flex-col justify-center gap-14"
+        [ labItem "" [ sectionLabel "lab-d / iconography" ]
+        , labItem "grid grid-cols-12 gap-10 items-start"
             [ div { className: "col-span-12 md:col-span-7" }
                 [ h2
                     { className: "text-[10vw] sm:text-[6vw] leading-[0.9] tracking-[-0.025em] font-bold max-w-[12ch]"
@@ -1215,7 +1261,7 @@ labIconsSection =
                     [ text "A glyph carries weight. Use it once. Use it well." ]
                 ]
             ]
-        , div { className: "grid grid-cols-1 sm:grid-cols-3 gap-px bg-[#2a3142] border border-[#2a3142]" }
+        , labItem "grid grid-cols-1 sm:grid-cols-3 gap-px bg-[#2a3142] border border-[#2a3142]"
             [ iconCard "asterisk" "Layout" "ELK does the math. You write the edges."
             , iconCard "arrow" "Morphs" "Nodes arrive. Edges resolve. The picture lands."
             , iconCard "ring" "Camera" "Each section gets an arm. The arm picks the frame."
@@ -1245,8 +1291,8 @@ labPhotoSection =
     { id: "lab-photo"
     , className: "relative snap-start snap-always h-screen overflow-hidden z-10"
     }
-    [ div { className: "absolute inset-0 grid grid-cols-12" }
-        [ div { className: "col-span-12 md:col-span-7 relative bg-[#11162a] overflow-hidden" }
+    [ labStage "absolute inset-0 grid grid-cols-12"
+        [ labItem "col-span-12 md:col-span-7 relative bg-[#11162a] overflow-hidden"
             [ img
                 { src: "/markgraf-www/mascot/christoph-source.png"
                 , alt: "Christoph"
@@ -1258,7 +1304,7 @@ labPhotoSection =
                 }
                 [ text "fig. 01 — christoph, source" ]
             ]
-        , div { className: "col-span-12 md:col-span-5 flex flex-col justify-center px-8 sm:px-12 py-12 gap-10" }
+        , labItem "col-span-12 md:col-span-5 flex flex-col justify-center px-8 sm:px-12 py-12 gap-10"
             [ sectionLabel "lab-e / photo"
             , h2
                 { className: "text-[9vw] sm:text-[5vw] leading-[0.9] tracking-[-0.025em] font-bold"
