@@ -98,7 +98,7 @@ makeHemisphereLight sky ground intensity =
   element (threejs "HemisphereLight") { args: [ unsafeCoerce sky, unsafeCoerce ground, unsafeCoerce intensity ] }
 
 totalBalls :: Int
-totalBalls = 135
+totalBalls = 270
 
 segDuration :: Number
 segDuration = 0.45
@@ -852,12 +852,12 @@ foldlEffect f z = foldl step (pure z)
 
 shapeGroups :: Array JSX
 shapeGroups =
-  [ shapeGroup rrGeo solidMat 0 101
-  , shapeGroup pgGeo solidMat 101 27
-  , shapeGroup cylinderGeo solidMat 128 7
-  , wireGroup rrGeo 0 101
-  , wireGroup pgGeo 101 27
-  , wireGroup cylinderGeo 128 7
+  [ shapeGroup rrGeo solidMat 0 202
+  , shapeGroup pgGeo solidMat 202 54
+  , shapeGroup cylinderGeo solidMat 256 14
+  , wireGroup rrGeo 0 202
+  , wireGroup pgGeo 202 54
+  , wireGroup cylinderGeo 256 14
   ]
   where
   rrGeo = roundedRectGeometry 1.9 1.2 0.55 0.28
