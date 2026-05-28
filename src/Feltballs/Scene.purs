@@ -648,13 +648,14 @@ codePos t f i = pointOnSegs d
   e3 = edgeLen b1x b1y b2x b2y
   e4 = edgeLen b2x b2y b3x b3y
   e5 = edgeLen c1x c1y c2x c2y
-  -- Gap budgets = real arc length, so balls cross connectors at the same
-  -- speed and density as strokes. The icon becomes a closed loop; chevrons
-  -- and slash are still visible, with thin connectors between them carrying
-  -- the same flow.
-  g1 = edgeLen a3x a3y b1x b1y
-  g2 = edgeLen b3x b3y c1x c1y
-  g3 = edgeLen c2x c2y a1x a1y
+  -- Gap budgets are a fraction of real arc length. Lower fraction → fewer
+  -- balls on the connector at any time, each moving proportionally faster.
+  -- 0.2 leaves the strokes reading as the icon while still letting the eye
+  -- track individual balls flying across the gaps.
+  gapShare = 0.2
+  g1 = edgeLen a3x a3y b1x b1y * gapShare
+  g2 = edgeLen b3x b3y c1x c1y * gapShare
+  g3 = edgeLen c2x c2y a1x a1y * gapShare
   s1 = e1
   s2 = s1 + e2
   s3 = s2 + g1
