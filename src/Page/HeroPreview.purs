@@ -193,8 +193,8 @@ sectionStates =
     }
   , { id: "play"
     , morph: gathered
-    , camera: home { py = 0.0, pz = 26.0, fov = 55.0 }
-    , formation: code { radius: 8.0, speed: 0.6 }
+    , camera: home { py = 0.0, pz = 18.0, fov = 55.0 }
+    , formation: code { radius: 14.0, speed: 0.6 }
     }
   , { id: "install"
     , morph: gathered
