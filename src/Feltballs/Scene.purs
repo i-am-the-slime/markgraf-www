@@ -346,7 +346,7 @@ lerpFormation = do
 
 formationPos :: Number -> Formation -> Int -> Vec3
 formationPos t f i =
-  if kindInt == 6 then applyDanceScaled 0.18 t i basePos
+  if kindInt == 6 || kindInt == 7 then applyDanceScaled 0.15 t i basePos
   else applyDance t i basePos
   where
   basePos =
@@ -356,6 +356,7 @@ formationPos t f i =
     else if kindInt == 4 then wavePos t f i
     else if kindInt == 5 then tornadoPos t f i
     else if kindInt == 6 then playButtonPos t f i
+    else if kindInt == 7 then codePos t f i
     else { x: 0.0, y: 0.0, z: 0.0 }
   kindInt = Int.round f.kind
 
@@ -591,6 +592,57 @@ playButtonPos t f i = pointOn d
     if s < e1 then onEdge ax ay bx by (s / e1)
     else if s < e1 + e2 then onEdge bx by cx cy ((s - e1) / e2)
     else onEdge cx cy ax ay ((s - e1 - e2) / e3)
+
+-- Heroicons code-bracket icon: `>`, `<`, and a `/` slash. Three disconnected
+-- polylines totalling six segments. Balls walk all six end-to-end by cumulative
+-- arc length; the rare scroll moments where `u` crosses a subpath boundary look
+-- like a teleport but are infrequent enough at default speed to read fine.
+-- Coordinates from the SVG `d=` attribute, viewBox 24×24 → centred and scaled
+-- by `k = radius / 12` (the half-extent of the icon), with SVG y flipped to
+-- match our y-up world.
+codePos :: Number -> Formation -> Int -> Vec3
+codePos t f i = pointOnSegs d
+  where
+  fi = Int.toNumber i
+  n = Int.toNumber totalBalls
+  k = f.radius / 12.0
+  -- `>` right chevron: (17.25,6.75) → (22.5,12) → (17.25,17.25)
+  a1x = 5.25 * k
+  a1y = 5.25 * k
+  a2x = 10.5 * k
+  a2y = 0.0
+  a3x = 5.25 * k
+  a3y = -5.25 * k
+  -- `<` left chevron: (6.75,17.25) → (1.5,12) → (6.75,6.75)
+  b1x = -5.25 * k
+  b1y = -5.25 * k
+  b2x = -10.5 * k
+  b2y = 0.0
+  b3x = -5.25 * k
+  b3y = 5.25 * k
+  -- `/` slash: (14.25,3.75) → (9.75,20.25)
+  c1x = 2.25 * k
+  c1y = 8.25 * k
+  c2x = -2.25 * k
+  c2y = -8.25 * k
+  e1 = edgeLen a1x a1y a2x a2y
+  e2 = edgeLen a2x a2y a3x a3y
+  e3 = edgeLen b1x b1y b2x b2y
+  e4 = edgeLen b2x b2y b3x b3y
+  e5 = edgeLen c1x c1y c2x c2y
+  s2 = e1 + e2
+  s3 = s2 + e3
+  s4 = s3 + e4
+  total = s4 + e5
+  uRaw = fi / n + t * f.speed * 0.05
+  u = uRaw - floor uRaw
+  d = u * total
+  pointOnSegs s =
+    if s < e1 then onEdge a1x a1y a2x a2y (s / e1)
+    else if s < s2 then onEdge a2x a2y a3x a3y ((s - e1) / e2)
+    else if s < s3 then onEdge b1x b1y b2x b2y ((s - s2) / e3)
+    else if s < s4 then onEdge b2x b2y b3x b3y ((s - s3) / e4)
+    else onEdge c1x c1y c2x c2y ((s - s4) / e5)
 
 edgeLen :: Number -> Number -> Number -> Number -> Number
 edgeLen x0 y0 x1 y1 = sqrt (dx * dx + dy * dy)

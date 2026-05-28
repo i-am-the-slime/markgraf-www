@@ -142,6 +142,10 @@ tornado fp = { kind: 5.0, radius: fp.radius, length: fp.length, speed: fp.speed,
 playButton :: { radius :: Number, speed :: Number } -> FormationPose
 playButton fp = { kind: 6.0, radius: fp.radius, length: 0.0, speed: fp.speed, order: 1.0 }
 
+-- Heroicons code-bracket outline (`</>`). Three disconnected polylines.
+code :: { radius :: Number, speed :: Number } -> FormationPose
+code fp = { kind: 7.0, radius: fp.radius, length: 0.0, speed: fp.speed, order: 1.0 }
+
 type SectionState =
   { id :: String
   , morph :: Morph
@@ -190,7 +194,7 @@ sectionStates =
   , { id: "play"
     , morph: gathered
     , camera: home { py = 0.0, pz = 26.0, fov = 55.0 }
-    , formation: playButton { radius: 5.0, speed: 0.6 }
+    , formation: code { radius: 8.0, speed: 0.6 }
     }
   , { id: "install"
     , morph: gathered
