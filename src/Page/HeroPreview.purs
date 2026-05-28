@@ -1089,11 +1089,17 @@ parentVariants = Motion.variants
 
 itemVariants :: Motion.Variants
 itemVariants = Motion.variants
-  { hidden: { opacity: 0.0, y: 44.0 }
+  { hidden: { opacity: 0.0, y: 60.0, filter: "blur(8px)" }
   , show:
       { opacity: 1.0
       , y: 0.0
-      , transition: { duration: 0.55, ease: "easeOut" }
+      , filter: "blur(0px)"
+      , transition:
+          { type: "spring"
+          , stiffness: 70.0
+          , damping: 14.0
+          , mass: 0.9
+          }
       }
   }
 
