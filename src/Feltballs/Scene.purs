@@ -628,10 +628,11 @@ codePos t f i = onEdge cs.x0 cs.y0 cs.x1 cs.y1 cs.u
 -- outline. Strokes return 1.0.
 codeGapBump :: Number -> Formation -> Int -> Number
 codeGapBump t f i =
-  if cs.isGap then 1.0 - 0.65 * 4.0 * cs.u * (1.0 - cs.u)
+  if cs.isGap then 1.0 - dip * sqrt (4.0 * cs.u * (1.0 - cs.u))
   else 1.0
   where
   cs = codeSegment t f i
+  dip = 0.92
 
 type CodeSeg =
   { isGap :: Boolean
