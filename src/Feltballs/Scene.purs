@@ -485,36 +485,24 @@ formationScale t f i =
 -- top, with a faster spin and a slight per-ball wobble so the cone looks
 -- turbulent. `radius` is the top width; `length` is the total height.
 tornadoPos :: Number -> Formation -> Int -> Vec3
-tornadoPos t f i = { x: wanderX + bx + ejectX + jx, y: by + jy, z: wanderZ + bz + ejectZ + jz }
+tornadoPos t f i = { x: bx + jx, y: by + jy, z: bz + jz }
   where
   fi = Int.toNumber i
   n = Int.toNumber totalBalls
-  -- Each ball rides the funnel from bottom to top, wrapping around. Phase is
-  -- offset by fi/n so the column stays evenly populated.
+  -- Each ball climbs a fixed helix from bottom to top, wrapping around. The
+  -- angle is a function of u — so balls trace the helix path itself as they
+  -- rise, rather than the whole funnel spinning around its own axis.
   upSpeed = 0.18
   uRaw = fi / n + t * upSpeed
   u = uRaw - floor uRaw
-  funnel = 0.2 + u
-  theta = 2.0 * pi * 5.0 * fi / n + t * f.speed
+  turns = 4.0
+  funnel = 0.15 + u * 1.1
+  theta = 2.0 * pi * turns * u
   by = u * f.length - f.length / 2.0
   bx = f.radius * funnel * cos theta
   bz = f.radius * funnel * sin theta
-  -- Ejection: top 18% of the climb spews radially outward before wrap-back,
-  -- so the crown looks like it's flinging debris out.
-  ejectU = max 0.0 ((u - 0.82) / 0.18)
-  ejectAmp = ejectU * ejectU * f.radius * 1.4
-  ejectX = cos theta * ejectAmp
-  ejectZ = sin theta * ejectAmp
-  -- Whole-funnel "Tasmanian devil" wander: mismatched sines drive the cluster
-  -- across x/z in chaotic loops. Stronger near the top (u^2) so the tip pivots
-  -- on the floor while the crown whips around it.
-  wAmp = f.radius * (0.4 + u * u * 1.6)
-  wanderX = ( sin (t * 1.3) + sin (t * 0.71 + 1.7) * 0.7 + sin (t * 2.27 - 0.4) * 0.4 ) * wAmp
-  wanderZ = ( cos (t * 1.07 + 0.9) + cos (t * 0.83 - 1.2) * 0.7 + cos (t * 1.91 + 2.1) * 0.4 ) * wAmp
-  -- Turbulence: three mismatched-frequency sines per axis, each with its own
-  -- phase keyed off `fi` so neighbouring balls jitter independently. Scaled
-  -- by funnel so the bottom (tight) stays cleaner and the top spews wider.
-  jAmp = u * u * u * f.radius * 0.6
+  -- Light per-ball jitter, stronger toward the top so the crown looks bushier.
+  jAmp = u * u * u * f.radius * 0.25
   jx = ( sin (t * 3.7 + fi * 1.13)
        + sin (t * 5.1 - fi * 0.71) * 0.6
        + sin (t * 8.3 + fi * 2.37) * 0.35
