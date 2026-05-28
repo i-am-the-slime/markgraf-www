@@ -318,6 +318,7 @@ formationPos t f i = applyDance t i basePos
     else if kindInt == 2 then spherePos t f i
     else if kindInt == 3 then helixPos t f i
     else if kindInt == 4 then wavePos t f i
+    else if kindInt == 5 then tornadoPos t f i
     else { x: 0.0, y: 0.0, z: 0.0 }
   kindInt = Int.round f.kind
 
@@ -433,6 +434,24 @@ helixPos t f i = { x, y, z }
   y = (fi / n) * f.length - f.length / 2.0
   x = f.radius * cos theta
   z = f.radius * sin theta
+
+-- Funnel-shaped helix: radius narrows toward the bottom, widens toward the
+-- top, with a faster spin and a slight per-ball wobble so the cone looks
+-- turbulent. `radius` is the top width; `length` is the total height.
+tornadoPos :: Number -> Formation -> Int -> Vec3
+tornadoPos t f i = { x, y, z }
+  where
+  fi = Int.toNumber i
+  n = Int.toNumber totalBalls
+  turns = 6.0
+  u = fi / n
+  y = u * f.length - f.length / 2.0
+  funnel = 0.15 + u * u
+  wobble = 1.0 + sin (t * 2.1 + fi * 0.37) * 0.12
+  r = f.radius * funnel * wobble
+  theta = 2.0 * pi * turns * u + t * f.speed * (1.6 + (1.0 - u) * 0.8)
+  x = r * cos theta
+  z = r * sin theta
 
 lerpMorph :: Effect Morph
 lerpMorph = do

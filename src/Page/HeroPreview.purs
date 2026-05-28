@@ -133,6 +133,9 @@ helix fp = { kind: 3.0, radius: fp.radius, length: fp.length, speed: fp.speed, o
 wave :: { radius :: Number, length :: Number, speed :: Number } -> FormationPose
 wave fp = { kind: 4.0, radius: fp.radius, length: fp.length, speed: fp.speed, order: 1.0 }
 
+tornado :: { radius :: Number, length :: Number, speed :: Number } -> FormationPose
+tornado fp = { kind: 5.0, radius: fp.radius, length: fp.length, speed: fp.speed, order: 1.0 }
+
 type SectionState =
   { id :: String
   , morph :: Morph
@@ -171,7 +174,7 @@ sectionStates =
   , { id: "ai"
     , morph: gathered
     , camera: home { px = 4.0, lx = 1.4, fov = 80.0 }
-    , formation: ring { radius: 7.0, speed: 0.5 }
+    , formation: tornado { radius: 6.0, length: 14.0, speed: 1.4 }
     }
   , { id: "embed"
     , morph: gathered
