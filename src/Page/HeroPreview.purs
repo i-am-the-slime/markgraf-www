@@ -1418,10 +1418,11 @@ sectionLabel label = element sectionLabelComponent { label }
 sectionLabelComponent :: ReactComponent { label :: String }
 sectionLabelComponent = unsafePerformEffect $ reactComponent "SectionLabel" \{ label } -> Hooks.do
   let upper = toUpper label
-  -- The line draws only once the scramble has finished settling, so the order
-  -- reads type-first, then-rule. Mirrors `scramble`'s own clock.
+  -- The line draws as the scramble is settling, so the order reads type-first,
+  -- then-rule. Mirrors `scramble`'s own clock, brought in by `lineLead` so the
+  -- rule overlaps the last few characters rather than waiting for full stop.
   let lastEnd = (CU.length upper - 1) * scrambleStagger + scrambleDuration
-  let lineDelay = (scrambleStartDelay + Int.toNumber lastEnd) / 1000.0
+  let lineDelay = max 0.0 ((scrambleStartDelay + Int.toNumber lastEnd) / 1000.0 - lineLead)
   nodeRef <- useRef (null :: Nullable Element.Element)
   inView /\ setInView <- useState' false
   shown /\ setShown <- useState' upper
@@ -1538,6 +1539,11 @@ scrambleDuration = 550
 
 scrambleStartDelay :: Number
 scrambleStartDelay = 770.0
+
+-- Seconds the rule's draw is brought forward from the scramble's full stop, so
+-- it starts while the last characters are still settling.
+lineLead :: Number
+lineLead = 0.6
 
 foreign import markgrafPlayerImpl :: forall a. ReactComponent { | a }
 
