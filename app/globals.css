@@ -192,16 +192,16 @@ body:has(.vhs-text-wrap.vhs-on)::after {
     background-color: #0a0e1a;
     color: var(--color-foreground);
   }
-  /* Font gate (see Layout.Root): the inline boot script adds `fonts-loading`
-     before paint and swaps it for `fonts-ready` once every webfont is in.
-     Without JS neither class is set, so the body stays visible — graceful
-     degradation rather than a blank page. */
-  html.fonts-loading body {
-    opacity: 0;
+  /* Hold the wordmark hidden for a beat, then fade it in — by the time it
+     appears Sinistre has loaded, so its font swap is never seen. The rest of
+     the page (scene, tagline) paints immediately. `both` keeps it at opacity 0
+     through the delay; with CSS disabled the title just shows normally. */
+  .hero-wordmark-in {
+    animation: hero-wordmark-in 0.7s ease-out 0.7s both;
   }
-  html.fonts-ready body {
-    opacity: 1;
-    transition: opacity 0.3s ease-out;
+  @keyframes hero-wordmark-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
   pre, code {
     font-family: var(--font-mono);
