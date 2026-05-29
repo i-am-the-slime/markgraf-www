@@ -96,6 +96,12 @@ export const sectionLabelComponent = ({ label }) => {
 // FFI: lookup a DOM node by id, returns the Element or null.
 export const lookupNode = (id) => () => document.getElementById(id);
 
+// Browser-native smooth scroll-into-view. Not in web-dom 6.0.0, so a one-line
+// shim suffices; PureScript decides which element gets it.
+export const scrollIntoViewSmoothImpl = (el) => () => {
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
 // Mirrors the textarea's scroll position onto the highlight overlay so the
 // colored spans stay aligned with the actual caret/text as the user scrolls
 // the editor.
@@ -196,48 +202,6 @@ export const onMagazineScrollImpl = (cb) => () => {
   };
 };
 
-// Thin shim: fire `cb` the first time a real mouse wheel is detected on the
-// magazine (sparse chunky deltas — not trackpad's dense fractional stream).
-// Passive listener: we never preventDefault, so native scroll behavior is
-// untouched. Policy (what to do with that signal) lives in PureScript.
-export const onMouseWheelDetectedImpl = (cb) => () => {
-  if (typeof window === "undefined") return () => {};
-  const root = document.getElementById("magazine");
-  if (!root) return () => {};
-  const isMouseWheel = (e) => {
-    if (e.deltaMode !== 0) return true;
-    const dy = Math.abs(e.deltaY);
-    return dy >= 50 && Number.isInteger(e.deltaY);
-  };
-  const onWheel = (e) => {
-    if (!isMouseWheel(e)) return;
-    root.removeEventListener("wheel", onWheel);
-    cb();
-  };
-  root.addEventListener("wheel", onWheel, { passive: true });
-  return () => root.removeEventListener("wheel", onWheel);
-};
-
-// Swap class `from` for class `to` on every descendant of #rootId that has
-// `from`. Policy-free DOM primitive.
-export const swapClassUnderImpl = (rootId) => (from) => (to) => () => {
-  if (typeof window === "undefined") return;
-  const root = document.getElementById(rootId);
-  if (!root) return;
-  for (const el of root.querySelectorAll(`.${from}`)) {
-    el.classList.remove(from);
-    el.classList.add(to);
-  }
-};
-
-// Swap class `from` for class `to` on #elemId itself.
-export const swapClassOnImpl = (elemId) => (from) => (to) => () => {
-  if (typeof window === "undefined") return;
-  const el = document.getElementById(elemId);
-  if (!el) return;
-  el.classList.remove(from);
-  el.classList.add(to);
-};
 
 // Periodically toggle `vhs-on` on elements with the given class so the VHS
 // title effect bursts for ~1.6s every 40-70s.

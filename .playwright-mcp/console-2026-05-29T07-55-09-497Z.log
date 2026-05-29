@@ -1,0 +1,81 @@
+[     136ms] [LOG] [HMR] connected @ http://localhost:3000/markgraf-www/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[     266ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/markgraf-www/feltballs-worker.js:1716
+[    7511ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/markgraf-www/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[    7573ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/installHook.js:0
+[    7739ms] [LOG] [HMR] connected @ http://localhost:3000/markgraf-www/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[    7912ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/markgraf-www/feltballs-worker.js:1716
+[   37905ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   37906ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   37906ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   37906ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   37907ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   37907ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   37908ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   37908ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   37908ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   37909ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   37909ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   37910ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   69177ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   69178ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   69178ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   69178ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   69179ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   69179ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   69182ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   69182ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   69183ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   69183ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[   69183ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100322ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100322ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100323ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100323ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100323ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100323ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100324ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100324ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100324ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100324ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100325ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100325ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100325ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100325ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100325ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100326ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100326ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100326ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100326ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100327ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100327ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100327ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100327ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100328ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100328ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100328ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100328ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100328ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  100328ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131378ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131378ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131379ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131379ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131382ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131383ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131383ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131383ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131384ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131384ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131384ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  131385ms] [ERROR] Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist. @ http://localhost:3000/markgraf-www/:0
+[  159604ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/markgraf-www/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[  159660ms] [LOG] [Fast Refresh] done in 126ms @ http://localhost:3000/markgraf-www/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[  162821ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/markgraf-www/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[  162852ms] [LOG] [Fast Refresh] done in 75ms @ http://localhost:3000/markgraf-www/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431

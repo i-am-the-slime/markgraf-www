@@ -25,6 +25,11 @@ import React.Basic.Hooks (Component, component, readRef, useEffectOnce, useEffec
 import React.Basic.Hooks as Hooks
 import Untagged.Castable (cast)
 import Web.DOM (Node)
+import Web.DOM.Element as Element
+import Web.DOM.NonElementParentNode (getElementById)
+import Web.HTML (window)
+import Web.HTML.HTMLDocument (toNonElementParentNode)
+import Web.HTML.Window (document)
 import Yoga.React.DOM.Attributes.AutoCapitalize (autoCapitalizeOff)
 import Yoga.React.DOM.HTML.A (a)
 import Yoga.React.DOM.HTML.Button (button)
@@ -54,7 +59,6 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
   activeRef <- useRef ""
   activeSection /\ setActiveSection <- useState' "page-hero"
   useEffectOnce $ installVhsBurst "vhs-text-wrap"
-  useEffectOnce installWheelSnap
   useEffectOnce $
     observeRatios "magazine" (_.id <$> sectionStates) \id ratio -> do
       ratios <- readRef ratiosRef
@@ -87,6 +91,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       , labIconsSection
       , labPhotoSection
       , labRightHangSection
+      , navArrows { active: activeSection }
       ]
 
 -- Fixed full-viewport layer that the offscreen WebGL canvas paints into. Sits
@@ -225,8 +230,7 @@ heroPage =
     { id: "page-hero"
     , className: "relative z-10 snap-start snap-always h-screen w-full overflow-hidden"
     }
-    [ div { className: "absolute inset-0" } [ element sceneComponent {} ]
-    , heroLockup
+    [ heroLockup
     , spreadFolio "00" "hero"
     ]
 
@@ -1421,34 +1425,47 @@ foreign import onIntersect :: String -> (Boolean -> Effect Unit) -> Effect (Effe
 foreign import installScrollSync :: String -> String -> Effect (Effect Unit)
 foreign import installVhsBurst :: String -> Effect (Effect Unit)
 
--- The magazine boots in snap-mandatory (best for trackpads). The first time we
--- see a real mouse wheel event we relax it to snap-proximity, so wheel users
--- get free-form scrolling with a gentle pull near each section instead of
--- being forced through one viewport per click.
-onMouseWheelDetected :: Effect Unit -> Effect (Effect Unit)
-onMouseWheelDetected = onMouseWheelDetectedImpl
+-- Scroll the section with the given id into view. The magazine is snap-
+-- mandatory, so the browser handles the actual easing; we just point at the
+-- target element.
+scrollSectionIntoView :: String -> Effect Unit
+scrollSectionIntoView id = do
+  doc <- window >>= document
+  getElementById id (toNonElementParentNode doc) >>= case _ of
+    Nothing -> pure unit
+    Just el -> scrollIntoViewSmoothImpl el
 
-foreign import onMouseWheelDetectedImpl
-  :: Effect Unit -> Effect (Effect Unit)
+foreign import scrollIntoViewSmoothImpl :: Element.Element -> Effect Unit
 
-swapClassUnder :: String -> String -> String -> Effect Unit
-swapClassUnder = swapClassUnderImpl
+-- Find the neighbour of `current` in `sectionStates`, offset by `dir` (+1 down,
+-- -1 up), clamped to the ends.
+neighbourSection :: String -> Int -> Maybe String
+neighbourSection current dir = do
+  i <- Array.findIndex (\s -> s.id == current) sectionStates
+  let j = max 0 (min (Array.length sectionStates - 1) (i + dir))
+  s <- Array.index sectionStates j
+  pure s.id
 
-foreign import swapClassUnderImpl
-  :: String -> String -> String -> Effect Unit
-
-swapClassOn :: String -> String -> String -> Effect Unit
-swapClassOn = swapClassOnImpl
-
-foreign import swapClassOnImpl
-  :: String -> String -> String -> Effect Unit
-
-installWheelSnap :: Effect (Effect Unit)
-installWheelSnap = onMouseWheelDetected relaxSnap
+navArrows :: { active :: String } -> JSX
+navArrows props =
+  div
+    { className: "fixed right-6 bottom-6 z-30 flex flex-col gap-2"
+    }
+    [ arrow (-1) "↑"
+    , arrow 1 "↓"
+    ]
   where
-  relaxSnap = do
-    swapClassOn "magazine" "snap-mandatory" "snap-proximity"
-    swapClassUnder "magazine" "snap-always" "snap-normal"
+  arrow dir label =
+    button
+      { className:
+          "h-10 w-10 rounded-full border border-white/20 bg-black/40 \
+          \backdrop-blur text-[#f5f1e8] hover:bg-black/60 transition-colors \
+          \font-mono text-sm leading-none"
+      , onClick: handler_ $ case neighbourSection props.active dir of
+          Just id -> scrollSectionIntoView id
+          Nothing -> pure unit
+      }
+      [ text label ]
 
 -- Picks the most-visible section from the ratios so far and, when it changes,
 -- posts its declared morph + camera arm to the worker.
