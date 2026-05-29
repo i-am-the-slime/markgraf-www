@@ -483,6 +483,7 @@ formationScale :: Number -> Formation -> Int -> Number
 formationScale t f i =
   if Int.round f.kind == 5 then scale
   else if Int.round f.kind == 7 then codeGapBump t f i
+  else if Int.round f.kind == 3 then 0.6
   else 1.0
   where
   fi = Int.toNumber i
