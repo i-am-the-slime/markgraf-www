@@ -20,7 +20,6 @@ import Effect.Uncurried (mkEffectFn1)
 import Effect.Unsafe (unsafePerformEffect)
 import Data.Nullable (Nullable, null)
 import Data.String.Common (joinWith, toUpper)
-import Components.Scene (writeSceneProgress)
 import DiagramShapes.Offscreen as DiagramShapes
 import Framer.Motion.MotionComponent as Motion
 import Framer.Motion.Types as Motion
@@ -491,7 +490,6 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
     onMagazineScroll \p -> do
       MV.set p.x xMv
       MV.set p.y yMv
-      writeSceneProgress p.progress
   useEffect debounced do
     setGen (gen + 1)
     pure (pure unit)
