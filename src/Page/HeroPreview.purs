@@ -1431,7 +1431,10 @@ sectionLabelComponent = unsafePerformEffect $ reactComponent "SectionLabel" \{ l
     , span { className: "text-brand" } [ text shown ]
     ]
   where
-  eyebrowClass = "flex items-center gap-4 mb-8 font-mono text-[10px] uppercase tracking-[0.35em]"
+  -- min-h reserves the row's full line height so the scramble's blank phase
+  -- (label briefly set to collapsing whitespace) can't shrink the eyebrow to
+  -- the 1px red rule and shunt the headline below it up and back down.
+  eyebrowClass = "flex items-center gap-4 mb-8 min-h-[1.5em] font-mono text-[10px] uppercase tracking-[0.35em]"
 
 -- The red rule draws to full width while in view, retracts when it leaves.
 redRule :: Boolean -> JSX
