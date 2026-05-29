@@ -42,6 +42,8 @@ workspace:
         - web-events
         - web-html
         - web-touchevents
+    yoga-r3f:
+      path: /Users/mark/code/yoga-r3f
     js-object:
       git: https://github.com/purescript-codegen/purescript-js-object
       ref: baba9598f114062dfaa4025b79eca0e06245a0c6
@@ -94,6 +96,7 @@ package:
     - untagged-union
     - web-clipboard
     - web-dom
+    - yoga-r3f
     - yoga-react-dom
   build:
     censorProjectWarnings: all

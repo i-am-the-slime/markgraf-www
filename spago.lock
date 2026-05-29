@@ -36,6 +36,7 @@
             "untagged-union",
             "web-clipboard",
             "web-dom",
+            "yoga-r3f",
             "yoga-react-dom"
           ]
         },
@@ -729,6 +730,9 @@
           "typelevel-regex",
           "untagged-union"
         ]
+      },
+      "yoga-r3f": {
+        "path": "/Users/mark/code/yoga-r3f"
       },
       "yoga-react-dom": {
         "git": "https://github.com/rowtype-yoga/purescript-yoga-react-dom.git",
@@ -1865,6 +1869,26 @@
         "unsafe-coerce",
         "web-events",
         "web-html"
+      ]
+    },
+    "yoga-r3f": {
+      "type": "local",
+      "path": "/Users/mark/code/yoga-r3f",
+      "dependencies": [
+        "arraybuffer-types",
+        "effect",
+        "foreign",
+        "foreign-object",
+        "functions",
+        "js-object",
+        "prelude",
+        "profunctor-lenses",
+        "react-basic",
+        "react-basic-dom",
+        "react-basic-hooks",
+        "typelevel-prelude",
+        "unsafe-coerce",
+        "untagged-union"
       ]
     },
     "yoga-react-dom": {
