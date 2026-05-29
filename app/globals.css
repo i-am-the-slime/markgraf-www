@@ -274,7 +274,7 @@ body:has(.vhs-text-wrap.vhs-on)::after {
      flickers with each stutter. `both` keeps it dark through the delay; with CSS
      disabled the title just shows normally. */
   .hero-wordmark-in {
-    animation: hero-wordmark-in 4s linear 0.7s both;
+    animation: hero-wordmark-in 3s linear 0.7s both;
   }
   /* Wide plateaus, narrow snaps between them: each lit/dark state must last
      several frames or the compositor samples right past it. Faint strikes that
