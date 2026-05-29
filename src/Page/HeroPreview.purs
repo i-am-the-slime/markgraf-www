@@ -266,16 +266,35 @@ heroLockup =
                 }
                 [ text "markgraf" ]
             ]
-        , p
-            { className: "max-w-[34ch] text-[clamp(1.125rem,2.2vw,2rem)] leading-snug text-[#f5f1e8]"
-            , style: css
-                { fontFamily: "'Ilisarniq', 'Ilisarniq Fallback', ui-sans-serif, system-ui, sans-serif"
-                , textShadow: "0 1px 2px rgba(10,14,26,0.95), 0 0 18px rgba(10,14,26,0.92), 0 0 44px rgba(10,14,26,0.75)"
-                }
-            }
-            [ text "A few words are worth a thousand pictures." ]
-        , div { className: "hidden sm:block" } [ installPill ]
+        , heroTagline
+        , div { className: "hidden sm:block hero-pill-in" } [ installPill ]
         ]
+    ]
+
+-- The tagline types itself in once the wordmark has caught: each word is its own
+-- inline-block carrying a staggered animation-delay, so the line resolves left to
+-- right rather than appearing whole. Delays start past the wordmark's settle and
+-- step per word; the CSS (.hero-tagline-word) and reduced-motion fallback live in
+-- globals.css.
+heroTagline :: JSX
+heroTagline =
+  p
+    { className: "max-w-[34ch] text-[clamp(1.125rem,2.2vw,2rem)] leading-snug text-[#f5f1e8]"
+    , style: css
+        { fontFamily: "'Ilisarniq', 'Ilisarniq Fallback', ui-sans-serif, system-ui, sans-serif"
+        , textShadow: "0 1px 2px rgba(10,14,26,0.95), 0 0 18px rgba(10,14,26,0.92), 0 0 44px rgba(10,14,26,0.75)"
+        }
+    }
+    (Array.concat (Array.mapWithIndex reveal words))
+  where
+  words = [ "A", "few", "words", "are", "worth", "a", "thousand", "pictures." ]
+  reveal i w =
+    [ span
+        { className: "hero-tagline-word"
+        , style: css { animationDelay: show (4700 + i * 120) <> "ms" }
+        }
+        [ text w ]
+    , text " "
     ]
 
 -- ---------------------------------------------------------------------------
