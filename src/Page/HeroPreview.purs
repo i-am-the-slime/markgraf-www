@@ -474,7 +474,11 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
   size /\ setSize <- useState' { w: 0.0, h: 0.0 }
   active /\ setActive <- useState' RenderPane
   gen /\ setGen <- useState' 0
-  xMv <- MV.useMotionValue (-280.0)
+  -- Must start at 0 to agree with onMagazineScroll's lastXRef (also 0): the
+  -- first `fire` derives the pane's natural centre from `r.left - lastX`, so a
+  -- nonzero initial x here would over-correct the horizontal offset by that
+  -- amount on first paint (shoving the hero player off-screen until a scroll).
+  xMv <- MV.useMotionValue 0.0
   yMv <- MV.useMotionValue 0.0
   useEffect src do
     launchAff_ do
