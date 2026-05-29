@@ -247,32 +247,37 @@ body:has(.vhs-text-wrap.vhs-on)::after {
    landing whole. Per-word delays are set inline (base 4.7s + index * step) so
    the line types itself in; the pill follows once the last word lands. Both
    collapse to a plain appearance under reduced motion. */
+/* Each word holds its letters together so only the line wraps, never a word. */
 .hero-tagline-word {
   display: inline-block;
+  white-space: nowrap;
+}
+/* Teletype, MGS-style: every letter is invisible until its delay, then snaps to
+   full in a single frame (steps(1)) — no fade, no scale, just on. The per-letter
+   delay is set inline; the cadence is one letter every 40ms. */
+.hero-tagline-char {
   opacity: 0;
-  /* Pop in like loading geometry: scale up over a handful of hard frames
-     (steps), no blur and no smooth rise. The stepped opacity bands rather than
-     fades, which reads as PS1 dithered transparency. */
-  animation: hero-tagline-word 0.3s steps(4) both;
+  animation: hero-tagline-char 0.04s steps(1) both;
 }
-@keyframes hero-tagline-word {
-  from { opacity: 0; transform: scale(0.55); }
-  to { opacity: 1; transform: scale(1); }
+@keyframes hero-tagline-char {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
+/* The pill cuts in whole once the line has finished typing (~6.4s), same hard
+   snap as the letters rather than a slide or zoom. */
 .hero-pill-in {
-  animation: hero-pill-in 0.3s steps(4) 6s both;
+  opacity: 0;
+  animation: hero-pill-in 0.04s steps(1) 6.5s both;
 }
 @keyframes hero-pill-in {
-  from { opacity: 0; transform: scale(0.7); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero-tagline-word,
+  .hero-tagline-char,
   .hero-pill-in {
     animation: none;
     opacity: 1;
-    transform: none;
-    filter: none;
   }
 }
 

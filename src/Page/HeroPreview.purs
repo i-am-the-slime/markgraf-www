@@ -288,11 +288,12 @@ heroInstallCta =
     , span { style: css { color: "#ff3b1a" } } [ text "↓" ]
     ]
 
--- The tagline types itself in once the wordmark has caught: each word is its own
--- inline-block carrying a staggered animation-delay, so the line resolves left to
--- right rather than appearing whole. Delays start past the wordmark's settle and
--- step per word; the CSS (.hero-tagline-word) and reduced-motion fallback live in
--- globals.css.
+-- The tagline types itself in like Metal Gear Solid codec text: once the wordmark
+-- has caught, letters snap in one at a time on a steady cadence — no fade, no
+-- scale, each just appears. Letters within a word stay together (the group is an
+-- inline-block) while the real space between groups keeps the line wrapping and
+-- costs one tick, so the type rolls on evenly. The per-letter snap and reduced-
+-- motion fallback live in globals.css (.hero-tagline-char).
 heroTagline :: JSX
 heroTagline =
   p
@@ -302,17 +303,24 @@ heroTagline =
         , textShadow: "0 1px 2px rgba(10,14,26,0.95), 0 0 18px rgba(10,14,26,0.92), 0 0 44px rgba(10,14,26,0.75)"
         }
     }
-    (Array.concat (Array.mapWithIndex reveal words))
+    (Array.concat (Array.mapWithIndex word words))
   where
   words = [ "A", "few", "words", "are", "worth", "a", "thousand", "pictures." ]
-  reveal i w =
-    [ span
-        { className: "hero-tagline-word"
-        , style: css { animationDelay: show (4700 + i * 120) <> "ms" }
-        }
-        [ text w ]
+  word i w =
+    [ span { className: "hero-tagline-word" } (letters (charStart i) w)
     , text " "
     ]
+  letters start w =
+    CU.toCharArray w # Array.mapWithIndex \j c -> letter (start + j) (CU.singleton c)
+  letter idx c =
+    span
+      { className: "hero-tagline-char"
+      , style: css { animationDelay: show (4700 + idx * 40) <> "ms" }
+      }
+      [ text c ]
+  -- Global letter index where each word begins: the +1 per earlier word is the
+  -- space between them, keeping the cadence continuous across word boundaries.
+  charStart i = Array.take i words # Array.foldl (\acc w -> acc + CU.length w + 1) 0
 
 -- ---------------------------------------------------------------------------
 -- Fixed chrome: top bar with brand + nav, side rail with page dots.
