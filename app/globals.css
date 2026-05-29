@@ -190,14 +190,14 @@ body:has(.vhs-text-wrap.vhs-on)::after {
     rgba(0, 0, 0, 0.2) 0px,
     rgba(0, 0, 0, 0.2) 1px,
     transparent 1px,
-    transparent 4px
+    transparent 3px
   );
   will-change: transform;
   animation: crt-scroll 10s linear infinite;
 }
 @keyframes crt-scroll {
   from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(0, 4px, 0); }
+  to { transform: translate3d(0, 3px, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .crt-overlay::before {
