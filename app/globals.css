@@ -192,6 +192,17 @@ body:has(.vhs-text-wrap.vhs-on)::after {
     background-color: #0a0e1a;
     color: var(--color-foreground);
   }
+  /* Font gate (see Layout.Root): the inline boot script adds `fonts-loading`
+     before paint and swaps it for `fonts-ready` once every webfont is in.
+     Without JS neither class is set, so the body stays visible — graceful
+     degradation rather than a blank page. */
+  html.fonts-loading body {
+    opacity: 0;
+  }
+  html.fonts-ready body {
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+  }
   pre, code {
     font-family: var(--font-mono);
   }
