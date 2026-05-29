@@ -195,4 +195,14 @@ body:has(.vhs-text-wrap.vhs-on)::after {
   pre, code {
     font-family: var(--font-mono);
   }
+  /* Highlight in the house accent instead of the browser's blue. Near-black
+     text keeps selected copy legible against the hot orange. */
+  ::selection {
+    background-color: #ff3b1a;
+    color: #0a0e1a;
+  }
+  ::-moz-selection {
+    background-color: #ff3b1a;
+    color: #0a0e1a;
+  }
 }

@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
-import Data.Nullable (toNullable)
+import Data.Nullable (Nullable, null)
 import Data.Number (sqrt)
 import Effect (Effect)
 import Effect.Unsafe (unsafePerformEffect)
@@ -36,7 +36,7 @@ diagramShapesOffscreen = unsafeCoerce (unsafePerformEffect diagramShapesOffscree
 
 diagramShapesOffscreenComponent :: Component {}
 diagramShapesOffscreenComponent = component "DiagramShapesOffscreen" \_ -> Hooks.do
-  canvasRef <- useRef (toNullable (Nothing :: Maybe HTMLCanvasElement))
+  canvasRef <- useRef (null :: Nullable HTMLCanvasElement)
 
   useEffectOnce do
     readRefMaybe canvasRef >>= case _ of
