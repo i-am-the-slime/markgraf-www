@@ -168,25 +168,39 @@ body:has(.vhs-text-wrap.vhs-on)::after {
 }
 
 /* CRT scanlines as a top-level DOM overlay (split out of the canvas grain
-   shader). Bold 1px black line every 4px, looping slowly top-to-bottom. The
-   travel distance (40px) is a multiple of the 4px period so the loop is
-   seamless; tune speed via the animation duration. */
+   shader). Bold 1px black line every 4px, looping slowly top-to-bottom.
+
+   The pattern lives on a ::before layer that's rasterised once and moved with
+   a GPU transform — animating background-position instead would re-sample the
+   hard 1px lines against the device-pixel grid every frame, making some lines
+   render thicker than others (a moiré beat). The layer is oversized and shifts
+   by exactly one 4px period, so the loop is seamless. Tune speed via duration. */
 .crt-overlay {
+  overflow: hidden;
+}
+.crt-overlay::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -8px;
+  height: calc(100% + 16px);
   background: repeating-linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 1) 0px,
-    rgba(0, 0, 0, 1) 1px,
+    rgba(0, 0, 0, 0.2) 0px,
+    rgba(0, 0, 0, 0.2) 1px,
     transparent 1px,
     transparent 4px
   );
+  will-change: transform;
   animation: crt-scroll 10s linear infinite;
 }
 @keyframes crt-scroll {
-  from { background-position-y: 0; }
-  to { background-position-y: 40px; }
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 4px, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .crt-overlay {
+  .crt-overlay::before {
     animation: none;
   }
 }
