@@ -316,8 +316,9 @@ body:has(.vhs-text-wrap.vhs-on)::after {
     84.5% { opacity: 1; }
     86% { opacity: 1; }
     87% { opacity: 0; }
-    88% { opacity: 1; }
-    100% { opacity: 1; }
+    88% { opacity: 0.8; }   /* catches — lit but not yet full */
+    90% { opacity: 0.8; animation-timing-function: ease-out; }
+    100% { opacity: 1; }    /* phosphor warms up to full */
   }
   /* Flashing is a photosensitivity risk — skip the strike-on and just fade. */
   @media (prefers-reduced-motion: reduce) {
