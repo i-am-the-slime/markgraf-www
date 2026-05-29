@@ -185,8 +185,11 @@ body:has(.vhs-text-wrap.vhs-on)::after {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
+  /* Dark by default so the first paint (before the client React tree mounts)
+     is the magazine's near-black, not a cream flash. The magazine sets its own
+     dark surface; the privacy page opts back into the light theme explicitly. */
   body {
-    background-color: var(--color-background);
+    background-color: #0a0e1a;
     color: var(--color-foreground);
   }
   pre, code {

@@ -6,6 +6,7 @@ import React.Basic (JSX)
 import React.Basic.Hooks (Component, component)
 import Yoga.React.DOM.HTML.A (a)
 import Yoga.React.DOM.HTML.Code (code) as H
+import Yoga.React.DOM.HTML.Div (div)
 import Yoga.React.DOM.HTML.H (h1, h2)
 import Yoga.React.DOM.HTML.Main (main)
 import Yoga.React.DOM.HTML.P (p)
@@ -18,8 +19,10 @@ mkPrivacyPage =
   component "PrivacyPage" \_ ->
     pure $
       main
-        { className: "min-h-screen px-6 py-16 sm:py-24 max-w-2xl mx-auto" }
-        [ heading
+        { className: "min-h-screen bg-background text-foreground" }
+        [ div
+            { className: "px-6 py-16 sm:py-24 max-w-2xl mx-auto" }
+            [ heading
         , updated
         , section "What the markgraf browser extension does"
             [ text "The extension scans rendered markdown pages on github.com and gist.github.com for "
@@ -54,6 +57,7 @@ mkPrivacyPage =
         , section "Contact"
             [ text "Questions about this policy: open an issue on the GitHub repository above."
             ]
+        ]
         ]
 
 heading :: JSX
