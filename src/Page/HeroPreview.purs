@@ -282,20 +282,20 @@ heroLockup =
 -- Fixed chrome: top bar with brand + nav, side rail with page dots.
 -- ---------------------------------------------------------------------------
 
--- Nav turned on its side: a full-height column hugging the left edge whose
--- single link row is rotated a quarter turn, so the labels run bottom-to-top
--- and mirror the page-dot rail on the right. Hidden on phones, where the dot
--- rail alone carries section navigation.
+-- Nav turned on its side: a full-height column hugging the right edge whose
+-- single link row is rotated a quarter turn, so the labels run top-to-bottom
+-- and read naturally with a head-tilt to the right. Hidden on phones, where the
+-- nav arrows alone carry section navigation.
 sideNav :: { active :: String } -> JSX
 sideNav { active } =
-  nav { className: "fixed left-0 inset-y-0 z-30 w-14 hidden sm:flex items-center justify-center pointer-events-none" }
+  nav { className: "fixed right-0 inset-y-0 z-30 w-14 hidden sm:flex items-center justify-center pointer-events-none" }
     [ div
         { className: "flex items-center gap-8 whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.28em] pointer-events-auto"
-        , style: css { transform: "rotate(-90deg)" }
+        , style: css { transform: "rotate(90deg)" }
         }
-        -- Reversed: the quarter-turn sends the first child to the bottom, so
-        -- reversing lays the labels out top-to-bottom in scroll order.
-        (navLink active <$> Array.reverse sections)
+        -- A clockwise quarter-turn sends the first child to the top, so the
+        -- labels lay out top-to-bottom in scroll order with no reversal.
+        (navLink active <$> sections)
     ]
   where
   sections =
