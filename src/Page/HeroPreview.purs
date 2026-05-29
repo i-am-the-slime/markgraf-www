@@ -257,7 +257,7 @@ heroLockup =
   div { className: "absolute inset-0 z-10 flex flex-col items-center justify-start pt-[12vh] pointer-events-none px-6" }
     [ div { className: "flex flex-col items-center gap-[clamp(1.5rem,4vw,4rem)] max-w-[min(64rem,92vw)] text-center" }
         [ h1
-            { className: "display-glow hero-wordmark-in vhs-text-wrap text-[clamp(3.5rem,16vw,14rem)] leading-[0.82] tracking-[-0.045em] font-bold"
+            { className: "display-glow hero-wordmark-in vhs-text-wrap text-[clamp(1.75rem,8vw,7rem)] leading-[0.82] tracking-[-0.045em] font-bold"
             , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
             }
             [ span
