@@ -64,7 +64,7 @@ var writeClipboard = function (value) {
     };
 };
 var tagline = /* #__PURE__ */ p({
-    className: "text-xl leading-relaxed mb-12 text-foreground"
+    className: "text-[clamp(1.25rem,2.2vw,2rem)] leading-relaxed mb-12 text-foreground"
 })([ /* #__PURE__ */ Yoga_React_DOM_Internal.text("Animated graph diagrams from a tiny declarative source language.") ]);
 var subhead = function (label) {
     return h3({
@@ -159,7 +159,7 @@ var install = function (copy) {
 var hero = /* #__PURE__ */ Yoga_React_DOM_HTML_Header.header()()({
     className: "flex items-center gap-4 mb-12"
 })([ logo, /* #__PURE__ */ Yoga_React_DOM_HTML_H.h1()()({
-    className: "text-2xl font-medium tracking-tight"
+    className: "text-[clamp(1.5rem,2.5vw,2.75rem)] font-medium tracking-tight"
 })([ /* #__PURE__ */ Yoga_React_DOM_Internal.text("markgraf") ]) ]);
 var footer = /* #__PURE__ */ Yoga_React_DOM_HTML_Footer.footer()()({
     className: "pt-8 border-t border-border flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground"
@@ -201,7 +201,7 @@ var mkHomePage = function __do() {
     var copy = mkCopyButton();
     return React_Basic_Hooks.component("HomePage")(function (v) {
         return pure1(main({
-            className: "min-h-screen px-6 py-16 sm:py-24 max-w-2xl mx-auto"
+            className: "min-h-screen px-6 py-16 sm:py-24 max-w-[68ch] mx-auto"
         })([ hero, install(copy), what, language, output, aiAuthoring, footer ]));
     })();
 };

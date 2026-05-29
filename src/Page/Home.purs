@@ -39,7 +39,7 @@ mkHomePage = do
   copy <- mkCopyButton
   component "HomePage" \_ -> Hooks.do
     pure $
-      main { className: "min-h-screen px-6 py-16 sm:py-24 max-w-2xl mx-auto" }
+      main { className: "min-h-screen px-6 py-16 sm:py-24 max-w-[68ch] mx-auto" }
         [ hero
         , install copy
         , what
@@ -53,7 +53,7 @@ hero :: JSX
 hero =
   header { className: "flex items-center gap-4 mb-12" }
     [ logo
-    , h1 { className: "text-2xl font-medium tracking-tight" } [ text "markgraf" ]
+    , h1 { className: "text-[clamp(1.5rem,2.5vw,2.75rem)] font-medium tracking-tight" } [ text "markgraf" ]
     ]
 
 install :: ({ value :: String } -> JSX) -> JSX
@@ -68,7 +68,7 @@ install copy =
 
 tagline :: JSX
 tagline =
-  p { className: "text-xl leading-relaxed mb-12 text-foreground" }
+  p { className: "text-[clamp(1.25rem,2.2vw,2rem)] leading-relaxed mb-12 text-foreground" }
     [ text "Animated graph diagrams from a tiny declarative source language." ]
 
 mkCopyButton :: Component { value :: String }

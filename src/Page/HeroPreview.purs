@@ -7,7 +7,6 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String.CodeUnits as CU
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Ref as Ref
 import Effect.Aff (Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (mkEffectFn1)
@@ -1422,51 +1421,23 @@ foreign import onIntersect :: String -> (Boolean -> Effect Unit) -> Effect (Effe
 foreign import installScrollSync :: String -> String -> Effect (Effect Unit)
 foreign import installVhsBurst :: String -> Effect (Effect Unit)
 
-onMagazineWheel
-  :: ({ deltaY :: Number, timeStamp :: Number } -> Effect Unit)
-  -> Effect (Effect Unit)
-onMagazineWheel = onMagazineWheelImpl
+-- The magazine boots in snap-mandatory (best for trackpads). The first time we
+-- see a real mouse wheel event we relax it to snap-proximity, so wheel users
+-- get free-form scrolling with a gentle pull near each section instead of
+-- being forced through one viewport per click.
+onMouseWheelDetected :: Effect Unit -> Effect (Effect Unit)
+onMouseWheelDetected = onMouseWheelDetectedImpl
 
-foreign import onMagazineWheelImpl
-  :: ({ deltaY :: Number, timeStamp :: Number } -> Effect Unit)
-  -> Effect (Effect Unit)
+foreign import onMouseWheelDetectedImpl
+  :: Effect Unit -> Effect (Effect Unit)
 
-snapMagazineTo :: Int -> Effect Int
-snapMagazineTo = snapMagazineToImpl
+setMagazineSnap :: String -> Effect Unit
+setMagazineSnap = setMagazineSnapImpl
 
-foreign import snapMagazineToImpl :: Int -> Effect Int
-
-magazineCurrentIndex :: Effect Int
-magazineCurrentIndex = magazineCurrentIndexImpl
-
-foreign import magazineCurrentIndexImpl :: Effect Int
+foreign import setMagazineSnapImpl :: String -> Effect Unit
 
 installWheelSnap :: Effect (Effect Unit)
-installWheelSnap = do
-  accum <- Ref.new 0.0
-  lastTs <- Ref.new 0.0
-  lockedUntil <- Ref.new 0.0
-  onMagazineWheel \e -> do
-    until <- Ref.read lockedUntil
-    when (e.timeStamp >= until) do
-      prev <- Ref.read lastTs
-      when (e.timeStamp - prev > idleResetMs) (Ref.write 0.0 accum)
-      Ref.write e.timeStamp lastTs
-      old <- Ref.read accum
-      let reset = (old > 0.0 && e.deltaY < 0.0) || (old < 0.0 && e.deltaY > 0.0)
-      let acc' = (if reset then 0.0 else old) + e.deltaY
-      Ref.write acc' accum
-      when (abs acc' >= threshold) do
-        idx <- magazineCurrentIndex
-        let dir = if acc' > 0.0 then 1 else -1
-        _ <- snapMagazineTo (idx + dir)
-        Ref.write 0.0 accum
-        Ref.write (e.timeStamp + lockMs) lockedUntil
-  where
-  threshold = 30.0
-  idleResetMs = 180.0
-  lockMs = 600.0
-  abs n = if n < 0.0 then -n else n
+installWheelSnap = onMouseWheelDetected (setMagazineSnap "proximity")
 
 -- Picks the most-visible section from the ratios so far and, when it changes,
 -- posts its declared morph + camera arm to the worker.

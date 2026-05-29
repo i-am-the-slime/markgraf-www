@@ -196,49 +196,47 @@ export const onMagazineScrollImpl = (cb) => () => {
   };
 };
 
-// Thin shim: emit normalized pixel deltaY on the magazine and let PureScript
-// drive the snap state machine. preventDefault here so the snap-mandatory
-// container doesn't fight the programmatic scroll.
-export const onMagazineWheelImpl = (cb) => () => {
+// Thin shim: fire `cb` the first time a real mouse wheel is detected on the
+// magazine (sparse chunky deltas — not trackpad's dense fractional stream).
+// Passive listener: we never preventDefault, so native scroll behavior is
+// untouched. Policy (what to do with that signal) lives in PureScript.
+export const onMouseWheelDetectedImpl = (cb) => () => {
   if (typeof window === "undefined") return () => {};
   const root = document.getElementById("magazine");
   if (!root) return () => {};
-  const onWheel = (e) => {
-    e.preventDefault();
-    const dy = e.deltaMode === 0 ? e.deltaY : e.deltaY * 40;
-    cb({ deltaY: dy, timeStamp: e.timeStamp || performance.now() })();
+  const isMouseWheel = (e) => {
+    if (e.deltaMode !== 0) return true;
+    const dy = Math.abs(e.deltaY);
+    return dy >= 50 && Number.isInteger(e.deltaY);
   };
-  root.addEventListener("wheel", onWheel, { passive: false });
+  const onWheel = (e) => {
+    if (!isMouseWheel(e)) return;
+    root.removeEventListener("wheel", onWheel);
+    cb();
+  };
+  root.addEventListener("wheel", onWheel, { passive: true });
   return () => root.removeEventListener("wheel", onWheel);
 };
 
-// Snap the magazine to the section at `index` (clamped). Returns the index it
-// actually scrolled to, so PureScript can update its current-index ref.
-export const snapMagazineToImpl = (index) => () => {
-  if (typeof window === "undefined") return 0;
+// Swap the magazine's CSS scroll-snap strictness. "mandatory" forces a snap
+// after every scroll (good for trackpads, painful for wheels); "proximity"
+// only snaps when the user lands within ~range of a section, which gives
+// wheel users free scrolling with a gentle pull near each section.
+export const setMagazineSnapImpl = (strictness) => () => {
+  if (typeof window === "undefined") return;
   const root = document.getElementById("magazine");
-  if (!root) return 0;
-  const els = Array.from(root.querySelectorAll('[class*="snap-start"]'));
-  if (els.length === 0) return 0;
-  const i = Math.max(0, Math.min(els.length - 1, index));
-  els[i].scrollIntoView({ behavior: "smooth", block: "start" });
-  return i;
-};
-
-// Index of the section closest to the magazine's current scrollTop.
-export const magazineCurrentIndexImpl = () => {
-  if (typeof window === "undefined") return 0;
-  const root = document.getElementById("magazine");
-  if (!root) return 0;
-  const els = Array.from(root.querySelectorAll('[class*="snap-start"]'));
-  const top = root.scrollTop;
-  let best = 0;
-  let bestDist = Infinity;
-  for (let i = 0; i < els.length; i += 1) {
-    const d = Math.abs(els[i].offsetTop - top);
-    if (d < bestDist) { bestDist = d; best = i; }
+  if (!root) return;
+  root.classList.remove("snap-mandatory", "snap-proximity");
+  root.classList.add(`snap-${strictness}`);
+  // Children carry `snap-always` (scroll-snap-stop: always), which forces a
+  // stop at every section regardless of the parent's proximity setting. When
+  // we relax to proximity, also relax the stop so wheels can scroll freely.
+  const stop = strictness === "proximity" ? "snap-normal" : "snap-always";
+  const drop = strictness === "proximity" ? "snap-always" : "snap-normal";
+  for (const el of root.querySelectorAll(`.${drop}`)) {
+    el.classList.remove(drop);
+    el.classList.add(stop);
   }
-  return best;
 };
 
 // Periodically toggle `vhs-on` on elements with the given class so the VHS
