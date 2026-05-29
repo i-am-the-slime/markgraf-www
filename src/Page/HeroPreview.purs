@@ -256,9 +256,9 @@ heroPage =
 heroLockup :: JSX
 heroLockup =
   div { className: "absolute inset-0 z-10 flex flex-col items-center justify-start pt-[12vh] pointer-events-none px-6" }
-    [ div { className: "flex flex-col items-center gap-10 max-w-3xl text-center" }
+    [ div { className: "flex flex-col items-center gap-[clamp(1.5rem,4vw,4rem)] max-w-[min(64rem,92vw)] text-center" }
         [ h1
-            { className: "vhs-text-wrap text-[18vw] sm:text-[16vw] md:text-[13vw] leading-[0.82] tracking-[-0.045em] font-bold"
+            { className: "vhs-text-wrap text-[clamp(3.5rem,16vw,20rem)] leading-[0.82] tracking-[-0.045em] font-bold"
             , style: css
                 { fontFamily: "'Sinistre', serif"
                 , textShadow: "0 0 80px rgba(10,14,26,0.7)"
@@ -271,7 +271,7 @@ heroLockup =
                 [ text "markgraf" ]
             ]
         , p
-            { className: "max-w-xl text-lg sm:text-xl leading-snug text-[#c8cdd9]"
+            { className: "max-w-[34ch] text-[clamp(1.125rem,2.2vw,2rem)] leading-snug text-[#c8cdd9]"
             , style: css { fontFamily: "'Ilisarniq', ui-sans-serif, system-ui, sans-serif" }
             }
             [ text "A few words are worth a thousand pictures." ]
@@ -913,7 +913,7 @@ isIdentChar c = isIdentStart c || isDigit c || c == '-'
 
 installPill :: JSX
 installPill =
-  div { className: "inline-flex items-center gap-3 bg-[#11162280] backdrop-blur-md border border-[#2a3142] rounded-full pl-5 pr-2 py-2 font-mono text-sm pointer-events-auto" }
+  div { className: "inline-flex items-center gap-3 bg-[#11162280] backdrop-blur-md border border-[#2a3142] rounded-full pl-5 pr-2 py-2 font-mono text-[clamp(0.875rem,1.4vw,1.25rem)] pointer-events-auto" }
     [ span { style: css { color: "#ff3b1a" } } [ text "$" ]
     , span { className: "text-[#f5f1e8]" } [ text "brew install markgrafhq/tap/markgraf" ]
     , button
