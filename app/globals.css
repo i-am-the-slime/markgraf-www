@@ -267,16 +267,40 @@ body:has(.vhs-text-wrap.vhs-on)::after {
     background-color: #0f0f0f;
     color: var(--color-foreground);
   }
-  /* Hold the wordmark hidden for a beat, then fade it in — by the time it
-     appears Sinistre has loaded, so its font swap is never seen. The rest of
-     the page (scene, tagline) paints immediately. `both` keeps it at opacity 0
-     through the delay; with CSS disabled the title just shows normally. */
+  /* Hold the wordmark hidden for a beat, then strike it on like an old neon
+     tube — a couple of stutters before the gas catches and it holds steady. By
+     the time it fires Sinistre has loaded, so its font swap is never seen. The
+     phosphor glow (.display-glow text-shadow) rides on opacity, so the halo
+     flickers with each stutter. `both` keeps it dark through the delay; with CSS
+     disabled the title just shows normally. */
   .hero-wordmark-in {
-    animation: hero-wordmark-in 0.7s ease-out 0.7s both;
+    animation: hero-wordmark-in 1.2s linear 0.7s both;
   }
   @keyframes hero-wordmark-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    0%, 12% { opacity: 0; }
+    13% { opacity: 0.85; }
+    14% { opacity: 0; }
+    25% { opacity: 0; }
+    26% { opacity: 0.7; }
+    27% { opacity: 0; }
+    38% { opacity: 0; }
+    39% { opacity: 1; }
+    41% { opacity: 0.15; }
+    43% { opacity: 1; }
+    45% { opacity: 0.3; }
+    47% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+  /* Flashing is a photosensitivity risk — skip the strike-on and just fade. */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-wordmark-in {
+      animation: hero-wordmark-fade 0.5s ease-out 0.7s both;
+    }
+    @keyframes hero-wordmark-fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
   }
   pre, code {
     font-family: var(--font-mono);
