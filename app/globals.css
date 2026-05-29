@@ -250,18 +250,21 @@ body:has(.vhs-text-wrap.vhs-on)::after {
 .hero-tagline-word {
   display: inline-block;
   opacity: 0;
-  animation: hero-tagline-word 0.5s ease-out both;
+  /* Pop in like loading geometry: scale up over a handful of hard frames
+     (steps), no blur and no smooth rise. The stepped opacity bands rather than
+     fades, which reads as PS1 dithered transparency. */
+  animation: hero-tagline-word 0.3s steps(4) both;
 }
 @keyframes hero-tagline-word {
-  from { opacity: 0; transform: translateY(0.4em); filter: blur(4px); }
-  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  from { opacity: 0; transform: scale(0.55); }
+  to { opacity: 1; transform: scale(1); }
 }
 .hero-pill-in {
-  animation: hero-pill-in 0.6s ease-out 6s both;
+  animation: hero-pill-in 0.3s steps(4) 6s both;
 }
 @keyframes hero-pill-in {
-  from { opacity: 0; transform: translateY(0.5rem); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-tagline-word,
@@ -305,13 +308,14 @@ body:has(.vhs-text-wrap.vhs-on)::after {
      flickers with each stutter. `both` keeps it dark through the delay; with CSS
      disabled the title just shows normally. */
   .hero-wordmark-in {
-    /* Strike on like a neon tube, then never quite hold still: once the gas
-       catches (~4.5s) a faint hum takes over, sparse micro-flickers that read
-       as a live tube rather than a pulse. The hum is listed last so it wins the
-       opacity once its delay elapses; before that the ignition has the floor. */
+    /* Strike on like a neon tube, then settle into a faint PS1 vertex wobble:
+       once it holds (~4.5s) the title's geometry never quite locks to the pixel
+       grid, snapping a pixel at a time at a low, choppy framerate (steps(), no
+       interpolation). The two animations touch different properties — opacity vs
+       transform — so they coexist; the wobble just runs forever underneath. */
     animation:
       hero-wordmark-in 3.8s linear 0.7s both,
-      hero-neon-hum 7s linear 4.5s infinite;
+      hero-ps1-jitter 0.45s steps(1) 4.5s infinite;
   }
   /* A real tube ignites in bursts — struck (lit) or dark, always snapping back
      to 0 between flashes, never dimming. Realism is in the cadence: wide dark
@@ -367,19 +371,18 @@ body:has(.vhs-text-wrap.vhs-on)::after {
     88% { opacity: 0.8; animation-timing-function: ease-out; }
     100% { opacity: 1; }    /* the only full-brightness moment — the climax */
   }
-  /* The settled tube: mostly full brightness with a handful of brief, shallow
-     dips per loop. Kept sparse and small (never below 0.93) so it reads as a
-     faint electrical hum, not a deliberate pulse. */
-  @keyframes hero-neon-hum {
-    0%, 100% { opacity: 1; }
-    16.8% { opacity: 0.97; }
-    17.3% { opacity: 1; }
-    40.6% { opacity: 0.93; }
-    41.3% { opacity: 1; }
-    61.7% { opacity: 0.98; }
-    62.2% { opacity: 1; }
-    82.8% { opacity: 0.94; }
-    83.4% { opacity: 1; }
+  /* Unstable geometry: the title snaps between integer-pixel offsets, never
+     interpolating (the steps(1) timing on the animation holds each frame, then
+     jumps). One device pixel of wander is enough to read as PS1 vertex jitter
+     without turning into a shake. */
+  @keyframes hero-ps1-jitter {
+    0%   { transform: translate(0, 0); }
+    18%  { transform: translate(1px, -1px); }
+    36%  { transform: translate(-1px, 0); }
+    54%  { transform: translate(0, 1px); }
+    72%  { transform: translate(1px, 1px); }
+    90%  { transform: translate(-1px, 0); }
+    100% { transform: translate(0, 0); }
   }
   /* Flashing is a photosensitivity risk — skip the strike-on and just fade. */
   @media (prefers-reduced-motion: reduce) {
