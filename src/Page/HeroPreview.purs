@@ -747,7 +747,7 @@ derive instance Eq TokKind
 tokColor :: TokKind -> String
 tokColor TKeyword = "#ff3b1a"
 tokColor TOperator = "#ff8a5c"
-tokColor TString = "#bcd6ff"
+tokColor TString = "#7d9cc8"
 tokColor TNumber = "#d9c97a"
 tokColor TComment = "#5a6478"
 tokColor TBrace = "#8a94a8"
