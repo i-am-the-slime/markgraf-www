@@ -32,7 +32,7 @@ bone :: String
 bone = "#f5f1e8"
 
 ink :: String
-ink = "#0a0e1a"
+ink = "#0f0f0f"
 
 -- Static positions ------------------------------------------------------------
 

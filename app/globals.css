@@ -189,7 +189,7 @@ body:has(.vhs-text-wrap.vhs-on)::after {
      is the magazine's near-black, not a cream flash. The magazine sets its own
      dark surface; the privacy page opts back into the light theme explicitly. */
   body {
-    background-color: #0a0e1a;
+    background-color: #0f0f0f;
     color: var(--color-foreground);
   }
   /* Hold the wordmark hidden for a beat, then fade it in — by the time it
@@ -210,10 +210,10 @@ body:has(.vhs-text-wrap.vhs-on)::after {
      text keeps selected copy legible against the hot orange. */
   ::selection {
     background-color: #ff3b1a;
-    color: #0a0e1a;
+    color: #0f0f0f;
   }
   ::-moz-selection {
     background-color: #ff3b1a;
-    color: #0a0e1a;
+    color: #0f0f0f;
   }
 }

@@ -90,7 +90,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
   pure $
     main
       { id: "magazine"
-      , className: "relative bg-[#0a0e1a] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
+      , className: "relative bg-[#0f0f0f] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
       }
       [ diagramShapesBackground
       , scrim (activeSection == "playground")
@@ -594,7 +594,7 @@ paneTabs active setActive =
         , className:
             "w-10 h-10 rounded-md border flex items-center justify-center transition-colors cursor-pointer "
               <>
-                if active == SourcePane then "bg-[#ff3b1a] border-[#ff3b1a] text-[#0a0e1a]"
+                if active == SourcePane then "bg-[#ff3b1a] border-[#ff3b1a] text-[#0f0f0f]"
                 else "bg-transparent border-[#2a3142] text-[#8a94a8] hover:border-[#ff3b1a] hover:text-[#f5f1e8]"
         }
         codeIcon
@@ -910,7 +910,7 @@ installPill =
     , span { className: "text-[#f5f1e8]" } [ text "brew install markgrafhq/tap/markgraf" ]
     , button
         { type: "button"
-        , className: "ml-2 text-[10px] uppercase tracking-[0.2em] text-[#8a94a8] hover:text-[#f5f1e8] transition-colors px-3 py-1.5 rounded-full bg-[#0a0e1a] border border-[#2a3142] cursor-pointer"
+        , className: "ml-2 text-[10px] uppercase tracking-[0.2em] text-[#8a94a8] hover:text-[#f5f1e8] transition-colors px-3 py-1.5 rounded-full bg-[#0f0f0f] border border-[#2a3142] cursor-pointer"
         }
         [ text "copy" ]
     ]
@@ -1311,7 +1311,7 @@ labIconsSection =
 
 iconCard :: String -> String -> String -> JSX
 iconCard kind heading body =
-  div { className: "bg-[#0a0e1a] p-8 flex flex-col gap-6 min-h-[180px]" }
+  div { className: "bg-[#0f0f0f] p-8 flex flex-col gap-6 min-h-[180px]" }
     [ div { className: "text-[#ff3b1a]" } [ glyph kind ]
     , div { className: "flex flex-col gap-2" }
         [ div

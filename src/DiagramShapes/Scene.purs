@@ -87,7 +87,7 @@ colorHover = 2
 ballColorHex :: Int -> String
 ballColorHex 2 = "#ffd84a"
 ballColorHex 1 = "#ff5a2a"
-ballColorHex _ = "#0a0e1a"
+ballColorHex _ = "#0f0f0f"
 
 makeFog :: String -> Number -> Number -> JSX
 makeFog color near far =
@@ -302,7 +302,7 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
     }
   where
   initFrame = { t: 0.0, aspect: 1.0 }
-  fog = makeFog "#0a0e1a" 6.0 55.0
+  fog = makeFog "#0f0f0f" 6.0 55.0
   ambient = element (threejs "AmbientLight") { intensity: 0.12 }
   hemi = makeHemisphereLight "#c8cdd9" "#1a1f2e" 0.9
   directional = element (threejs "DirectionalLight")
