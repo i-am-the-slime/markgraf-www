@@ -118,13 +118,23 @@ targetDpr :: HTMLCanvasElement -> Effect Number
 targetDpr canvasEl = do
   w <- clientWidth el
   h <- clientHeight el
-  pure (min 1.0 (sqrt (toNumber pixelBudget / area w h)))
+  budget <- pixelBudget
+  pure (min 1.0 (sqrt (toNumber budget / area w h)))
   where
   el = toElement canvasEl
   area w h = max 1.0 w * max 1.0 h
 
-pixelBudget :: Int
-pixelBudget = 640 * 480
+-- Wider viewports earn a larger pixel budget, so the background sharpens on big
+-- screens but stays cheap on phones. Re-read on every resize via targetDpr.
+pixelBudget :: Effect Int
+pixelBudget = do
+  width <- window >>= Window.innerWidth
+  pure (budgetFor width)
+  where
+  budgetFor width
+    | width >= 1400 = 1024 * 768
+    | width >= 800 = 800 * 600
+    | otherwise = 640 * 480
 
 type Geometry = { width :: Number, height :: Number, top :: Number, left :: Number }
 
