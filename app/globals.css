@@ -167,9 +167,11 @@ body:has(.vhs-text-wrap.vhs-on)::after {
   50% { opacity: 0.55; }
 }
 
-/* Hero CRT scanlines as a DOM overlay (split out of the canvas grain shader).
-   Bold 1px black line every 4px, painted over the whole hero. */
-.hero-scanlines {
+/* CRT scanlines as a top-level DOM overlay (split out of the canvas grain
+   shader). Bold 1px black line every 4px, looping slowly top-to-bottom. The
+   travel distance (40px) is a multiple of the 4px period so the loop is
+   seamless; tune speed via the animation duration. */
+.crt-overlay {
   background: repeating-linear-gradient(
     to bottom,
     rgba(0, 0, 0, 1) 0px,
@@ -177,6 +179,16 @@ body:has(.vhs-text-wrap.vhs-on)::after {
     transparent 1px,
     transparent 4px
   );
+  animation: crt-scroll 10s linear infinite;
+}
+@keyframes crt-scroll {
+  from { background-position-y: 0; }
+  to { background-position-y: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .crt-overlay {
+    animation: none;
+  }
 }
 
 /* markgraf-react paints a <svg class="markgraf-player"> with intrinsic width

@@ -110,6 +110,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       , labPhotoSection
       , labRightHangSection
       , navArrows { active: activeSection }
+      , crtOverlay
       ]
 
 -- Fixed full-viewport layer that the offscreen WebGL canvas paints into. Sits
@@ -250,15 +251,7 @@ heroPage =
     }
     [ heroLockup
     , spreadFolio "00" "hero"
-    , heroScanlines
     ]
-
--- CRT scanlines lifted out of the offscreen canvas's grain shader (where they
--- were multiplied into the noise) into their own DOM layer, so they ride on top
--- of the wordmark and everything else in the hero rather than only the canvas.
-heroScanlines :: JSX
-heroScanlines =
-  div { className: "absolute inset-0 z-30 pointer-events-none hero-scanlines" } noJSX
 
 heroLockup :: JSX
 heroLockup =
@@ -330,6 +323,14 @@ navLink active (sectionId /\ label) =
           <> if active == sectionId then "text-[#ff3b1a] font-bold" else "text-[#8a94a8]"
     }
     [ text label ]
+
+-- CRT scanlines, lifted out of the offscreen canvas's grain shader into a
+-- top-level DOM layer so they ride above everything — the floating player and
+-- the side nav included, which a section-scoped layer never could. The lines
+-- loop slowly top-to-bottom (see .crt-overlay in globals.css).
+crtOverlay :: JSX
+crtOverlay =
+  div { className: "fixed inset-0 z-[60] pointer-events-none crt-overlay" } noJSX
 
 spreadFolio :: String -> String -> JSX
 spreadFolio num label =
