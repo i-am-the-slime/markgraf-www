@@ -477,7 +477,7 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
   useEffect src do
     launchAff_ do
       delay (Milliseconds 250.0)
-      liftEffect (setDebounced src)
+      setDebounced src # liftEffect
     pure (pure unit)
   useEffect unit do
     onElementResize "markgraf-preview" setSize
@@ -767,11 +767,9 @@ tokenize input = fuse (go 0 [])
     | i >= n = acc
     | otherwise = case matchAt i of
         { tok: Just t, next } -> go next (acc <> [ t ])
-        { next } ->
-          let
-            ch = fromMaybe "" (CU.singleton <$> CU.charAt i input)
-          in
-            go (i + 1) (acc <> [ { kind: TPlain, text: ch } ])
+        { next } -> do
+          let ch = fromMaybe "" (CU.singleton <$> CU.charAt i input)
+          go (i + 1) (acc <> [ { kind: TPlain, text: ch } ])
 
   matchAt i =
     case tryComment i of
@@ -820,15 +818,14 @@ tokenize input = fuse (go 0 [])
           _ -> go' (k + 1)
 
   tryOperator i =
-    let
-      s = suffix i
-    in
-      if startsWith "<-->" s then Just { kind: TOperator, text: "<-->" }
-      else if startsWith "<->" s then Just { kind: TOperator, text: "<->" }
-      else if startsWith "-->" s then Just { kind: TOperator, text: "-->" }
-      else if startsWith "->" s then Just { kind: TOperator, text: "->" }
-      else if startsWith "<-" s then Just { kind: TOperator, text: "<-" }
-      else Nothing
+    if startsWith "<-->" s then Just { kind: TOperator, text: "<-->" }
+    else if startsWith "<->" s then Just { kind: TOperator, text: "<->" }
+    else if startsWith "-->" s then Just { kind: TOperator, text: "-->" }
+    else if startsWith "->" s then Just { kind: TOperator, text: "->" }
+    else if startsWith "<-" s then Just { kind: TOperator, text: "<-" }
+    else Nothing
+    where
+    s = suffix i
 
   tryBrace i = case CU.charAt i input of
     Just '{' -> Just { kind: TBrace, text: "{" }
