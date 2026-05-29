@@ -210,6 +210,9 @@ body:has(.vhs-text-wrap.vhs-on)::after {
    shadow rings (tight + wide) plus the existing dark contrast shadow keep them
    legible over the busy scene. */
 .display-glow {
+  /* Warm amber tint so the large type reads as lit phosphor rather than flat
+     white — pulled toward the same hue as the glow rings below. */
+  color: #f3ead2;
   text-shadow:
     0 0 12px rgba(255, 238, 214, 0.35),
     0 0 42px rgba(255, 238, 214, 0.18),
