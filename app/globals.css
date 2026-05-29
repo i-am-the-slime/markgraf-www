@@ -112,7 +112,6 @@
   transform: translate(0.02em, 0);
   animation: vhs-move 1.5s infinite;
   animation-play-state: paused;
-  opacity: 0.35;
 }
 body::after {
   content: "";

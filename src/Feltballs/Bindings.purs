@@ -2,6 +2,7 @@ module Feltballs.Bindings
   ( module Yoga.React.R3F.Events
   , module Drei
   , module DreiStaging
+  , instances
   , boxGeometry
   , planeGeometry
   , sphereGeometry
@@ -15,9 +16,13 @@ module Feltballs.Bindings
 
 import React.Basic (JSX, element)
 import React.R3F.Three.Internal (threejs)
-import Yoga.React.R3F.Drei.Misc (edges, outlines, instances, instance_, roundedBoxGeometry, text, html) as Drei
+import Yoga.React.R3F.Drei.Misc (edges, outlines, instance_, roundedBoxGeometry, text, html) as Drei
+import Yoga.React.R3F.Drei.Misc as DreiMisc
 import Yoga.React.R3F.Drei.Staging (environment) as DreiStaging
 import Yoga.React.R3F.Events (ThreeEvent, eventPointX, eventPointY, eventPointZ, stopPropagation, withChildren)
+
+instances :: forall p. { | p } -> Array JSX -> JSX
+instances p kids = DreiMisc.instances (withChildren kids p)
 
 boxGeometry :: forall p. { | p } -> JSX
 boxGeometry = element (threejs "BoxGeometry")
