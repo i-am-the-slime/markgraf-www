@@ -520,7 +520,7 @@ playgroundView pp =
             [ div {}
                 [ sectionLabel "01 / playground"
                 , h2
-                    { className: "text-[clamp(1.875rem,4vw,4rem)] font-bold tracking-tight leading-[0.95] max-w-[20ch]"
+                    { className: "text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] max-w-[20ch]"
                     , style: css { fontFamily: "'Sinistre', serif" }
                     }
                     "Try it out"
@@ -932,7 +932,7 @@ playerSection =
     [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ sectionLabel "02 / player"
         , h2
-            { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
+            { className: "text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
             , style: css { fontFamily: "'Sinistre', serif" }
             }
             "Native macOS player."
@@ -964,7 +964,7 @@ renderSection =
     [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ sectionLabel "03 / render"
         , h2
-            { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
+            { className: "text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
             , style: css { fontFamily: "'Sinistre', serif" }
             }
             "mp4, SVG, GIF, or sequence diagram."
@@ -998,7 +998,7 @@ aiSection =
     [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ sectionLabel "04 / ai authoring"
         , h2
-            { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
+            { className: "text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
             , style: css { fontFamily: "'Sinistre', serif" }
             }
             "Claude writes the diagram."
@@ -1024,7 +1024,7 @@ embedSection =
     [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ sectionLabel "05 / integrations"
         , h2
-            { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
+            { className: "text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
             , style: css { fontFamily: "'Sinistre', serif" }
             }
             "GitHub and docs sites."
@@ -1050,7 +1050,7 @@ playSection =
     [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ sectionLabel "06 / play"
         , h2
-            { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
+            { className: "text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
             , style: css { fontFamily: "'Sinistre', serif" }
             }
             "Trace any shape."
@@ -1088,7 +1088,7 @@ footerSection =
         [ sectionLabel "06 / install"
         , div { className: "flex flex-col gap-6" }
             [ h2
-                { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] max-w-3xl"
+                { className: "text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] max-w-[min(56rem,90vw)]"
                 , style: css { fontFamily: "'Sinistre', serif" }
                 }
                 "Install"
