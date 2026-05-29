@@ -133,6 +133,7 @@ pixelBudget = do
   pure (budgetFor width height)
   where
   budgetFor width height
+    | width >= 1600 && height >= 1000 = 1600 * 1200
     | width >= 1400 && height >= 900 = 1024 * 768
     | width >= 800 && height >= 600 = 800 * 600
     | otherwise = 640 * 480
