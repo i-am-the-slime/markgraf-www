@@ -168,13 +168,13 @@ body:has(.vhs-text-wrap.vhs-on)::after {
 }
 
 /* Hero CRT scanlines as a DOM overlay (split out of the canvas grain shader).
-   1px dark line every 3px, painted over the whole hero. Most visible on the
-   bright wordmark; near-invisible over the dark background — the CRT look. */
+   Light 1px line every 3px so the texture reads across the whole hero — black
+   lines were invisible against the near-black background. */
 .hero-scanlines {
   background: repeating-linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.28) 0px,
-    rgba(0, 0, 0, 0.28) 1px,
+    rgba(255, 255, 255, 0.07) 0px,
+    rgba(255, 255, 255, 0.07) 1px,
     transparent 1px,
     transparent 3px
   );
