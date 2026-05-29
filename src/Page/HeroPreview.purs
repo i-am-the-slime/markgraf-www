@@ -12,7 +12,7 @@ import Effect.Random (random)
 import Effect.Ref as Ref
 import Effect.Timer (clearTimeout, setTimeout)
 import Data.String.CodeUnits as CU
-import Data.Tuple.Nested ((/\))
+import Data.Tuple.Nested (type (/\), (/\))
 import Effect (Effect)
 import Effect.Aff (Aff, Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
@@ -95,7 +95,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       [ diagramShapesBackground
       , scrim (activeSection == "playground")
       , topBar
-      , sideNav
+      , sideNav { active: activeSection }
       , pageRail
       , heroPage
       , playground { section: activeSection }
@@ -301,26 +301,37 @@ topBar =
 -- single link row is rotated a quarter turn, so the labels run bottom-to-top
 -- and mirror the page-dot rail on the right. Hidden on phones, where the dot
 -- rail alone carries section navigation.
-sideNav :: JSX
-sideNav =
+sideNav :: { active :: String } -> JSX
+sideNav { active } =
   nav { className: "fixed left-0 inset-y-0 z-30 w-14 hidden sm:flex items-center justify-center pointer-events-none" }
     [ div
-        { className: "flex items-center gap-8 whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.28em] text-[#8a94a8] pointer-events-auto"
+        { className: "flex items-center gap-8 whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.28em] pointer-events-auto"
         , style: css { transform: "rotate(-90deg)" }
         }
-        [ navLink "#playground" "playground"
-        , navLink "#player" "player"
-        , navLink "#render" "render"
-        , navLink "#ai" "ai"
-        , navLink "#embed" "integrations"
-        , navLink "#play" "play"
-        , navLink "#install" "install"
-        ]
+        (navLink active <$> sections)
+    ]
+  where
+  sections =
+    [ "playground" /\ "playground"
+    , "player" /\ "player"
+    , "render" /\ "render"
+    , "ai" /\ "ai"
+    , "embed" /\ "integrations"
+    , "play" /\ "play"
+    , "install" /\ "install"
     ]
 
-navLink :: String -> String -> JSX
-navLink href label =
-  a { href, className: "hover:text-[#f5f1e8] transition-colors" } [ text label ]
+-- The active section's label goes bold red, the rest stay muted — the same
+-- accent the page-dot rail uses, so both chrome rails agree on where you are.
+navLink :: String -> String /\ String -> JSX
+navLink active (sectionId /\ label) =
+  a
+    { href: "#" <> sectionId
+    , className:
+        "transition-colors hover:text-[#f5f1e8] "
+          <> if active == sectionId then "text-[#ff3b1a] font-bold" else "text-[#8a94a8]"
+    }
+    [ text label ]
 
 pageRail :: JSX
 pageRail =

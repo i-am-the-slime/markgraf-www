@@ -8,3 +8,4 @@ bun.lock
 *.tsbuildinfo
 .DS_Store
 /public/diagram-shapes-worker.js
+/*.jpg
