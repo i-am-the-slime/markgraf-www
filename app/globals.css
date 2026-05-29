@@ -274,47 +274,48 @@ body:has(.vhs-text-wrap.vhs-on)::after {
      flickers with each stutter. `both` keeps it dark through the delay; with CSS
      disabled the title just shows normally. */
   .hero-wordmark-in {
-    animation: hero-wordmark-in 2s linear 0.7s both;
+    animation: hero-wordmark-in 3.4s linear 0.7s both;
   }
   /* A real tube ignites in bursts — struck (lit) or dark, always snapping back
      to 0 between flashes, never dimming. Realism is in the cadence: wide dark
      gaps at first, then the strikes come faster and the peaks climb (0.5 -> 1)
      until the gas holds and it stays on. The ~1% edges act as on/off snaps. */
   @keyframes hero-wordmark-in {
-    0%, 12% { opacity: 0; }
-    13% { opacity: 0.45; }
-    15% { opacity: 0.45; }
-    16% { opacity: 0; }
-    25% { opacity: 0; }
-    26% { opacity: 0.45; }
-    28% { opacity: 0.45; }
-    29% { opacity: 0; }
+    0%, 7% { opacity: 0; }
+    8% { opacity: 0.4; }     /* slow, sparse blinking — wide dark gaps */
+    10% { opacity: 0.4; }
+    11% { opacity: 0; }
+    20% { opacity: 0; }
+    21% { opacity: 0.4; }
+    23% { opacity: 0.4; }
+    24% { opacity: 0; }
+    33% { opacity: 0; }
+    34% { opacity: 0.5; }
+    36% { opacity: 0.5; }
     37% { opacity: 0; }
-    38% { opacity: 0.7; }
-    40% { opacity: 0.7; }
-    41% { opacity: 0; }
+    44% { opacity: 0; }
+    45% { opacity: 0.5; }
+    47% { opacity: 0.5; }
     48% { opacity: 0; }
-    49% { opacity: 0.45; }
-    51% { opacity: 0.45; }
-    52% { opacity: 0; }
+    54% { opacity: 0; }      /* gaps start shrinking — it speeds up */
+    55% { opacity: 0.7; }
+    57% { opacity: 0.7; }
     58% { opacity: 0; }
-    59% { opacity: 0.7; }
-    61% { opacity: 0.7; }
-    62% { opacity: 0; }
-    66% { opacity: 0; }
-    67% { opacity: 0.8; }
-    69% { opacity: 0.8; }
-    70% { opacity: 0; }
-    73% { opacity: 0; }
+    63% { opacity: 0; }
+    64% { opacity: 0.7; }
+    66% { opacity: 0.7; }
+    67% { opacity: 0; }
+    71% { opacity: 0; }
+    72% { opacity: 0.8; }
     74% { opacity: 0.8; }
-    76% { opacity: 0.8; }
-    77% { opacity: 0; }
-    79% { opacity: 0; }
-    80% { opacity: 0.8; }
-    82% { opacity: 0.8; }
-    83% { opacity: 0; }
-    84.5% { opacity: 0.8; }
-    86% { opacity: 0.8; }
+    75% { opacity: 0; }
+    78% { opacity: 0; }
+    79% { opacity: 0.8; }
+    81% { opacity: 0.8; }
+    82% { opacity: 0; }
+    84% { opacity: 0; }
+    85% { opacity: 0.8; }
+    86.5% { opacity: 0.8; }
     87% { opacity: 0; }
     88% { opacity: 0.8; animation-timing-function: ease-out; }
     100% { opacity: 1; }    /* the only full-brightness moment — the climax */
