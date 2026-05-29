@@ -74,7 +74,9 @@ package:
     - framer-motion
     - functions
     - integers
+    - intersection-observer
     - js-promise
+    - js-timers
     - lists
     - literals
     - maybe
@@ -96,6 +98,7 @@ package:
     - untagged-union
     - web-clipboard
     - web-dom
+    - web-resize-observer
     - yoga-r3f
     - yoga-react-dom
   build:

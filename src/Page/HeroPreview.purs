@@ -3,7 +3,14 @@ module Page.HeroPreview (mkHeroPreview) where
 import Prelude
 
 import Data.Array as Array
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Foldable (for_, traverse_)
+import Data.Int as Int
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Options ((:=))
+import Data.Traversable (traverse)
+import Effect.Random (random)
+import Effect.Ref as Ref
+import Effect.Timer (clearTimeout, setTimeout)
 import Data.String.CodeUnits as CU
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -13,6 +20,7 @@ import Effect.Uncurried (mkEffectFn1)
 import Effect.Unsafe (unsafePerformEffect)
 import Data.Nullable (Nullable)
 import Components.Scene (writeSceneProgress)
+import Feltballs.Offscreen as Feltballs
 import Framer.Motion.MotionComponent as Motion
 import Framer.Motion.Types as Motion
 import Framer.Motion.Types (VariantLabel(..))
@@ -24,12 +32,21 @@ import Unsafe.Coerce (unsafeCoerce)
 import React.Basic.Hooks (Component, component, readRef, useEffectOnce, useEffect, useRef, useState', writeRef)
 import React.Basic.Hooks as Hooks
 import Untagged.Castable (cast)
-import Web.DOM (Node)
+import Web.DOM.DOMTokenList as DOMTokenList
+import Web.DOM.Document as Document
 import Web.DOM.Element as Element
+import Web.DOM.HTMLCollection as HTMLCollection
 import Web.DOM.NonElementParentNode (getElementById)
+import Web.Event.Event (EventType(..))
+import Web.Event.EventTarget (addEventListenerWithOptions, eventListener, removeEventListener)
 import Web.HTML (window)
+import Web.HTML.HTMLDocument as HTMLDocument
 import Web.HTML.HTMLDocument (toNonElementParentNode)
+import Web.HTML.Window as Window
 import Web.HTML.Window (document)
+import Web.Intersection.Observer as IO
+import Web.Intersection.Observer.Options as IO
+import Web.ResizeObserver as RO
 import Yoga.React.DOM.Attributes.AutoCapitalize (autoCapitalizeOff)
 import Yoga.React.DOM.HTML.A (a)
 import Yoga.React.DOM.HTML.Button (button)
@@ -1400,9 +1417,10 @@ sectionLabel :: String -> JSX
 sectionLabel label = element sectionLabelComponent { label }
 
 foreign import sectionLabelComponent :: ReactComponent { label :: String }
-foreign import sceneComponent :: ReactComponent {}
-foreign import feltballsComponent :: ReactComponent {}
 foreign import markgrafPlayerImpl :: forall a. ReactComponent { | a }
+
+feltballsComponent :: ReactComponent {}
+feltballsComponent = Feltballs.feltballsOffscreen
 
 markgrafPlayer
   :: forall props props_
@@ -1418,12 +1436,71 @@ markgrafPlayer
   -> JSX
 markgrafPlayer = element markgrafPlayerImpl
 
-foreign import lookupNode :: String -> Effect (Nullable Node)
+onElementResize
+  :: String -> ({ w :: Number, h :: Number } -> Effect Unit) -> Effect (Effect Unit)
+onElementResize elemId cb = findElementById elemId >>= case _ of
+  Nothing -> pure mempty
+  Just el -> do
+    ro <- RO.resizeObserver \entries _ -> for_ entries \e ->
+      cb { w: e.contentRect.width, h: e.contentRect.height }
+    RO.observe el {} ro
+    pure (RO.disconnect ro)
 
-foreign import onElementResize :: String -> ({ w :: Number, h :: Number } -> Effect Unit) -> Effect (Effect Unit)
-foreign import onIntersect :: String -> (Boolean -> Effect Unit) -> Effect (Effect Unit)
-foreign import installScrollSync :: String -> String -> Effect (Effect Unit)
-foreign import installVhsBurst :: String -> Effect (Effect Unit)
+findElementById :: String -> Effect (Maybe Element.Element)
+findElementById elemId = do
+  doc <- window >>= document
+  getElementById elemId (toNonElementParentNode doc)
+
+installScrollSync :: String -> String -> Effect (Effect Unit)
+installScrollSync taId preId = do
+  taM <- findElementById taId
+  preM <- findElementById preId
+  case taM, preM of
+    Just ta, Just pre -> do
+      let
+        sync = do
+          Element.scrollTop ta >>= flip Element.setScrollTop pre
+          Element.scrollLeft ta >>= flip Element.setScrollLeft pre
+      listener <- eventListener \_ -> sync
+      let target = Element.toEventTarget ta
+      addEventListenerWithOptions (EventType "scroll") listener passiveOpts target
+      sync
+      pure $ removeEventListener (EventType "scroll") listener false target
+    _, _ -> pure mempty
+
+installVhsBurst :: String -> Effect (Effect Unit)
+installVhsBurst className = do
+  scheduleRef <- Ref.new Nothing
+  burstRef <- Ref.new Nothing
+  let
+    targets = do
+      d <- window >>= document
+      hc <- Document.getElementsByClassName className (HTMLDocument.toDocument d)
+      HTMLCollection.toArray hc
+    setVhs on = do
+      els <- targets
+      for_ els \el -> do
+        cl <- Element.classList el
+        if on then DOMTokenList.add cl "vhs-on"
+              else DOMTokenList.remove cl "vhs-on"
+    burst = do
+      setVhs true
+      tid <- setTimeout 1600 do
+        setVhs false
+        scheduleNext
+      Ref.write (Just tid) burstRef
+    scheduleNext = do
+      r <- random
+      tid <- setTimeout (Int.round ((40.0 + r * 30.0) * 1000.0)) burst
+      Ref.write (Just tid) scheduleRef
+  scheduleNext
+  pure do
+    Ref.read burstRef >>= traverse_ clearTimeout
+    Ref.read scheduleRef >>= traverse_ clearTimeout
+    setVhs false
+
+passiveOpts :: { capture :: Boolean, once :: Boolean, passive :: Boolean }
+passiveOpts = { capture: false, once: false, passive: true }
 
 -- Scroll the section with the given id into view. The magazine is snap-
 -- mandatory, so the browser handles the actual easing; we just point at the
@@ -1498,24 +1575,60 @@ observeRatios
   -> Array String
   -> (String -> Number -> Effect Unit)
   -> Effect (Effect Unit)
-observeRatios root ids cb = observeRatiosImpl root ids cb
+observeRatios rootId ids cb = do
+  rootEl <- findElementById rootId
+  els <- Array.catMaybes <$> traverse findElementById ids
+  obs <- IO.newIntersectionObserver
+    (\entries _ -> for_ entries \e -> do
+        id <- Element.id e.target
+        cb id e.intersectionRatio)
+    ( IO.thresholds := [ 0.0, 0.25, 0.5, 0.75, 1.0 ]
+        <> maybe mempty (\r -> IO.root := r) rootEl
+    )
+  for_ els (IO.observe obs)
+  pure $ for_ els (IO.unobserve obs)
 
 postWorkerMessage :: forall a. String -> a -> Effect Unit
 postWorkerMessage = postWorkerMessageImpl
-
-foreign import observeRatiosImpl
-  :: String
-  -> Array String
-  -> (String -> Number -> Effect Unit)
-  -> Effect (Effect Unit)
 
 foreign import postWorkerMessageImpl :: forall a. String -> a -> Effect Unit
 
 onMagazineScroll
   :: ({ x :: Number, y :: Number, progress :: Number } -> Effect Unit)
   -> Effect (Effect Unit)
-onMagazineScroll = onMagazineScrollImpl
-
-foreign import onMagazineScrollImpl
-  :: ({ x :: Number, y :: Number, progress :: Number } -> Effect Unit)
-  -> Effect (Effect Unit)
+onMagazineScroll cb = findElementById "magazine" >>= case _ of
+  Nothing -> pure mempty
+  Just el -> do
+    lastXRef <- Ref.new 0.0
+    win <- window
+    let
+      fire = do
+        vh <- Int.toNumber <$> Window.innerHeight win
+        vw <- Int.toNumber <$> Window.innerWidth win
+        st <- Element.scrollTop el
+        let p = clamp01 (st / max 1.0 vh)
+        previewM <- findElementById "markgraf-preview"
+        lastX <- Ref.read lastXRef
+        naturalCenter <- case previewM of
+          Just preview -> do
+            r <- Element.getBoundingClientRect preview
+            pure ((r.left - lastX) + r.width / 2.0)
+          Nothing -> pure (vw / 2.0)
+        let
+          offsetToCenter = vw / 2.0 - naturalCenter
+          x = offsetToCenter * (1.0 - p)
+          y = (-0.95 + 0.95 * p) * vh
+        Ref.write x lastXRef
+        cb { x, y, progress: p }
+    listener <- eventListener \_ -> fire
+    let
+      elTarget = Element.toEventTarget el
+      winTarget = Window.toEventTarget win
+    addEventListenerWithOptions (EventType "scroll") listener passiveOpts elTarget
+    addEventListenerWithOptions (EventType "resize") listener passiveOpts winTarget
+    fire
+    pure do
+      removeEventListener (EventType "scroll") listener false elTarget
+      removeEventListener (EventType "resize") listener false winTarget
+  where
+  clamp01 v = max 0.0 (min 1.0 v)

@@ -9,7 +9,6 @@ import Data.Number as Number
 import Data.Foldable (traverse_)
 import Effect (Effect)
 import Effect.Unsafe (unsafePerformEffect)
-import Feltballs.Bindings (withChildren)
 import React.Basic (JSX, ReactComponent, element, fragment)
 import React.Basic.Hooks (Component, component, readRefMaybe, useRef)
 import React.Basic.Hooks as Hooks
@@ -19,6 +18,10 @@ import React.R3F.Three.Types (Object3D)
 import React.R3F.Web (canvas)
 import Unsafe.Coerce (unsafeCoerce)
 import Yoga.React.DOM.Internal (css)
+import Yoga.React.R3F.Drei.Misc (trailImpl, lightformerImpl)
+import Yoga.React.R3F.Drei.Staging (floatImpl, environmentImpl)
+import Yoga.React.R3F.Events (withChildren)
+import Yoga.React.R3F.Postprocessing (effectComposerImpl, bloomImpl, chromaticAberrationImpl)
 
 -- Palette ---------------------------------------------------------------------
 
@@ -360,14 +363,6 @@ sceneComponent = unsafePerformEffect sceneComp
 foreign import data ThreeCurve :: Type
 foreign import data ThreeCamera :: Type
 foreign import data ThreeObject :: Type
-
-foreign import floatImpl :: forall a. ReactComponent { | a }
-foreign import trailImpl :: forall a. ReactComponent { | a }
-foreign import environmentImpl :: forall a. ReactComponent { | a }
-foreign import lightformerImpl :: forall a. ReactComponent { | a }
-foreign import effectComposerImpl :: forall a. ReactComponent { | a }
-foreign import bloomImpl :: forall a. ReactComponent { | a }
-foreign import chromaticAberrationImpl :: forall a. ReactComponent { | a }
 
 foreign import mkLineGeometryImpl :: Vec3 -> Vec3 -> Effect ThreeObject
 foreign import mkTubeGeometryImpl

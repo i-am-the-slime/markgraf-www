@@ -6,6 +6,7 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import React.Basic (JSX)
+import Effect.Timer (setTimeout)
 import Web.Clipboard as Clipboard
 import Web.HTML (window)
 import Web.HTML.Window (navigator)
@@ -258,4 +259,5 @@ writeClipboard value = do
     Nothing -> pure unit
     Just cb -> void $ Clipboard.writeText value cb
 
-foreign import scheduleReset :: Effect Unit -> Effect Unit
+scheduleReset :: Effect Unit -> Effect Unit
+scheduleReset = void <<< setTimeout 1200

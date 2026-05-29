@@ -1,15 +1,4 @@
-import { Float, Trail, Environment, Lightformer } from "@react-three/drei"
-import { EffectComposer, Bloom, ChromaticAberration } from "@react-three/postprocessing"
 import { Vector3, CatmullRomCurve3, BufferGeometry, LineCurve3, TubeGeometry } from "three"
-
-export const floatImpl = Float
-export const trailImpl = Trail
-export const environmentImpl = Environment
-export const lightformerImpl = Lightformer
-
-export const effectComposerImpl = EffectComposer
-export const bloomImpl = Bloom
-export const chromaticAberrationImpl = ChromaticAberration
 
 export const mkLineGeometryImpl = (from) => (to) => () =>
   new BufferGeometry().setFromPoints([
