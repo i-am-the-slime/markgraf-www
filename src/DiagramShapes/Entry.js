@@ -2,7 +2,7 @@ import React from "react"
 import { Canvas } from "@react-three/fiber"
 import { sceneJSX } from "./index.js"
 
-export const feltballsApp = function FeltballsApp() {
+export const diagramShapesApp = function DiagramShapesApp() {
   return React.createElement(
     Canvas,
     {

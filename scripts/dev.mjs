@@ -3,8 +3,8 @@ import { watch } from "node:fs"
 import { spawn } from "node:child_process"
 
 const workerCtx = await context({
-  entryPoints: ["app/feltballs.worker.js"],
-  outfile: "public/feltballs-worker.js",
+  entryPoints: ["app/diagram-shapes.worker.js"],
+  outfile: "public/diagram-shapes-worker.js",
   bundle: true,
   format: "esm",
   target: "esnext",
@@ -14,7 +14,7 @@ const workerCtx = await context({
 })
 await workerCtx.rebuild()
 await workerCtx.watch()
-console.log("[worker] esbuild watching app/feltballs.worker.js -> public/feltballs-worker.js")
+console.log("[worker] esbuild watching app/diagram-shapes.worker.js -> public/diagram-shapes-worker.js")
 
 let building = false
 let queued = false

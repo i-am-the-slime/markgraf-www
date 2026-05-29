@@ -6,7 +6,7 @@
     "dev": "spago build && bun run scripts/dev.mjs",
     "build": "spago build && bun run worker && next build",
     "start": "next start",
-    "worker": "bun run scripts/build-feltballs-worker.mjs"
+    "worker": "bun run scripts/build-diagram-shapes-worker.mjs"
   },
   "dependencies": {
     "@codemirror/theme-one-dark": "^6.1.3",

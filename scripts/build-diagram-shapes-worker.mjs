@@ -1,4 +1,4 @@
-// Bundle the feltballs worker into a self-contained ESM file in public/.
+// Bundle the diagramShapes worker into a self-contained ESM file in public/.
 // We do this outside Turbopack because Turbopack injects React Fast Refresh
 // signatures into compiled PureScript modules, which break inside a Web
 // Worker context (the signed renderFn becomes undefined and the component's
@@ -7,8 +7,8 @@
 import { build } from "esbuild"
 
 await build({
-  entryPoints: ["app/feltballs.worker.js"],
-  outfile: "public/feltballs-worker.js",
+  entryPoints: ["app/diagram-shapes.worker.js"],
+  outfile: "public/diagram-shapes-worker.js",
   bundle: true,
   format: "esm",
   target: "esnext",
@@ -16,4 +16,4 @@ await build({
   define: { "process.env.NODE_ENV": '"production"' },
   // No source maps / minification — keep readable for debugging.
 })
-console.log("built public/feltballs-worker.js")
+console.log("built public/diagram-shapes-worker.js")

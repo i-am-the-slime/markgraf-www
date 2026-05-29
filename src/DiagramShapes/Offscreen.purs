@@ -1,4 +1,4 @@
-module Feltballs.Offscreen (feltballsOffscreen) where
+module DiagramShapes.Offscreen (diagramShapesOffscreen) where
 
 import Prelude
 
@@ -14,21 +14,21 @@ import Yoga.React.DOM.HTML.Canvas (canvas)
 import Yoga.React.DOM.Internal (css, noJSX)
 
 foreign import data CanvasEl :: Type
-foreign import setupFeltballsImpl :: Int -> CanvasEl -> Effect (Effect Unit)
+foreign import setupDiagramShapesImpl :: Int -> CanvasEl -> Effect (Effect Unit)
 
 pixelBudget :: Int
 pixelBudget = 640 * 480
 
-feltballsOffscreen :: ReactComponent {}
-feltballsOffscreen = unsafeCoerce (unsafePerformEffect feltballsOffscreenComponent)
+diagramShapesOffscreen :: ReactComponent {}
+diagramShapesOffscreen = unsafeCoerce (unsafePerformEffect diagramShapesOffscreenComponent)
 
-feltballsOffscreenComponent :: Component {}
-feltballsOffscreenComponent = component "FeltballsOffscreen" \_ -> Hooks.do
+diagramShapesOffscreenComponent :: Component {}
+diagramShapesOffscreenComponent = component "DiagramShapesOffscreen" \_ -> Hooks.do
   canvasRef <- useRef (toNullable (Nothing :: Maybe CanvasEl))
 
   useEffectOnce do
     readRefMaybe canvasRef >>= case _ of
-      Just c -> setupFeltballsImpl pixelBudget c
+      Just c -> setupDiagramShapesImpl pixelBudget c
       Nothing -> pure (pure unit)
 
   pure $ canvas

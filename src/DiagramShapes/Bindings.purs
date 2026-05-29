@@ -1,4 +1,4 @@
-module Feltballs.Bindings
+module DiagramShapes.Bindings
   ( module Yoga.React.R3F.Events
   , module Drei
   , module DreiStaging

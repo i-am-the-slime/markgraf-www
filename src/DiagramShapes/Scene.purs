@@ -1,4 +1,4 @@
-module Feltballs.Scene (sceneJSX) where
+module DiagramShapes.Scene (sceneJSX) where
 
 import Prelude
 
@@ -11,7 +11,7 @@ import Data.Number (acos, cos, floor, pi, sin, sqrt)
 import Effect (Effect)
 import Effect.Random (randomInt)
 import Effect.Unsafe (unsafePerformEffect)
-import Feltballs.Bindings (cylinderGeometry, instance_, instances, meshBasicMaterial, meshStandardMaterial)
+import DiagramShapes.Bindings (cylinderGeometry, instance_, instances, meshBasicMaterial, meshStandardMaterial)
 import React.Basic (JSX, Ref, element)
 import React.Basic.Hooks (Component, component, readRef, readRefMaybe, useEffectOnce, useRef, useState, writeRef, (/\))
 import React.Basic.Hooks as Hooks

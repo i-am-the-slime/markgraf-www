@@ -21,7 +21,7 @@ import Effect.Unsafe (unsafePerformEffect)
 import Data.Nullable (Nullable, null)
 import Data.String.Common (joinWith, toUpper)
 import Components.Scene (writeSceneProgress)
-import Feltballs.Offscreen as Feltballs
+import DiagramShapes.Offscreen as DiagramShapes
 import Framer.Motion.MotionComponent as Motion
 import Framer.Motion.Types as Motion
 import Framer.Motion.Types (VariantLabel(..))
@@ -92,7 +92,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       { id: "magazine"
       , className: "relative bg-[#0a0e1a] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
       }
-      [ feltballsBackground
+      [ diagramShapesBackground
       , scrim (activeSection == "playground")
       , topBar
       , pageRail
@@ -116,10 +116,10 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
 -- Fixed full-viewport layer that the offscreen WebGL canvas paints into. Sits
 -- behind every section so per-section camera arms + ball morphs are visible
 -- as the user scrolls between spreads.
-feltballsBackground :: JSX
-feltballsBackground =
+diagramShapesBackground :: JSX
+diagramShapesBackground =
   div { className: "fixed inset-0 z-0 pointer-events-none" }
-    [ element feltballsComponent {} ]
+    [ element diagramShapesComponent {} ]
 
 -- ---------------------------------------------------------------------------
 -- Per-section declarative state: each section declares both a ball morph
@@ -1540,8 +1540,8 @@ scrambleStartDelay = 770.0
 
 foreign import markgrafPlayerImpl :: forall a. ReactComponent { | a }
 
-feltballsComponent :: ReactComponent {}
-feltballsComponent = Feltballs.feltballsOffscreen
+diagramShapesComponent :: ReactComponent {}
+diagramShapesComponent = DiagramShapes.diagramShapesOffscreen
 
 markgrafPlayer
   :: forall props props_

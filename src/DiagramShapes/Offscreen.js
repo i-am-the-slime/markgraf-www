@@ -1,21 +1,21 @@
 // Transfer the canvas's drawing surface to a Web Worker that mounts the
-// feltballs R3F scene. The `new URL(literal, import.meta.url)` form is what
+// diagramShapes R3F scene. The `new URL(literal, import.meta.url)` form is what
 // Turbopack scans to emit the worker as its own chunk — has to be in JS.
 // A ref-guard prevents StrictMode's double-effect from re-transferring.
-export const setupFeltballsImpl = (pixelBudget) => (canvas) => () => {
-  if (canvas._feltballsTransferred) return () => {}
-  canvas._feltballsTransferred = true
+export const setupDiagramShapesImpl = (pixelBudget) => (canvas) => () => {
+  if (canvas._diagramShapesTransferred) return () => {}
+  canvas._diagramShapesTransferred = true
 
-  // Worker bundled out-of-band by scripts/build-feltballs-worker.mjs (esbuild),
+  // Worker bundled out-of-band by scripts/build-diagram-shapes-worker.mjs (esbuild),
   // not via Turbopack: dev-mode Turbopack injects React Fast Refresh signatures
   // into PS-compiled modules and they crash in a Worker context. Served from
   // /public so the Next-bundler never sees it.
-  const worker = new Worker("/markgraf-www/feltballs-worker.js", { type: "module" })
-  worker.addEventListener("error", (e) => console.error("[feltballs-worker] error:", e.message, "at", e.filename + ":" + e.lineno))
-  worker.addEventListener("messageerror", (e) => console.error("[feltballs-worker] messageerror:", e))
+  const worker = new Worker("/markgraf-www/diagram-shapes-worker.js", { type: "module" })
+  worker.addEventListener("error", (e) => console.error("[diagram-shapes-worker] error:", e.message, "at", e.filename + ":" + e.lineno))
+  worker.addEventListener("messageerror", (e) => console.error("[diagram-shapes-worker] messageerror:", e))
   worker.addEventListener("message", (e) => {
     if (e.data?.type === "diag") console.log("[fb-worker]", e.data.msg, e.data.extra ?? "")
-    else if (e.data?.type === "error") console.error("[feltballs-worker] init error:", e.data)
+    else if (e.data?.type === "error") console.error("[diagram-shapes-worker] init error:", e.data)
   })
   const offscreen = canvas.transferControlToOffscreen()
 
@@ -78,15 +78,15 @@ export const setupFeltballsImpl = (pixelBudget) => (canvas) => () => {
   // Expose a global so the host page can declaratively send morph/camera
   // updates from React. Cleared on unmount. The signature mirrors `post`.
   if (typeof window !== "undefined") {
-    window.__feltballsPost = (type, payload) => post(type, payload)
+    window.__diagramShapesPost = (type, payload) => post(type, payload)
   }
 
   return () => {
     stopChainTicker()
     observer.disconnect()
     window.removeEventListener("resize", onResize)
-    if (typeof window !== "undefined" && window.__feltballsPost) {
-      delete window.__feltballsPost
+    if (typeof window !== "undefined" && window.__diagramShapesPost) {
+      delete window.__diagramShapesPost
     }
     worker.terminate()
   }

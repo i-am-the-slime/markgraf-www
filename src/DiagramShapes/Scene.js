@@ -117,7 +117,7 @@ export const installStartChainListenerImpl = (handler) => () => {
 }
 
 // Generic message listeners — host pages declare per-section morph and camera
-// state and post it via `window.__feltballsPost`. The worker lerps current
+// state and post it via `window.__diagramShapesPost`. The worker lerps current
 // toward target each frame.
 export const installMorphListenerImpl = (handler) => () => {
   if (typeof self === "undefined" || typeof self.addEventListener !== "function") return () => {}
