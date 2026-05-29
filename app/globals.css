@@ -281,51 +281,59 @@ body:has(.vhs-text-wrap.vhs-on)::after {
      gaps at first, then the strikes come faster and the peaks climb (0.5 -> 1)
      until the gas holds and it stays on. The ~1% edges act as on/off snaps. */
   @keyframes hero-wordmark-in {
-    0%, 6% { opacity: 0; }
-    7% { opacity: 0.3; }     /* erratic, sparse — irregular gaps and peaks */
-    8.5% { opacity: 0.3; }
-    9% { opacity: 0; }
+    0%, 5% { opacity: 0; }
+    6% { opacity: 0.4; }     /* single faint blink */
+    7% { opacity: 0; }
+    9% { opacity: 0.7; }     /* brighter, close behind */
+    10% { opacity: 0; }
+    11% { opacity: 0.3; }    /* weak double-flick */
     12% { opacity: 0; }
-    13% { opacity: 0.55; }   /* brighter blink, close behind */
-    15% { opacity: 0.55; }
-    16% { opacity: 0; }
-    16.8% { opacity: 0.2; }  /* weak double-flick */
-    17.6% { opacity: 0; }
-    27% { opacity: 0; }      /* long dark pause */
-    28% { opacity: 0.4; }
+    13% { opacity: 0.9; }    /* sudden bright stab... */
+    14% { opacity: 0; }      /* ...that dies */
+    23% { opacity: 0; }      /* long dead pause */
+    24% { opacity: 0.5; }
+    26% { opacity: 0.5; }
+    27% { opacity: 0; }
+    28% { opacity: 0.6; }    /* rapid burst */
+    29% { opacity: 0; }
     30% { opacity: 0.4; }
     31% { opacity: 0; }
-    35% { opacity: 0; }
-    36% { opacity: 0.25; }   /* faint... */
-    37.2% { opacity: 0; }
-    38% { opacity: 0.6; }    /* ...then a jump */
-    40% { opacity: 0.6; }
-    41% { opacity: 0; }
-    49% { opacity: 0; }      /* another pause */
-    50% { opacity: 0.5; }
-    52% { opacity: 0.5; }
-    53% { opacity: 0; }
-    57% { opacity: 0; }      /* gaps tighten — speeding up */
-    58% { opacity: 0.7; }
-    60% { opacity: 0.7; }
-    61% { opacity: 0; }
-    64% { opacity: 0; }
-    65% { opacity: 0.65; }
-    66% { opacity: 0; }      /* quick stutter pair */
-    67% { opacity: 0.8; }
-    69% { opacity: 0.8; }
-    70% { opacity: 0; }
+    32% { opacity: 0.7; }
+    33% { opacity: 0; }
+    40% { opacity: 0; }      /* dead pause again — breaks the ramp */
+    41% { opacity: 0.85; }   /* bright, almost holds */
+    43% { opacity: 0.85; }
+    44% { opacity: 0; }
+    45% { opacity: 0.3; }    /* machine-gun burst */
+    46% { opacity: 0; }
+    47% { opacity: 0.8; }
+    48% { opacity: 0; }
+    49% { opacity: 0.5; }
+    50% { opacity: 0; }
+    56% { opacity: 0; }      /* sudden dead air after it sped up */
+    57% { opacity: 0.9; }    /* stabs back bright */
+    58% { opacity: 0; }
+    59% { opacity: 0.6; }
+    60% { opacity: 0; }
+    61% { opacity: 0.8; }
+    62% { opacity: 0; }
+    67% { opacity: 0; }      /* one more dead beat */
+    68% { opacity: 0.8; }
+    69% { opacity: 0; }
+    70% { opacity: 0.5; }
+    71% { opacity: 0; }
+    72% { opacity: 0.8; }    /* fast stutter cluster */
     73% { opacity: 0; }
     74% { opacity: 0.8; }
+    75% { opacity: 0; }
     76% { opacity: 0.8; }
     77% { opacity: 0; }
-    80% { opacity: 0; }
-    81% { opacity: 0.8; }
-    82.5% { opacity: 0.8; }
+    81% { opacity: 0; }      /* last gasp of dark */
+    82% { opacity: 0.8; }
     83% { opacity: 0; }
-    85% { opacity: 0.8; }
-    86% { opacity: 0; }
-    86.5% { opacity: 0.8; }
+    84% { opacity: 0.8; }
+    85% { opacity: 0; }
+    86% { opacity: 0.8; }
     87% { opacity: 0; }
     88% { opacity: 0.8; animation-timing-function: ease-out; }
     100% { opacity: 1; }    /* the only full-brightness moment — the climax */
