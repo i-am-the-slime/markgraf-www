@@ -266,9 +266,9 @@ heroLockup =
             }
             [ span
                 { className: "vhs-text"
-                , style: css { "--vhs-text": "\"Markgraf\"" }
+                , style: css { "--vhs-text": "\"markgraf\"" }
                 }
-                [ text "Markgraf" ]
+                [ text "markgraf" ]
             ]
         , p
             { className: "max-w-[34ch] text-[clamp(1.125rem,2.2vw,2rem)] leading-snug text-[#f5f1e8]"
