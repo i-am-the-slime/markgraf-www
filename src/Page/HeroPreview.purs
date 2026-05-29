@@ -275,7 +275,7 @@ heroLockup =
             , style: css { fontFamily: "'Ilisarniq', ui-sans-serif, system-ui, sans-serif" }
             }
             [ text "A few words are worth a thousand pictures." ]
-        , installPill
+        , div { className: "hidden sm:block" } [ installPill ]
         ]
     ]
 
