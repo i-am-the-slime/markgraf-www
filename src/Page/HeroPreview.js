@@ -218,25 +218,25 @@ export const onMouseWheelDetectedImpl = (cb) => () => {
   return () => root.removeEventListener("wheel", onWheel);
 };
 
-// Swap the magazine's CSS scroll-snap strictness. "mandatory" forces a snap
-// after every scroll (good for trackpads, painful for wheels); "proximity"
-// only snaps when the user lands within ~range of a section, which gives
-// wheel users free scrolling with a gentle pull near each section.
-export const setMagazineSnapImpl = (strictness) => () => {
+// Swap class `from` for class `to` on every descendant of #rootId that has
+// `from`. Policy-free DOM primitive.
+export const swapClassUnderImpl = (rootId) => (from) => (to) => () => {
   if (typeof window === "undefined") return;
-  const root = document.getElementById("magazine");
+  const root = document.getElementById(rootId);
   if (!root) return;
-  root.classList.remove("snap-mandatory", "snap-proximity");
-  root.classList.add(`snap-${strictness}`);
-  // Children carry `snap-always` (scroll-snap-stop: always), which forces a
-  // stop at every section regardless of the parent's proximity setting. When
-  // we relax to proximity, also relax the stop so wheels can scroll freely.
-  const stop = strictness === "proximity" ? "snap-normal" : "snap-always";
-  const drop = strictness === "proximity" ? "snap-always" : "snap-normal";
-  for (const el of root.querySelectorAll(`.${drop}`)) {
-    el.classList.remove(drop);
-    el.classList.add(stop);
+  for (const el of root.querySelectorAll(`.${from}`)) {
+    el.classList.remove(from);
+    el.classList.add(to);
   }
+};
+
+// Swap class `from` for class `to` on #elemId itself.
+export const swapClassOnImpl = (elemId) => (from) => (to) => () => {
+  if (typeof window === "undefined") return;
+  const el = document.getElementById(elemId);
+  if (!el) return;
+  el.classList.remove(from);
+  el.classList.add(to);
 };
 
 // Periodically toggle `vhs-on` on elements with the given class so the VHS

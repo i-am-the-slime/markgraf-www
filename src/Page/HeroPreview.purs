@@ -492,12 +492,12 @@ playgroundView pp =
     { id: "playground"
     , className: "relative snap-start snap-always h-screen flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-5xl mx-auto w-full" }
+    [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ div { className: "flex items-baseline justify-between mb-8 gap-6 flex-wrap" }
             [ div {}
                 [ sectionLabel "01 / playground"
                 , h2
-                    { className: "text-3xl sm:text-5xl font-bold tracking-tight leading-[0.95] max-w-2xl"
+                    { className: "text-[clamp(1.875rem,4vw,4rem)] font-bold tracking-tight leading-[0.95] max-w-[20ch]"
                     , style: css { fontFamily: "'Sinistre', serif" }
                     }
                     "Try it out"
@@ -909,7 +909,7 @@ playerSection =
     { id: "player"
     , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-5xl mx-auto w-full" }
+    [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ sectionLabel "02 / player"
         , h2
             { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
@@ -941,7 +941,7 @@ renderSection =
     { id: "render"
     , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-5xl mx-auto w-full" }
+    [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ sectionLabel "03 / render"
         , h2
             { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
@@ -975,7 +975,7 @@ aiSection =
     { id: "ai"
     , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-5xl mx-auto w-full" }
+    [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ sectionLabel "04 / ai authoring"
         , h2
             { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
@@ -1001,7 +1001,7 @@ embedSection =
     { id: "embed"
     , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-5xl mx-auto w-full" }
+    [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ sectionLabel "05 / integrations"
         , h2
             { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
@@ -1027,7 +1027,7 @@ playSection =
     { id: "play"
     , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-5xl mx-auto w-full" }
+    [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ sectionLabel "06 / play"
         , h2
             { className: "text-4xl sm:text-6xl font-bold tracking-tight leading-[0.95] mb-6 max-w-3xl"
@@ -1064,7 +1064,7 @@ footerSection =
     { id: "install"
     , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
-    [ div { className: "max-w-5xl mx-auto w-full flex flex-col gap-10" }
+    [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full flex flex-col gap-10" }
         [ sectionLabel "06 / install"
         , div { className: "flex flex-col gap-6" }
             [ h2
@@ -1148,7 +1148,7 @@ labColumnsSection =
     { id: "lab-columns"
     , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
     }
-    [ labStage "max-w-6xl mx-auto w-full h-full flex flex-col justify-center gap-12"
+    [ labStage "max-w-[min(96rem,94vw)] mx-auto w-full h-full flex flex-col justify-center gap-12"
         [ labItem "" [ sectionLabel "lab-a / three columns" ]
         , labItem "" $
             [ h2
@@ -1184,7 +1184,7 @@ labQuoteSection =
     { id: "lab-quote"
     , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16 flex items-center"
     }
-    [ labStage "max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-12 gap-10"
+    [ labStage "max-w-[min(96rem,94vw)] mx-auto w-full grid grid-cols-1 md:grid-cols-12 gap-10"
         [ labItem "md:col-span-8 flex flex-col gap-10"
             [ sectionLabel "lab-b / pull-quote"
             , div
@@ -1211,7 +1211,7 @@ labHangSection =
     { id: "lab-hang"
     , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
     }
-    [ labStage "max-w-6xl mx-auto w-full h-full grid grid-cols-12 gap-6 items-center"
+    [ labStage "max-w-[min(96rem,94vw)] mx-auto w-full h-full grid grid-cols-12 gap-6 items-center"
         [ labItem "col-span-12 md:col-span-7 flex flex-col gap-10"
             [ sectionLabel "lab-c / hang"
             , h2
@@ -1271,7 +1271,7 @@ labIconsSection =
     { id: "lab-icons"
     , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
     }
-    [ labStage "max-w-6xl mx-auto w-full h-full flex flex-col justify-center gap-14"
+    [ labStage "max-w-[min(96rem,94vw)] mx-auto w-full h-full flex flex-col justify-center gap-14"
         [ labItem "" [ sectionLabel "lab-d / iconography" ]
         , labItem "grid grid-cols-12 gap-10 items-start"
             [ div { className: "col-span-12 md:col-span-7" }
@@ -1359,7 +1359,7 @@ labRightHangSection =
     { id: "lab-right-hang"
     , className: "relative snap-start snap-always h-screen overflow-hidden z-10 px-6 sm:px-12 py-16"
     }
-    [ labStage "max-w-6xl mx-auto w-full h-full grid grid-cols-12 gap-6 items-center"
+    [ labStage "max-w-[min(96rem,94vw)] mx-auto w-full h-full grid grid-cols-12 gap-6 items-center"
         [ labItem "col-span-12 md:col-span-3 flex flex-col gap-6 md:pr-6 md:border-r border-[#2a3142]"
             [ sectionLabel "lab-f / right hang"
             , div { className: "font-mono text-[10px] uppercase tracking-[0.3em] text-[#8a94a8] flex flex-col gap-1" }
@@ -1431,13 +1431,24 @@ onMouseWheelDetected = onMouseWheelDetectedImpl
 foreign import onMouseWheelDetectedImpl
   :: Effect Unit -> Effect (Effect Unit)
 
-setMagazineSnap :: String -> Effect Unit
-setMagazineSnap = setMagazineSnapImpl
+swapClassUnder :: String -> String -> String -> Effect Unit
+swapClassUnder = swapClassUnderImpl
 
-foreign import setMagazineSnapImpl :: String -> Effect Unit
+foreign import swapClassUnderImpl
+  :: String -> String -> String -> Effect Unit
+
+swapClassOn :: String -> String -> String -> Effect Unit
+swapClassOn = swapClassOnImpl
+
+foreign import swapClassOnImpl
+  :: String -> String -> String -> Effect Unit
 
 installWheelSnap :: Effect (Effect Unit)
-installWheelSnap = onMouseWheelDetected (setMagazineSnap "proximity")
+installWheelSnap = onMouseWheelDetected relaxSnap
+  where
+  relaxSnap = do
+    swapClassOn "magazine" "snap-mandatory" "snap-proximity"
+    swapClassUnder "magazine" "snap-always" "snap-normal"
 
 -- Picks the most-visible section from the ratios so far and, when it changes,
 -- posts its declared morph + camera arm to the worker.
