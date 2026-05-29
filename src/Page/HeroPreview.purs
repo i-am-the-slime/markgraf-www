@@ -308,7 +308,9 @@ sideNav { active } =
         { className: "flex items-center gap-8 whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.28em] pointer-events-auto"
         , style: css { transform: "rotate(-90deg)" }
         }
-        (navLink active <$> sections)
+        -- Reversed: the quarter-turn sends the first child to the bottom, so
+        -- reversing lays the labels out top-to-bottom in scroll order.
+        (navLink active <$> Array.reverse sections)
     ]
   where
   sections =
