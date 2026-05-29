@@ -738,7 +738,14 @@
         ]
       },
       "web-proletarian": {
-        "path": "/Users/mark/code/purescript-web-proletarian"
+        "git": "https://github.com/rowtype-yoga/purescript-web-proletarian.git",
+        "ref": "0ee3de080dcc538fe0db3e735ddb02a67de736a2",
+        "dependencies": [
+          "effect",
+          "prelude",
+          "unsafe-coerce",
+          "web-html"
+        ]
       },
       "yoga-r3f": {
         "path": "/Users/mark/code/yoga-r3f"
@@ -2003,8 +2010,9 @@
       ]
     },
     "web-proletarian": {
-      "type": "local",
-      "path": "/Users/mark/code/purescript-web-proletarian",
+      "type": "git",
+      "url": "https://github.com/rowtype-yoga/purescript-web-proletarian.git",
+      "rev": "0ee3de080dcc538fe0db3e735ddb02a67de736a2",
       "dependencies": [
         "effect",
         "prelude",
