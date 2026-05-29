@@ -96,7 +96,6 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       , scrim (activeSection == "playground")
       , topBar
       , sideNav { active: activeSection }
-      , pageRail
       , heroPage
       , playground { section: activeSection }
       , playerSection
@@ -334,34 +333,6 @@ navLink active (sectionId /\ label) =
           <> if active == sectionId then "text-[#ff3b1a] font-bold" else "text-[#8a94a8]"
     }
     [ text label ]
-
-pageRail :: JSX
-pageRail =
-  nav { className: "fixed right-6 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-4 pointer-events-auto" } $
-    railDot <$>
-      [ "#page-hero"
-      , "#playground"
-      , "#player"
-      , "#render"
-      , "#ai"
-      , "#embed"
-      , "#play"
-      , "#install"
-      , "#lab-columns"
-      , "#lab-quote"
-      , "#lab-hang"
-      , "#lab-icons"
-      , "#lab-photo"
-      , "#lab-right-hang"
-      ]
-
-railDot :: String -> JSX
-railDot href =
-  a
-    { href
-    , className: "block w-[7px] h-[7px] rounded-full bg-[#2a3142] hover:bg-[#ff3b1a] transition-colors"
-    }
-    noJSX
 
 spreadFolio :: String -> String -> JSX
 spreadFolio num label =
