@@ -250,7 +250,15 @@ heroPage =
     }
     [ heroLockup
     , spreadFolio "00" "hero"
+    , heroScanlines
     ]
+
+-- CRT scanlines lifted out of the offscreen canvas's grain shader (where they
+-- were multiplied into the noise) into their own DOM layer, so they ride on top
+-- of the wordmark and everything else in the hero rather than only the canvas.
+heroScanlines :: JSX
+heroScanlines =
+  div { className: "absolute inset-0 z-30 pointer-events-none hero-scanlines" } noJSX
 
 heroLockup :: JSX
 heroLockup =

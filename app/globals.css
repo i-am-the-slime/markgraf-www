@@ -167,6 +167,19 @@ body:has(.vhs-text-wrap.vhs-on)::after {
   50% { opacity: 0.55; }
 }
 
+/* Hero CRT scanlines as a DOM overlay (split out of the canvas grain shader).
+   1px dark line every 3px, painted over the whole hero. Most visible on the
+   bright wordmark; near-invisible over the dark background — the CRT look. */
+.hero-scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.28) 0px,
+    rgba(0, 0, 0, 0.28) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
 /* markgraf-react paints a <svg class="markgraf-player"> with intrinsic width
    and height attributes from the layout viewport.  Force it to scale to its
    container so it fits the playground pane instead of overflowing.  */
