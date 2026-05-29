@@ -2,34 +2,44 @@ module DiagramShapes.Offscreen (diagramShapesOffscreen) where
 
 import Prelude
 
+import Data.Foldable (for_)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null)
 import Data.Number (sqrt)
+import Data.Options ((:=))
 import Effect (Effect)
+import Effect.Console (log)
 import Effect.Unsafe (unsafePerformEffect)
+import Foreign (Foreign, unsafeToForeign)
 import React.Basic (ReactComponent)
 import React.Basic.Hooks (Component, component, readRefMaybe, useEffectOnce, useRef)
 import React.Basic.Hooks as Hooks
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM.Element (clientHeight, clientWidth)
-import Web.HTML.HTMLCanvasElement (HTMLCanvasElement, toElement)
+import Web.Event.Event (EventType(..))
+import Web.Event.EventTarget (addEventListener, eventListener, removeEventListener)
+import Web.HTML (window)
+import Web.HTML.HTMLCanvasElement (HTMLCanvasElement, toElement, toHTMLElement)
+import Web.HTML.HTMLElement (offsetLeft, offsetTop)
+import Web.HTML.Window as Window
+import Web.Intersection.Observer as IO
+import Web.Intersection.Observer.Options as IO
 import Yoga.React.DOM.HTML.Canvas (canvas)
 import Yoga.React.DOM.Internal (css, noJSX)
+import Yoga.WebBoss (onErrorFromWorker, postMessageToWorker, postMessageToWorkerWithTransfer, terminate)
+import Yoga.WebProletarian.Transferable (OffscreenCanvas, offscreenCanvasToTransferable, transferControlToOffscreen)
+import Yoga.WebProletarian.Types (Worker)
 
-foreign import setupDiagramShapesImpl :: Int -> HTMLCanvasElement -> Effect (Effect Unit)
+-- The diagramShapes scene renders into an OffscreenCanvas owned by a Web Worker.
+-- Messages to that worker are the @react-three/offscreen `{ type, payload }`
+-- protocol, so both message params are opaque `Foreign`.
+type DiagramShapesWorker = Worker Foreign Foreign
 
-pixelBudget :: Int
-pixelBudget = 640 * 480
-
-targetDpr :: Int -> HTMLCanvasElement -> Effect Number
-targetDpr budget canvasEl = do
-  w <- clientWidth el
-  h <- clientHeight el
-  pure (min 1.0 (sqrt (toNumber budget / area w h)))
-  where
-  el = toElement canvasEl
-  area w h = max 1.0 w * max 1.0 h
+foreign import newDiagramShapesWorker :: Effect DiagramShapesWorker
+foreign import transferGuard :: HTMLCanvasElement -> Effect Boolean
+foreign import setDiagramShapesPostGlobal :: (String -> Foreign -> Effect Unit) -> Effect Unit
+foreign import clearDiagramShapesPostGlobal :: Effect Unit
 
 diagramShapesOffscreen :: ReactComponent {}
 diagramShapesOffscreen = unsafeCoerce (unsafePerformEffect diagramShapesOffscreenComponent)
@@ -40,7 +50,7 @@ diagramShapesOffscreenComponent = component "DiagramShapesOffscreen" \_ -> Hooks
 
   useEffectOnce do
     readRefMaybe canvasRef >>= case _ of
-      Just c -> setupDiagramShapesImpl pixelBudget c
+      Just c -> setupDiagramShapes c
       Nothing -> pure (pure unit)
 
   pure $ canvas
@@ -56,3 +66,120 @@ diagramShapesOffscreenComponent = component "DiagramShapesOffscreen" \_ -> Hooks
         }
     }
     noJSX
+
+-- Hand the canvas's drawing surface to the worker, then keep it in sync: dpr and
+-- geometry on window resize, frameloop on visibility. Returns a teardown.
+setupDiagramShapes :: HTMLCanvasElement -> Effect (Effect Unit)
+setupDiagramShapes canvasEl = do
+  alreadyRan <- transferGuard canvasEl
+  if alreadyRan then pure (pure unit) else setup
+  where
+  setup = do
+    worker <- newDiagramShapesWorker
+    worker # onErrorFromWorker \msg -> log ("[diagram-shapes-worker] " <> msg)
+
+    offscreen <- transferControlToOffscreen canvasEl
+    initWorker worker offscreen
+
+    stopResize <- onWindowResize (syncSize worker)
+    stopVisibility <- onVisibilityChange canvasEl \visible ->
+      post worker "props" { frameloop: if visible then "always" else "never" }
+    setDiagramShapesPostGlobal (post worker)
+
+    pure do
+      stopResize
+      stopVisibility
+      clearDiagramShapesPostGlobal
+      terminate worker
+
+  initWorker worker offscreen = do
+    dpr <- targetDpr canvasEl
+    geom <- geometry canvasEl
+    postMessageToWorkerWithTransfer
+      (envelope "init" (initPayload offscreen dpr geom))
+      [ offscreenCanvasToTransferable offscreen ]
+      worker
+
+  syncSize worker = do
+    dpr <- targetDpr canvasEl
+    geom <- geometry canvasEl
+    post worker "props" { dpr }
+    post worker "resize" geom
+
+-- The scene renders into a fixed pixel budget; dpr is the uniform scale that
+-- keeps total pixels under that budget while preserving aspect ratio.
+targetDpr :: HTMLCanvasElement -> Effect Number
+targetDpr canvasEl = do
+  w <- clientWidth el
+  h <- clientHeight el
+  pure (min 1.0 (sqrt (toNumber pixelBudget / area w h)))
+  where
+  el = toElement canvasEl
+  area w h = max 1.0 w * max 1.0 h
+
+pixelBudget :: Int
+pixelBudget = 640 * 480
+
+type Geometry = { width :: Number, height :: Number, top :: Number, left :: Number }
+
+type InitPayload =
+  { props ::
+      { camera :: { position :: Array Number, rotation :: Array Number, fov :: Number }
+      , gl :: { alpha :: Boolean }
+      , dpr :: Number
+      }
+  , drawingSurface :: OffscreenCanvas
+  , width :: Number
+  , height :: Number
+  , top :: Number
+  , left :: Number
+  , pixelRatio :: Number
+  }
+
+geometry :: HTMLCanvasElement -> Effect Geometry
+geometry canvasEl = do
+  width <- clientWidth el
+  height <- clientHeight el
+  top <- offsetTop htmlEl
+  left <- offsetLeft htmlEl
+  pure { width, height, top, left }
+  where
+  el = toElement canvasEl
+  htmlEl = toHTMLElement canvasEl
+
+initPayload :: OffscreenCanvas -> Number -> Geometry -> InitPayload
+initPayload offscreen dpr geom =
+  { props: { camera, gl: { alpha: true }, dpr }
+  , drawingSurface: offscreen
+  , width: geom.width
+  , height: geom.height
+  , top: geom.top
+  , left: geom.left
+  , pixelRatio: dpr
+  }
+  where
+  camera = { position: [ 0.0, -3.0, 9.0 ], rotation: [ 0.28, 0.0, 0.0 ], fov: 85.0 }
+
+post :: forall payload. DiagramShapesWorker -> String -> payload -> Effect Unit
+post worker ty payload = postMessageToWorker (envelope ty payload) worker
+
+envelope :: forall payload. String -> payload -> Foreign
+envelope ty payload = unsafeToForeign { "type": ty, payload }
+
+onWindowResize :: Effect Unit -> Effect (Effect Unit)
+onWindowResize action = do
+  target <- map Window.toEventTarget window
+  listener <- eventListener \_ -> action
+  addEventListener (EventType "resize") listener false target
+  pure (removeEventListener (EventType "resize") listener false target)
+
+-- Pause R3F's frameloop when the canvas scrolls off-screen — the worker
+-- re-`root.configure`s on a `{ type: "props" }` message.
+onVisibilityChange :: HTMLCanvasElement -> (Boolean -> Effect Unit) -> Effect (Effect Unit)
+onVisibilityChange canvasEl onChange = do
+  obs <- IO.newIntersectionObserver onCross (IO.threshold := 0.0)
+  IO.observe obs el
+  pure (IO.unobserve obs el)
+  where
+  el = toElement canvasEl
+  onCross entries _ = for_ entries \e -> onChange e.isIntersecting

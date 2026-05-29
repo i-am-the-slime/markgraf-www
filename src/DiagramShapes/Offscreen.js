@@ -1,93 +1,33 @@
-// Transfer the canvas's drawing surface to a Web Worker that mounts the
-// diagramShapes R3F scene. The `new URL(literal, import.meta.url)` form is what
-// Turbopack scans to emit the worker as its own chunk — has to be in JS.
-// A ref-guard prevents StrictMode's double-effect from re-transferring.
-export const setupDiagramShapesImpl = (pixelBudget) => (canvas) => () => {
-  if (canvas._diagramShapesTransferred) return () => {}
+// Irreducible browser plumbing for the diagramShapes offscreen scene. Everything
+// with logic lives in Offscreen.purs; these are the calls PureScript can't make
+// without FFI: constructing the Worker, the StrictMode transfer guard, and the
+// host-page post channel.
+
+// Worker bundled out-of-band by scripts/build-diagram-shapes-worker.mjs (esbuild),
+// not via Turbopack: dev-mode Turbopack injects React Fast Refresh signatures
+// into PS-compiled modules and they crash in a Worker context. Served from
+// /public so the Next-bundler never sees it — hence a static string path, not
+// the `new URL(..., import.meta.url)` form.
+export const newDiagramShapesWorker = () =>
+  new Worker("/markgraf-www/diagram-shapes-worker.js", { type: "module" })
+
+// transferControlToOffscreen() throws if called twice on the same canvas, and
+// React StrictMode double-invokes effects in dev. The on-screen <canvas> node is
+// stable across that remount, so we mark it: returns true if setup already ran.
+export const transferGuard = (canvas) => () => {
+  if (canvas._diagramShapesTransferred) return true
   canvas._diagramShapesTransferred = true
+  return false
+}
 
-  // Worker bundled out-of-band by scripts/build-diagram-shapes-worker.mjs (esbuild),
-  // not via Turbopack: dev-mode Turbopack injects React Fast Refresh signatures
-  // into PS-compiled modules and they crash in a Worker context. Served from
-  // /public so the Next-bundler never sees it.
-  const worker = new Worker("/markgraf-www/diagram-shapes-worker.js", { type: "module" })
-  worker.addEventListener("error", (e) => console.error("[diagram-shapes-worker] error:", e.message, "at", e.filename + ":" + e.lineno))
-  worker.addEventListener("messageerror", (e) => console.error("[diagram-shapes-worker] messageerror:", e))
-  worker.addEventListener("message", (e) => {
-    if (e.data?.type === "diag") console.log("[fb-worker]", e.data.msg, e.data.extra ?? "")
-    else if (e.data?.type === "error") console.error("[diagram-shapes-worker] init error:", e.data)
-  })
-  const offscreen = canvas.transferControlToOffscreen()
+// Host pages (HeroPreview) declaratively push morph/camera/formation updates
+// through window.__diagramShapesPost. `post` is a curried PS Effect function.
+export const setDiagramShapesPostGlobal = (post) => () => {
+  window.__diagramShapesPost = (type, payload) => post(type)(payload)()
+}
 
-  const post = (type, payload) =>
-    worker.postMessage({ type, payload }, type === "init" ? [offscreen] : [])
-
-  // pixelBudget passed in from PureScript; dpr is a uniform scale so the
-  // canvas's aspect ratio is preserved automatically.
-  const targetDpr = () => {
-    const w = Math.max(1, canvas.clientWidth)
-    const h = Math.max(1, canvas.clientHeight)
-    return Math.min(1, Math.sqrt(pixelBudget / (w * h)))
-  }
-
-  post("init", {
-    props: {
-      camera: { position: [0, -3, 9], rotation: [0.28, 0, 0], fov: 85 },
-      gl: { alpha: true },
-      dpr: targetDpr(),
-    },
-    drawingSurface: offscreen,
-    width: canvas.clientWidth,
-    height: canvas.clientHeight,
-    top: canvas.offsetTop,
-    left: canvas.offsetLeft,
-    pixelRatio: targetDpr(),
-  })
-
-  const onResize = () => {
-    post("props", { dpr: targetDpr() })
-    post("resize", {
-      width: canvas.clientWidth,
-      height: canvas.clientHeight,
-      top: canvas.offsetTop,
-      left: canvas.offsetLeft,
-    })
-  }
-  window.addEventListener("resize", onResize)
-
-  // Periodically nudge the worker to start a chain from a random ball — the
-  // scene itself doesn't take user input anymore. Only fires while visible
-  // (we set/clear the interval from the IntersectionObserver below).
-  // Chain visual is disabled scene-side; don't fire chain ticks either.
-  const startChainTicker = () => {}
-  const stopChainTicker = () => {}
-
-  // Pause R3F's frameloop when the canvas scrolls off-screen — the worker
-  // already accepts a {type:"props"} message and re-`root.configure`s with it.
-  // "never" stops the loop entirely; "always" resumes the rAF tick.
-  const observer = new IntersectionObserver(
-    (entries) => {
-      const visible = entries.some((e) => e.isIntersecting)
-      post("props", { frameloop: visible ? "always" : "never" })
-      if (visible) startChainTicker(); else stopChainTicker()
-    },
-    { threshold: 0 },
-  )
-  observer.observe(canvas)
-
-  // Expose a global so the host page can declaratively send morph/camera
-  // updates from React. Cleared on unmount. The signature mirrors `post`.
-  if (typeof window !== "undefined") {
-    window.__diagramShapesPost = (type, payload) => post(type, payload)
-  }
-
-  return () => {
-    stopChainTicker()
-    observer.disconnect()
-    window.removeEventListener("resize", onResize)
-    if (typeof window !== "undefined" && window.__diagramShapesPost) {
-      delete window.__diagramShapesPost
-    }
-    worker.terminate()
+export const clearDiagramShapesPostGlobal = () => {
+  if (typeof window !== "undefined" && window.__diagramShapesPost) {
+    delete window.__diagramShapesPost
   }
 }
