@@ -99,6 +99,12 @@ setupDiagramShapes canvasEl = do
       (envelope "init" (initPayload offscreen dpr geom))
       [ offscreenCanvasToTransferable offscreen ]
       worker
+    post worker "props" { dpr }
+
+  -- @react-three/offscreen clamps the init dpr to `Math.max(1, pixelRatio)`, so a
+  -- sub-1 budget never lands on the first frame — and it caches that 1 for every
+  -- later props message that omits dpr. This props message sets the real budget;
+  -- handleProps applies dpr verbatim, with no clamp.
 
   syncSize worker = do
     dpr <- targetDpr canvasEl
