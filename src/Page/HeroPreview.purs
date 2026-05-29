@@ -94,7 +94,6 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       }
       [ diagramShapesBackground
       , scrim (activeSection == "playground")
-      , topBar
       , sideNav { active: activeSection }
       , heroPage
       , playground { section: activeSection }
@@ -285,16 +284,6 @@ heroLockup =
 -- ---------------------------------------------------------------------------
 -- Fixed chrome: top bar with brand + nav, side rail with page dots.
 -- ---------------------------------------------------------------------------
-
-topBar :: JSX
-topBar =
-  div { className: "fixed top-0 inset-x-0 z-30 flex items-center justify-between px-8 py-5 font-mono text-[11px] uppercase tracking-[0.28em] text-[#8a94a8] pointer-events-none" }
-    [ span
-        { style: css { fontFamily: "'Sinistre', serif", letterSpacing: "0.05em", fontSize: "15px" }
-        , className: "text-[#f5f1e8] normal-case pointer-events-auto"
-        }
-        [ text "markgraf" ]
-    ]
 
 -- Nav turned on its side: a full-height column hugging the left edge whose
 -- single link row is rotated a quarter turn, so the labels run bottom-to-top
