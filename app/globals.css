@@ -274,26 +274,39 @@ body:has(.vhs-text-wrap.vhs-on)::after {
      flickers with each stutter. `both` keeps it dark through the delay; with CSS
      disabled the title just shows normally. */
   .hero-wordmark-in {
-    animation: hero-wordmark-in 2.4s linear 0.7s both;
+    animation: hero-wordmark-in 3.6s linear 0.7s both;
   }
   /* Wide plateaus, narrow snaps between them: each lit/dark state must last
-     several frames or the compositor samples right past it. The ~0.5% steps act
-     as near-instant on/off snaps; the plateaus around them are what you see. */
+     several frames or the compositor samples right past it. Faint flickers, a
+     sputtering near-catch that drops out, a beat of dark suspense, then the gas
+     catches and settles with a diminishing wobble. */
   @keyframes hero-wordmark-in {
-    0%, 14% { opacity: 0; }
-    15% { opacity: 0.6; }
-    20% { opacity: 0.6; }
-    21% { opacity: 0; }
-    28% { opacity: 0; }
-    29% { opacity: 0.85; }
-    34% { opacity: 0.85; }
-    35% { opacity: 0; }
-    41% { opacity: 0; }
-    42% { opacity: 1; }
-    46% { opacity: 0.2; }
-    49% { opacity: 1; }
-    53% { opacity: 0.45; }
-    56% { opacity: 1; }
+    0%, 10% { opacity: 0; }
+    11% { opacity: 0.35; }   /* first faint glow */
+    14% { opacity: 0.35; }
+    15% { opacity: 0; }      /* dies */
+    19% { opacity: 0; }
+    20% { opacity: 0.6; }    /* strike 2 */
+    23% { opacity: 0.6; }
+    24% { opacity: 0.05; }
+    25% { opacity: 0; }      /* dies again */
+    29% { opacity: 0; }
+    30% { opacity: 0.9; }    /* strike 3 — almost catches */
+    31% { opacity: 0.4; }    /* sputter */
+    33% { opacity: 1; }
+    36% { opacity: 1; }      /* holds a beat... */
+    37% { opacity: 0.1; }
+    38% { opacity: 0; }      /* ...then drops out */
+    43% { opacity: 0; }      /* dark suspense */
+    44% { opacity: 1; }      /* THE catch */
+    47% { opacity: 0.2; }    /* unstable */
+    50% { opacity: 1; }
+    54% { opacity: 0.45; }
+    57% { opacity: 1; }
+    61% { opacity: 0.65; }
+    64% { opacity: 1; }
+    70% { opacity: 0.85; }   /* final settle wobble */
+    74% { opacity: 1; }
     100% { opacity: 1; }
   }
   /* Flashing is a photosensitivity risk — skip the strike-on and just fade. */
