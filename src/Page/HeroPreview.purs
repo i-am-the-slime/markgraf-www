@@ -747,7 +747,7 @@ derive instance Eq TokKind
 tokColor :: TokKind -> String
 tokColor TKeyword = "#ff3b1a"
 tokColor TOperator = "#ff8a5c"
-tokColor TString = "#7d9cc8"
+tokColor TString = "#5b8fd6"
 tokColor TNumber = "#d9c97a"
 tokColor TComment = "#5a6478"
 tokColor TBrace = "#8a94a8"
@@ -1427,8 +1427,8 @@ sectionLabelComponent = unsafePerformEffect $ reactComponent "SectionLabel" \{ l
   useEffect (inView /\ upper) $ runScrambleWhileInView inView upper setShown
 
   pure $ div { className: eyebrowClass, ref: reactRef nodeRef }
-    [ redRule inView
-    , span { className: "text-brand" } [ text shown ]
+    [ span { className: "text-brand" } [ text shown ]
+    , redRule inView lineDelay
     ]
   where
   -- min-h reserves the row's full line height so the scramble's blank phase
@@ -1436,14 +1436,20 @@ sectionLabelComponent = unsafePerformEffect $ reactComponent "SectionLabel" \{ l
   -- the 1px red rule and shunt the headline below it up and back down.
   eyebrowClass = "flex items-center gap-4 mb-8 min-h-[1.5em] font-mono text-[10px] uppercase tracking-[0.35em]"
 
--- The red rule draws to full width while in view, retracts when it leaves.
-redRule :: Boolean -> JSX
-redRule inView =
+  -- The line draws only once the scramble has finished settling, so the order
+  -- reads type-first, then-rule. Mirrors `scramble`'s own clock.
+  lineDelay = (scrambleStartDelay + Int.toNumber lastEnd) / 1000.0
+  lastEnd = (CU.length label - 1) * scrambleStagger + scrambleDuration
+
+-- The red rule sits after the label and draws right-to-left (origin-right)
+-- once the typing has settled, then retracts immediately when out of view.
+redRule :: Boolean -> Number -> JSX
+redRule inView drawDelay =
   Motion.createMotionElement "span"
-    { className: "h-px w-10 bg-brand block origin-left"
+    { className: "h-px w-10 bg-brand block origin-right"
     , initial: { scaleX: 0.0 }
     , animate: { scaleX: if inView then 1.0 else 0.0 }
-    , transition: { duration: 0.4, delay: 0.35, ease: [ 0.65, 0.0, 0.35, 1.0 ] }
+    , transition: { duration: 0.4, delay: if inView then drawDelay else 0.0, ease: [ 0.65, 0.0, 0.35, 1.0 ] }
     }
     ([] :: Array JSX)
 
