@@ -299,11 +299,11 @@ heroTagline =
   p
     { className: "max-w-[34ch] text-[clamp(1.125rem,2.2vw,2rem)] leading-snug text-[#f5f1e8]"
     , style: css
-        { fontFamily: "'Ilisarniq', 'Ilisarniq Fallback', ui-sans-serif, system-ui, sans-serif"
+        { fontFamily: "'Commit Mono', ui-monospace, monospace"
         , textShadow: "0 1px 2px rgba(10,14,26,0.95), 0 0 18px rgba(10,14,26,0.92), 0 0 44px rgba(10,14,26,0.75)"
         }
     }
-    (Array.concat (Array.mapWithIndex word words))
+    (Array.concat (Array.mapWithIndex word words) <> [ caret ])
   where
   words = [ "A", "few", "words", "are", "worth", "a", "thousand", "pictures." ]
   word i w =
@@ -312,15 +312,20 @@ heroTagline =
     ]
   letters start w =
     CU.toCharArray w # Array.mapWithIndex \j c -> letter (start + j) (CU.singleton c)
+  -- Each letter carries its own reveal time as --d; the glyph snaps on at --d
+  -- and a block caret (the ::after in globals.css) flashes in the next mono cell
+  -- for that one tick, so the cursor rides along the line as it types.
   letter idx c =
     span
       { className: "hero-tagline-char"
-      , style: css { animationDelay: show (4700 + idx * 40) <> "ms" }
+      , style: css { "--d": show (4700 + idx * 40) <> "ms" }
       }
       [ text c ]
-  -- Global letter index where each word begins: the +1 per earlier word is the
-  -- space between them, keeping the cadence continuous across word boundaries.
-  charStart i = Array.take i words # Array.foldl (\acc w -> acc + CU.length w + 1) 0
+  -- A block that holds at the end of the line and blinks once the type-out lands.
+  caret = span { className: "hero-caret" } []
+  -- Global letter index where each word begins; spaces cost no tick, so the
+  -- cadence stays unbroken and the caret never stalls between words.
+  charStart i = Array.take i words # Array.foldl (\acc w -> acc + CU.length w) 0
 
 -- ---------------------------------------------------------------------------
 -- Fixed chrome: top bar with brand + nav, side rail with page dots.
