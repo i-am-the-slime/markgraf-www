@@ -276,49 +276,51 @@ body:has(.vhs-text-wrap.vhs-on)::after {
   .hero-wordmark-in {
     animation: hero-wordmark-in 2s linear 0.7s both;
   }
-  /* Wide plateaus, narrow snaps between them: each lit/dark state must last
-     several frames or the compositor samples right past it. Faint strikes that
-     die, a beat of dark suspense, the gas catches, then a damped oscillation —
-     rapid deep flickers that grow shallower and slower until the tube locks on.
-     Irregular timing (not evenly spaced) is what sells it as a real tube. */
+  /* A real tube ignites in bursts — struck (lit) or dark, always snapping back
+     to 0 between flashes, never dimming. Realism is in the cadence: wide dark
+     gaps at first, then the strikes come faster and the peaks climb (0.5 -> 1)
+     until the gas holds and it stays on. The ~1% edges act as on/off snaps. */
   @keyframes hero-wordmark-in {
-    0%, 9% { opacity: 0; }
-    10% { opacity: 0.35; }   /* first faint glow */
-    13% { opacity: 0.35; }
-    14% { opacity: 0; }      /* dies */
-    18% { opacity: 0; }
-    19% { opacity: 0.6; }    /* strike 2 */
-    22% { opacity: 0.6; }
-    23% { opacity: 0.05; }
-    24% { opacity: 0; }      /* dies again */
-    28% { opacity: 0; }
-    29% { opacity: 0.9; }    /* strike 3 — almost catches */
-    30% { opacity: 0.4; }    /* sputter */
-    32% { opacity: 1; }
-    34% { opacity: 1; }      /* holds a beat... */
-    35% { opacity: 0.1; }
-    36% { opacity: 0; }      /* ...then drops out */
-    41% { opacity: 0; }      /* dark suspense */
-    42% { opacity: 1; }      /* THE catch — now it oscillates */
-    43.5% { opacity: 0; }
-    45% { opacity: 1; }
-    46.5% { opacity: 0.05; }
-    48% { opacity: 1; }
-    50% { opacity: 0.3; }
-    52% { opacity: 1; }
-    54% { opacity: 0.2; }
-    56.5% { opacity: 1; }
-    59% { opacity: 0.45; }
-    62% { opacity: 1; }
-    65% { opacity: 0.4; }
-    68.5% { opacity: 1; }
-    72% { opacity: 0.65; }
-    76% { opacity: 1; }
-    80% { opacity: 0.7; }
-    84% { opacity: 1; }
-    88% { opacity: 0.85; }
-    92% { opacity: 1; }
-    96% { opacity: 0.94; }   /* last faint wobble */
+    0%, 8% { opacity: 0; }
+    9% { opacity: 0.5; }
+    11% { opacity: 0.5; }
+    12% { opacity: 0; }
+    17% { opacity: 0; }
+    18% { opacity: 0.5; }
+    20% { opacity: 0.5; }
+    21% { opacity: 0; }
+    26% { opacity: 0; }
+    27% { opacity: 1; }
+    29% { opacity: 1; }
+    30% { opacity: 0; }
+    34% { opacity: 0; }
+    35% { opacity: 0.5; }
+    37% { opacity: 0.5; }
+    38% { opacity: 0; }
+    41% { opacity: 0; }
+    42% { opacity: 1; }
+    44% { opacity: 1; }
+    45% { opacity: 0; }
+    48% { opacity: 0; }
+    49% { opacity: 1; }
+    51% { opacity: 1; }
+    52% { opacity: 0; }
+    54% { opacity: 0; }
+    55% { opacity: 1; }
+    57% { opacity: 1; }
+    58% { opacity: 0; }
+    60% { opacity: 0; }
+    61% { opacity: 1; }
+    63% { opacity: 1; }
+    64% { opacity: 0; }
+    65.5% { opacity: 0; }
+    66.5% { opacity: 1; }
+    68% { opacity: 1; }
+    69% { opacity: 0; }
+    70% { opacity: 1; }
+    71.5% { opacity: 1; }
+    72.5% { opacity: 0; }
+    73.5% { opacity: 1; }
     100% { opacity: 1; }
   }
   /* Flashing is a photosensitivity risk — skip the strike-on and just fade. */
