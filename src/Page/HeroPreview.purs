@@ -95,6 +95,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       [ diagramShapesBackground
       , scrim (activeSection == "playground")
       , topBar
+      , sideNav
       , pageRail
       , heroPage
       , playground { section: activeSection }
@@ -271,8 +272,11 @@ heroLockup =
                 [ text "markgraf" ]
             ]
         , p
-            { className: "max-w-[34ch] text-[clamp(1.125rem,2.2vw,2rem)] leading-snug text-[#c8cdd9]"
-            , style: css { fontFamily: "'Ilisarniq', ui-sans-serif, system-ui, sans-serif" }
+            { className: "max-w-[34ch] text-[clamp(1.125rem,2.2vw,2rem)] leading-snug text-[#f5f1e8]"
+            , style: css
+                { fontFamily: "'Ilisarniq', ui-sans-serif, system-ui, sans-serif"
+                , textShadow: "0 1px 2px rgba(10,14,26,0.95), 0 0 18px rgba(10,14,26,0.92), 0 0 44px rgba(10,14,26,0.75)"
+                }
             }
             [ text "A few words are worth a thousand pictures." ]
         , div { className: "hidden sm:block" } [ installPill ]
@@ -291,7 +295,19 @@ topBar =
         , className: "text-[#f5f1e8] normal-case pointer-events-auto"
         }
         [ text "markgraf" ]
-    , div { className: "flex items-center gap-6 pointer-events-auto" }
+    ]
+
+-- Nav turned on its side: a full-height column hugging the left edge whose
+-- single link row is rotated a quarter turn, so the labels run bottom-to-top
+-- and mirror the page-dot rail on the right. Hidden on phones, where the dot
+-- rail alone carries section navigation.
+sideNav :: JSX
+sideNav =
+  nav { className: "fixed left-0 inset-y-0 z-30 w-14 hidden sm:flex items-center justify-center pointer-events-none" }
+    [ div
+        { className: "flex items-center gap-8 whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.28em] text-[#8a94a8] pointer-events-auto"
+        , style: css { transform: "rotate(-90deg)" }
+        }
         [ navLink "#playground" "playground"
         , navLink "#player" "player"
         , navLink "#render" "render"
