@@ -308,14 +308,13 @@ body:has(.vhs-text-wrap.vhs-on)::after {
      flickers with each stutter. `both` keeps it dark through the delay; with CSS
      disabled the title just shows normally. */
   .hero-wordmark-in {
-    /* Strike on like a neon tube, then settle into a faint PS1 vertex wobble:
-       once it holds (~4.5s) the title's geometry never quite locks to the pixel
-       grid, snapping a pixel at a time at a low, choppy framerate (steps(), no
-       interpolation). The two animations touch different properties — opacity vs
-       transform — so they coexist; the wobble just runs forever underneath. */
+    /* Strike on like a neon tube, then never quite hold still: once the gas
+       catches (~4.5s) a faint hum takes over, sparse micro-flickers that read
+       as a live tube rather than a pulse. The hum is listed last so it wins the
+       opacity once its delay elapses; before that the ignition has the floor. */
     animation:
       hero-wordmark-in 3.8s linear 0.7s both,
-      hero-ps1-jitter 0.45s steps(1) 4.5s infinite;
+      hero-neon-hum 7s linear 4.5s infinite;
   }
   /* A real tube ignites in bursts — struck (lit) or dark, always snapping back
      to 0 between flashes, never dimming. Realism is in the cadence: wide dark
@@ -371,18 +370,19 @@ body:has(.vhs-text-wrap.vhs-on)::after {
     88% { opacity: 0.8; animation-timing-function: ease-out; }
     100% { opacity: 1; }    /* the only full-brightness moment — the climax */
   }
-  /* Unstable geometry: the title snaps between integer-pixel offsets, never
-     interpolating (the steps(1) timing on the animation holds each frame, then
-     jumps). One device pixel of wander is enough to read as PS1 vertex jitter
-     without turning into a shake. */
-  @keyframes hero-ps1-jitter {
-    0%   { transform: translate(0, 0); }
-    18%  { transform: translate(1px, -1px); }
-    36%  { transform: translate(-1px, 0); }
-    54%  { transform: translate(0, 1px); }
-    72%  { transform: translate(1px, 1px); }
-    90%  { transform: translate(-1px, 0); }
-    100% { transform: translate(0, 0); }
+  /* The settled tube: mostly full brightness with a handful of brief, shallow
+     dips per loop. Kept sparse and small (never below 0.93) so it reads as a
+     faint electrical hum, not a deliberate pulse. */
+  @keyframes hero-neon-hum {
+    0%, 100% { opacity: 1; }
+    16.8% { opacity: 0.97; }
+    17.3% { opacity: 1; }
+    40.6% { opacity: 0.93; }
+    41.3% { opacity: 1; }
+    61.7% { opacity: 0.98; }
+    62.2% { opacity: 1; }
+    82.8% { opacity: 0.94; }
+    83.4% { opacity: 1; }
   }
   /* Flashing is a photosensitivity risk — skip the strike-on and just fade. */
   @media (prefers-reduced-motion: reduce) {
