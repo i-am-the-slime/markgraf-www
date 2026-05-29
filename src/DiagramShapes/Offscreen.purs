@@ -129,11 +129,12 @@ targetDpr canvasEl = do
 pixelBudget :: Effect Int
 pixelBudget = do
   width <- window >>= Window.innerWidth
-  pure (budgetFor width)
+  height <- window >>= Window.innerHeight
+  pure (budgetFor width height)
   where
-  budgetFor width
-    | width >= 1400 = 1024 * 768
-    | width >= 800 = 800 * 600
+  budgetFor width height
+    | width >= 1400 && height >= 900 = 1024 * 768
+    | width >= 800 && height >= 600 = 800 * 600
     | otherwise = 640 * 480
 
 type Geometry = { width :: Number, height :: Number, top :: Number, left :: Number }

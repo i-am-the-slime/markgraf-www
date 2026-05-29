@@ -932,7 +932,7 @@ playerSection =
             , style: css { fontFamily: "'Sinistre', serif" }
             }
             "Native macOS player."
-        , p { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10" }
+        , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed mb-10" }
             "Swift, Metal, AppKit. Opens .markgraf files, plays them, hot-reloads on save."
         , div { className: "grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6" }
             [ featureRow "Drag-and-drop reload" "Drop a .markgraf file on the window. Edit in your editor of choice; the player picks up saves instantly."
@@ -964,7 +964,7 @@ renderSection =
             , style: css { fontFamily: "'Sinistre', serif" }
             }
             "mp4, SVG, GIF, or sequence diagram."
-        , p { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10" }
+        , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed mb-10" }
             "mp4, animated SVG, gif, or a static sequence diagram. ffmpeg is statically linked, so mp4 works on a fresh machine with nothing else installed."
         , div { className: "grid grid-cols-2 md:grid-cols-3 gap-4" }
             [ renderCard "--play" "native macOS player"
@@ -998,7 +998,7 @@ aiSection =
             , style: css { fontFamily: "'Sinistre', serif" }
             }
             "Claude writes the diagram."
-        , p { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10" }
+        , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed mb-10" }
             [ text "A Claude Code plugin teaches Claude the syntax and authoring rules. You describe the system in plain English, Claude produces the "
             , inlineCode ".markgraf"
             , text " source."
@@ -1024,7 +1024,7 @@ embedSection =
             , style: css { fontFamily: "'Sinistre', serif" }
             }
             "GitHub and docs sites."
-        , p { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed mb-10" }
+        , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed mb-10" }
             [ text "The same "
             , inlineCode "```markgraf"
             , text " block plays in your README and in your docs."
@@ -1050,7 +1050,7 @@ playSection =
             , style: css { fontFamily: "'Sinistre', serif" }
             }
             "Trace any shape."
-        , p { className: "text-base text-[#8a94a8] max-w-2xl leading-relaxed" }
+        , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed" }
             "Balls follow the play-button outline. Swap the path and the swarm traces anything — SVG next."
         ]
     , spreadFolio "06" "play"
