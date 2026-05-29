@@ -1418,6 +1418,10 @@ sectionLabel label = element sectionLabelComponent { label }
 sectionLabelComponent :: ReactComponent { label :: String }
 sectionLabelComponent = unsafePerformEffect $ reactComponent "SectionLabel" \{ label } -> Hooks.do
   let upper = toUpper label
+  -- The line draws only once the scramble has finished settling, so the order
+  -- reads type-first, then-rule. Mirrors `scramble`'s own clock.
+  let lastEnd = (CU.length upper - 1) * scrambleStagger + scrambleDuration
+  let lineDelay = (scrambleStartDelay + Int.toNumber lastEnd) / 1000.0
   nodeRef <- useRef (null :: Nullable Element.Element)
   inView /\ setInView <- useState' false
   shown /\ setShown <- useState' upper
@@ -1435,11 +1439,6 @@ sectionLabelComponent = unsafePerformEffect $ reactComponent "SectionLabel" \{ l
   -- (label briefly set to collapsing whitespace) can't shrink the eyebrow to
   -- the 1px red rule and shunt the headline below it up and back down.
   eyebrowClass = "flex items-center gap-4 mb-8 min-h-[1.5em] font-mono text-[10px] uppercase tracking-[0.35em]"
-
-  -- The line draws only once the scramble has finished settling, so the order
-  -- reads type-first, then-rule. Mirrors `scramble`'s own clock.
-  lineDelay = (scrambleStartDelay + Int.toNumber lastEnd) / 1000.0
-  lastEnd = (CU.length label - 1) * scrambleStagger + scrambleDuration
 
 -- The red rule sits after the label and draws right-to-left (origin-right)
 -- once the typing has settled, then retracts immediately when out of view.
