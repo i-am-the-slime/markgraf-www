@@ -1431,8 +1431,8 @@ sectionLabelComponent = unsafePerformEffect $ reactComponent "SectionLabel" \{ l
   useEffect (inView /\ upper) $ runScrambleWhileInView inView upper setShown
 
   pure $ div { className: eyebrowClass, ref: reactRef nodeRef }
-    [ span { className: "text-brand" } [ text shown ]
-    , redRule inView lineDelay
+    [ redRule inView lineDelay
+    , span { className: "text-brand" } [ text shown ]
     ]
   where
   -- min-h reserves the row's full line height so the scramble's blank phase
@@ -1440,8 +1440,8 @@ sectionLabelComponent = unsafePerformEffect $ reactComponent "SectionLabel" \{ l
   -- the 1px red rule and shunt the headline below it up and back down.
   eyebrowClass = "flex items-center gap-4 mb-8 min-h-[1.5em] font-mono text-[10px] uppercase tracking-[0.35em]"
 
--- The red rule sits after the label and draws right-to-left (origin-right)
--- once the typing has settled, then retracts immediately when out of view.
+-- The red rule draws right-to-left (origin-right) once the typing has settled,
+-- then retracts immediately when out of view.
 redRule :: Boolean -> Number -> JSX
 redRule inView drawDelay =
   Motion.createMotionElement "span"
