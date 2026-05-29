@@ -35,6 +35,29 @@
   font-display: swap;
 }
 
+/* Metric-matched fallbacks. Before the web fonts load, text renders in a local
+   system font scaled (via size-adjust + ascent/descent/line-gap overrides) to
+   occupy the exact same box as the real font — so the swap reflows nothing.
+   Overrides computed by capsize from the actual font files: Sinistre over Times
+   New Roman, Ilisarniq over Arial. Slot these between the real family and the
+   generic keyword in every stack below. */
+@font-face {
+  font-family: "Sinistre Fallback";
+  src: local('Times New Roman'), local('TimesNewRomanPSMT');
+  ascent-override: 76.0563%;
+  descent-override: 24.9015%;
+  line-gap-override: 5.6918%;
+  size-adjust: 140.5538%;
+}
+@font-face {
+  font-family: "Ilisarniq Fallback";
+  src: local('Arial'), local('ArialMT');
+  ascent-override: 72.2362%;
+  descent-override: 10.3195%;
+  line-gap-override: 0%;
+  size-adjust: 145.3564%;
+}
+
 @theme {
   --color-background: hsl(40 25% 96%);
   --color-foreground: hsl(0 0% 7%);
@@ -48,9 +71,9 @@
      :root override below punches noticeably hotter than #ff3b1a can reach. */
   --color-brand: #ff3b1a;
 
-  --font-sans: "Ilisarniq", ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: "Ilisarniq", "Ilisarniq Fallback", ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: "Commit Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --font-display: "Sinistre", ui-serif, Georgia, serif;
+  --font-display: "Sinistre", "Sinistre Fallback", ui-serif, Georgia, serif;
 
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;

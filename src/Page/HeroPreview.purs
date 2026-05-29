@@ -258,7 +258,7 @@ heroLockup =
     [ div { className: "flex flex-col items-center gap-[clamp(1.5rem,4vw,4rem)] max-w-[min(64rem,92vw)] text-center" }
         [ h1
             { className: "display-glow hero-wordmark-in vhs-text-wrap text-[clamp(3.5rem,16vw,14rem)] leading-[0.82] tracking-[-0.045em] font-bold"
-            , style: css { fontFamily: "'Sinistre', serif" }
+            , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
             }
             [ span
                 { className: "vhs-text"
@@ -269,7 +269,7 @@ heroLockup =
         , p
             { className: "max-w-[34ch] text-[clamp(1.125rem,2.2vw,2rem)] leading-snug text-[#f5f1e8]"
             , style: css
-                { fontFamily: "'Ilisarniq', ui-sans-serif, system-ui, sans-serif"
+                { fontFamily: "'Ilisarniq', 'Ilisarniq Fallback', ui-sans-serif, system-ui, sans-serif"
                 , textShadow: "0 1px 2px rgba(10,14,26,0.95), 0 0 18px rgba(10,14,26,0.92), 0 0 44px rgba(10,14,26,0.75)"
                 }
             }
@@ -518,7 +518,7 @@ playgroundView pp =
                 [ sectionLabel "01 / playground"
                 , h2
                     { className: "display-glow text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] max-w-[20ch]"
-                    , style: css { fontFamily: "'Sinistre', serif" }
+                    , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
                     }
                     "Try it out"
                 ]
@@ -929,7 +929,7 @@ playerSection =
         [ sectionLabel "02 / player"
         , h2
             { className: "display-glow text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
-            , style: css { fontFamily: "'Sinistre', serif" }
+            , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
             }
             "Native macOS player."
         , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed mb-10" }
@@ -961,7 +961,7 @@ renderSection =
         [ sectionLabel "03 / render"
         , h2
             { className: "display-glow text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
-            , style: css { fontFamily: "'Sinistre', serif" }
+            , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
             }
             "mp4, SVG, GIF, or sequence diagram."
         , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed mb-10" }
@@ -995,7 +995,7 @@ aiSection =
         [ sectionLabel "04 / ai authoring"
         , h2
             { className: "display-glow text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
-            , style: css { fontFamily: "'Sinistre', serif" }
+            , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
             }
             "Claude writes the diagram."
         , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed mb-10" }
@@ -1021,7 +1021,7 @@ embedSection =
         [ sectionLabel "05 / integrations"
         , h2
             { className: "display-glow text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
-            , style: css { fontFamily: "'Sinistre', serif" }
+            , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
             }
             "GitHub and docs sites."
         , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed mb-10" }
@@ -1047,7 +1047,7 @@ playSection =
         [ sectionLabel "06 / play"
         , h2
             { className: "display-glow text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
-            , style: css { fontFamily: "'Sinistre', serif" }
+            , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
             }
             "Trace any shape."
         , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed" }
@@ -1085,7 +1085,7 @@ footerSection =
         , div { className: "flex flex-col gap-6" }
             [ h2
                 { className: "display-glow text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] max-w-[min(56rem,90vw)]"
-                , style: css { fontFamily: "'Sinistre', serif" }
+                , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
                 }
                 "Install"
             , div {} [ installPill ]
@@ -1169,24 +1169,24 @@ labColumnsSection =
         , labItem "" $
             [ h2
                 { className: "text-[10vw] sm:text-[6.5vw] leading-[0.88] tracking-[-0.03em] font-bold max-w-[14ch]"
-                , style: css { fontFamily: "'Sinistre', serif" }
+                , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
                 }
                 "A few words, a thousand pictures."
             ]
         , labItem "columns-1 sm:columns-2 lg:columns-3 gap-10 text-[15px] leading-[1.6] text-[#c8cdd9]"
             [ p
                 { className: "mb-4"
-                , style: css { fontFamily: "'Ilisarniq', sans-serif" }
+                , style: css { fontFamily: "'Ilisarniq', 'Ilisarniq Fallback', sans-serif" }
                 }
                 [ text "Write the edges. The compiler does the rest. Layout, morphs, camera — all from a few lines of text." ]
             , p
                 { className: "mb-4"
-                , style: css { fontFamily: "'Ilisarniq', sans-serif" }
+                , style: css { fontFamily: "'Ilisarniq', 'Ilisarniq Fallback', sans-serif" }
                 }
                 [ text "It reads a fenced block. It writes an SVG and a timeline. The player runs the timeline back like a short film. Pause it. Scrub it. Play it again." ]
             , p
                 { className: "mb-4"
-                , style: css { fontFamily: "'Ilisarniq', sans-serif" }
+                , style: css { fontFamily: "'Ilisarniq', 'Ilisarniq Fallback', sans-serif" }
                 }
                 [ text "The same source runs in your README. In your docs. In your slides. No frames. No tweens. No design tools." ]
             ]
@@ -1205,7 +1205,7 @@ labQuoteSection =
             [ sectionLabel "lab-b / pull-quote"
             , div
                 { className: "text-[9vw] sm:text-[6vw] leading-[0.95] tracking-[-0.02em] font-bold"
-                , style: css { fontFamily: "'Sinistre', serif" }
+                , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
                 }
                 [ text "“Pictures should move. Words should not.”" ]
             ]
@@ -1232,12 +1232,12 @@ labHangSection =
             [ sectionLabel "lab-c / hang"
             , h2
                 { className: "text-[14vw] sm:text-[9vw] leading-[0.88] tracking-[-0.035em] font-bold -ml-1"
-                , style: css { fontFamily: "'Sinistre', serif" }
+                , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
                 }
                 "Markgraf."
             , p
                 { className: "text-[22px] sm:text-[26px] leading-[1.35] max-w-[28ch] italic text-[#e8e4d8]"
-                , style: css { fontFamily: "'Sinistre', serif", fontWeight: "300" }
+                , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif", fontWeight: "300" }
                 }
                 [ text "A short language for short films." ]
             ]
@@ -1293,7 +1293,7 @@ labIconsSection =
             [ div { className: "col-span-12 md:col-span-7" }
                 [ h2
                     { className: "text-[10vw] sm:text-[6vw] leading-[0.9] tracking-[-0.025em] font-bold max-w-[12ch]"
-                    , style: css { fontFamily: "'Sinistre', serif" }
+                    , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
                     }
                     "Marks in the margin."
                 ]
@@ -1320,7 +1320,7 @@ iconCard kind heading body =
     , div { className: "flex flex-col gap-2" }
         [ div
             { className: "text-2xl font-bold tracking-tight"
-            , style: css { fontFamily: "'Sinistre', serif" }
+            , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
             }
             [ text heading ]
         , p { className: "text-[14px] leading-[1.5] text-[#8a94a8]" }
@@ -1351,13 +1351,13 @@ labPhotoSection =
             [ sectionLabel "lab-e / photo"
             , h2
                 { className: "text-[9vw] sm:text-[5vw] leading-[0.9] tracking-[-0.025em] font-bold"
-                , style: css { fontFamily: "'Sinistre', serif" }
+                , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
                 }
                 "The mascot."
             , div { className: "flex flex-col gap-4 max-w-[34ch]" }
                 [ p
                     { className: "text-[18px] leading-[1.5] text-[#e8e4d8] italic"
-                    , style: css { fontFamily: "'Sinistre', serif", fontWeight: "300" }
+                    , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif", fontWeight: "300" }
                     }
                     [ text "His name is Christoph. He keeps the source." ]
                 , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
@@ -1385,7 +1385,7 @@ labRightHangSection =
                 ]
             , p
                 { className: "text-[15px] leading-[1.55] text-[#c8cdd9] max-w-[24ch]"
-                , style: css { fontFamily: "'Ilisarniq', sans-serif" }
+                , style: css { fontFamily: "'Ilisarniq', 'Ilisarniq Fallback', sans-serif" }
                 }
                 [ text "A short note on what the compiler does. And what it refuses to do." ]
             , div { className: "h-px w-12 bg-[#ff3b1a]" } noJSX
@@ -1395,12 +1395,12 @@ labRightHangSection =
         , labItem "col-span-12 md:col-span-9 flex flex-col gap-10"
             [ h2
                 { className: "text-[14vw] sm:text-[9vw] leading-[0.88] tracking-[-0.035em] font-bold"
-                , style: css { fontFamily: "'Sinistre', serif" }
+                , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
                 }
                 "It draws. You write."
             , p
                 { className: "text-[20px] sm:text-[24px] leading-[1.4] max-w-[32ch] italic text-[#e8e4d8]"
-                , style: css { fontFamily: "'Sinistre', serif", fontWeight: "300" }
+                , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif", fontWeight: "300" }
                 }
                 [ text "The compiler keeps its promises. The picture moves on its own." ]
             ]
