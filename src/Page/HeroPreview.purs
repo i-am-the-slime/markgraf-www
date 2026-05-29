@@ -1418,11 +1418,11 @@ sectionLabel label = element sectionLabelComponent { label }
 sectionLabelComponent :: ReactComponent { label :: String }
 sectionLabelComponent = unsafePerformEffect $ reactComponent "SectionLabel" \{ label } -> Hooks.do
   let upper = toUpper label
-  -- The line draws as the scramble is settling, so the order reads type-first,
-  -- then-rule. Mirrors `scramble`'s own clock, brought in by `lineLead` so the
-  -- rule overlaps the last few characters rather than waiting for full stop.
+  -- The line draws as the scramble is settling and lands on the very same beat
+  -- as the last character: start it one full draw-duration before the scramble's
+  -- stop, so `start + ruleDrawDuration` coincides with the text settling.
   let lastEnd = (CU.length upper - 1) * scrambleStagger + scrambleDuration
-  let lineDelay = max 0.0 ((scrambleStartDelay + Int.toNumber lastEnd) / 1000.0 - lineLead)
+  let lineDelay = max 0.0 ((scrambleStartDelay + Int.toNumber lastEnd) / 1000.0 - ruleDrawDuration)
   nodeRef <- useRef (null :: Nullable Element.Element)
   inView /\ setInView <- useState' false
   shown /\ setShown <- useState' upper
@@ -1449,7 +1449,7 @@ redRule inView drawDelay =
     { className: "h-px w-10 bg-brand block origin-right"
     , initial: { scaleX: 0.0 }
     , animate: { scaleX: if inView then 1.0 else 0.0 }
-    , transition: { duration: 0.4, delay: if inView then drawDelay else 0.0, ease: [ 0.65, 0.0, 0.35, 1.0 ] }
+    , transition: { duration: ruleDrawDuration, delay: if inView then drawDelay else 0.0, ease: [ 0.65, 0.0, 0.35, 1.0 ] }
     }
     ([] :: Array JSX)
 
@@ -1540,10 +1540,10 @@ scrambleDuration = 550
 scrambleStartDelay :: Number
 scrambleStartDelay = 770.0
 
--- Seconds the rule's draw is brought forward from the scramble's full stop, so
--- it starts while the last characters are still settling.
-lineLead :: Number
-lineLead = 0.6
+-- Seconds the rule takes to draw. Doubles as the lead time: starting the draw
+-- this far ahead of the scramble's stop makes the line and text land together.
+ruleDrawDuration :: Number
+ruleDrawDuration = 0.4
 
 foreign import markgrafPlayerImpl :: forall a. ReactComponent { | a }
 
