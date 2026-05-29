@@ -274,39 +274,51 @@ body:has(.vhs-text-wrap.vhs-on)::after {
      flickers with each stutter. `both` keeps it dark through the delay; with CSS
      disabled the title just shows normally. */
   .hero-wordmark-in {
-    animation: hero-wordmark-in 3.6s linear 0.7s both;
+    animation: hero-wordmark-in 4s linear 0.7s both;
   }
   /* Wide plateaus, narrow snaps between them: each lit/dark state must last
-     several frames or the compositor samples right past it. Faint flickers, a
-     sputtering near-catch that drops out, a beat of dark suspense, then the gas
-     catches and settles with a diminishing wobble. */
+     several frames or the compositor samples right past it. Faint strikes that
+     die, a beat of dark suspense, the gas catches, then a damped oscillation —
+     rapid deep flickers that grow shallower and slower until the tube locks on.
+     Irregular timing (not evenly spaced) is what sells it as a real tube. */
   @keyframes hero-wordmark-in {
-    0%, 10% { opacity: 0; }
-    11% { opacity: 0.35; }   /* first faint glow */
-    14% { opacity: 0.35; }
-    15% { opacity: 0; }      /* dies */
-    19% { opacity: 0; }
-    20% { opacity: 0.6; }    /* strike 2 */
-    23% { opacity: 0.6; }
-    24% { opacity: 0.05; }
-    25% { opacity: 0; }      /* dies again */
-    29% { opacity: 0; }
-    30% { opacity: 0.9; }    /* strike 3 — almost catches */
-    31% { opacity: 0.4; }    /* sputter */
-    33% { opacity: 1; }
-    36% { opacity: 1; }      /* holds a beat... */
-    37% { opacity: 0.1; }
-    38% { opacity: 0; }      /* ...then drops out */
-    43% { opacity: 0; }      /* dark suspense */
-    44% { opacity: 1; }      /* THE catch */
-    47% { opacity: 0.2; }    /* unstable */
-    50% { opacity: 1; }
-    54% { opacity: 0.45; }
-    57% { opacity: 1; }
-    61% { opacity: 0.65; }
-    64% { opacity: 1; }
-    70% { opacity: 0.85; }   /* final settle wobble */
-    74% { opacity: 1; }
+    0%, 9% { opacity: 0; }
+    10% { opacity: 0.35; }   /* first faint glow */
+    13% { opacity: 0.35; }
+    14% { opacity: 0; }      /* dies */
+    18% { opacity: 0; }
+    19% { opacity: 0.6; }    /* strike 2 */
+    22% { opacity: 0.6; }
+    23% { opacity: 0.05; }
+    24% { opacity: 0; }      /* dies again */
+    28% { opacity: 0; }
+    29% { opacity: 0.9; }    /* strike 3 — almost catches */
+    30% { opacity: 0.4; }    /* sputter */
+    32% { opacity: 1; }
+    34% { opacity: 1; }      /* holds a beat... */
+    35% { opacity: 0.1; }
+    36% { opacity: 0; }      /* ...then drops out */
+    41% { opacity: 0; }      /* dark suspense */
+    42% { opacity: 1; }      /* THE catch — now it oscillates */
+    43.5% { opacity: 0; }
+    45% { opacity: 1; }
+    46.5% { opacity: 0.05; }
+    48% { opacity: 1; }
+    50% { opacity: 0.3; }
+    52% { opacity: 1; }
+    54% { opacity: 0.2; }
+    56.5% { opacity: 1; }
+    59% { opacity: 0.45; }
+    62% { opacity: 1; }
+    65% { opacity: 0.4; }
+    68.5% { opacity: 1; }
+    72% { opacity: 0.65; }
+    76% { opacity: 1; }
+    80% { opacity: 0.7; }
+    84% { opacity: 1; }
+    88% { opacity: 0.85; }
+    92% { opacity: 1; }
+    96% { opacity: 0.94; }   /* last faint wobble */
     100% { opacity: 1; }
   }
   /* Flashing is a photosensitivity risk — skip the strike-on and just fade. */
