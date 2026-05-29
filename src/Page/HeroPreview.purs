@@ -267,8 +267,25 @@ heroLockup =
                 [ text "markgraf" ]
             ]
         , heroTagline
-        , div { className: "hidden sm:block hero-pill-in" } [ installPill ]
+        , heroInstallCta
         ]
+    ]
+
+-- The hero stays clean over the running scene: instead of the full command, a
+-- compact pill that drops the reader to the install spread (folio 07) where the
+-- copyable command lives. Anchor href rides the scroll-snap magazine for the
+-- smooth scroll, same as the side nav. Shares the lockup's staggered entrance.
+heroInstallCta :: JSX
+heroInstallCta =
+  a
+    { href: "#install"
+    , className:
+        "hero-pill-in pointer-events-auto inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.28em] "
+          <> "text-[#f5f1e8] bg-[#11162280] backdrop-blur-md border border-[#2a3142] rounded-full px-6 py-3 "
+          <> "hover:border-[#ff3b1a] hover:text-[#ff3b1a] transition-colors"
+    }
+    [ text "Install"
+    , span { style: css { color: "#ff3b1a" } } [ text "↓" ]
     ]
 
 -- The tagline types itself in once the wordmark has caught: each word is its own
