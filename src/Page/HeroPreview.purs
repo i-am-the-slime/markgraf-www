@@ -620,8 +620,8 @@ editorAndPreview :: PlaygroundProps -> JSX
 editorAndPreview pp =
   div
     { className:
-        "grid gap-px h-[60vh] sm:h-[520px] w-fit mx-auto"
-    , style: css { gridTemplateColumns: "560px 560px" }
+        "grid gap-px h-[60vh] sm:h-[clamp(520px,56vh,800px)] w-fit mx-auto"
+    , style: css { gridTemplateColumns: paneColumns }
     }
     [ editorPane pp.src pp.setSrc (pp.active == SourcePane)
     , Motion.div
@@ -630,6 +630,11 @@ editorAndPreview pp =
         }
         $ previewPane pp.rendered pp.size pp.visible pp.gen (pp.active == RenderPane)
     ]
+  where
+  -- Two equal panes that scale with the viewport (matching the now-fluid
+  -- headings) but stay legible on laptops and stop growing on ultra-wide.
+  paneColumns = paneWidth <> " " <> paneWidth
+  paneWidth = "clamp(460px, 44vw, 820px)"
 
 editorPane :: String -> (String -> Effect Unit) -> Boolean -> JSX
 editorPane src setSrc activeOnMobile =
