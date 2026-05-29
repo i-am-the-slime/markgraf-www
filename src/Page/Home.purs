@@ -40,7 +40,7 @@ mkHomePage = do
   copy <- mkCopyButton
   component "HomePage" \_ -> Hooks.do
     pure $
-      main { className: "min-h-screen px-8 sm:px-12 lg:px-16 py-16 sm:py-24 max-w-[68ch] mx-auto" }
+      main { className: "min-h-screen px-10 sm:px-16 lg:px-24 py-16 sm:py-24 max-w-[68ch] mx-auto" }
         [ hero
         , install copy
         , what
