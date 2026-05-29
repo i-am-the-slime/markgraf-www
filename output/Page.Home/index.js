@@ -207,7 +207,7 @@ var mkHomePage = function __do() {
     var copy = mkCopyButton();
     return React_Basic_Hooks.component("HomePage")(function (v) {
         return pure1(main({
-            className: "min-h-screen px-6 py-16 sm:py-24 max-w-[68ch] mx-auto"
+            className: "min-h-screen px-8 sm:px-12 lg:px-16 py-16 sm:py-24 max-w-[68ch] mx-auto"
         })([ hero, install(copy), what, language, output, aiAuthoring, footer ]));
     })();
 };
