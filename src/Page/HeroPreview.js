@@ -5,61 +5,88 @@ import { createElement as h } from "react";
 export const markgrafPlayerImpl = MarkgrafPlayer;
 
 // The install CTA, drawn as a single SVG path that morphs through markgraf's own
-// node shapes — the same trick as the 3D ball scene (rounded box -> stadium ->
-// database cylinder). The key is that EVERY shape is the same closed path: a
-// move plus eight cubic segments (four edges, four corners), so only the numbers
-// change and framer-motion can tween `d` smoothly between very different
-// silhouettes. Edges that should be straight just get colinear controls; the
-// cylinder bows its top and bottom edges out and sharpens its corners. A lid
-// ellipse fades in only on the database beat to sell the 3D read.
-const BOX = { L: 10, R: 190, T: 14, B: 50 };
+// node shapes — the same trick as the 3D ball scene (box -> stadium -> database
+// cylinder -> parallelogram -> cloud). The key is that EVERY shape is the same
+// closed path: a move + ten cubic segments (three across the top so it can grow
+// cloud lumps, one per side, one across the bottom, four corners) + close. Only
+// the numbers change, so framer-motion tweens `d` smoothly between very
+// different silhouettes.
+//   r       – corner radius
+//   skew    – parallelogram lean (top shifts right, bottom left), as markgraf's
+//             parallelogramSkew does
+//   topBow  – single smooth arc across the top (database lid front)
+//   botBow  – single smooth arc below the bottom (database base front)
+//   bumps   – three lumps on the top edge instead, sitting flat at the sides
+//             (markgraf's cloud is a row of bumps on a baseline; this is its 2D
+//             single-path cousin)
+const BOX = { L: 18, R: 182, T: 14, B: 52 };
 
-const nodeShape = ({ r, topBow = 0, botBow = 0 }) => {
+const nodeShape = ({ r, skew = 0, topBow = 0, botBow = 0, bumps = 0 }) => {
   const { L, R, T, B } = BOX;
   const lerp = (a, b, t) => a + (b - a) * t;
+  // How far the top edge lifts above T at position t in [0,1]: three lumps for a
+  // cloud, otherwise one smooth arc (or flat when topBow is 0).
+  const lift = (t) =>
+    bumps > 0
+      ? bumps * Math.sin(Math.PI * ((t * 3) % 1))
+      : topBow * Math.sin(Math.PI * t);
+  const ax = L + r + skew;
+  const bx = R - r + skew;
+  const tx = (t) => lerp(ax, bx, t);
+  const tp = (t) => `${tx(t)},${T - lift(t)}`;
+  // one cubic bump segment of the top edge, from t0 to t1
+  const top = (t0, t1) =>
+    `C${tp(lerp(t0, t1, 1 / 3))} ${tp(lerp(t0, t1, 2 / 3))} ${tp(t1)} `;
+  const cTR = R + skew;
+  const cBR = R - skew;
+  const cBL = L - skew;
+  const cTL = L + skew;
+  const eR = R - r - skew; // bottom-right edge start x
+  const eL = L + r - skew; // bottom-left edge end x
   return (
-    `M${L + r},${T} ` +
-    // top edge (bows up by topBow)
-    `C${lerp(L + r, R - r, 0.33)},${T - topBow} ${lerp(L + r, R - r, 0.67)},${T - topBow} ${R - r},${T} ` +
-    `C${R},${T} ${R},${T} ${R},${T + r} ` + // top-right corner
-    // right edge (straight)
-    `C${R},${lerp(T + r, B - r, 0.33)} ${R},${lerp(T + r, B - r, 0.67)} ${R},${B - r} ` +
-    `C${R},${B} ${R},${B} ${R - r},${B} ` + // bottom-right corner
+    `M${tp(0)} ` +
+    top(0, 1 / 3) + top(1 / 3, 2 / 3) + top(2 / 3, 1) +
+    `C${cTR},${T} ${cTR},${T} ${cTR},${T + r} ` + // top-right corner
+    // right edge (straight, leans with skew)
+    `C${lerp(cTR, cBR, 1 / 3)},${lerp(T + r, B - r, 1 / 3)} ${lerp(cTR, cBR, 2 / 3)},${lerp(T + r, B - r, 2 / 3)} ${cBR},${B - r} ` +
+    `C${cBR},${B} ${cBR},${B} ${eR},${B} ` + // bottom-right corner
     // bottom edge (bows down by botBow)
-    `C${lerp(R - r, L + r, 0.33)},${B + botBow} ${lerp(R - r, L + r, 0.67)},${B + botBow} ${L + r},${B} ` +
-    `C${L},${B} ${L},${B} ${L},${B - r} ` + // bottom-left corner
-    // left edge (straight)
-    `C${L},${lerp(B - r, T + r, 0.33)} ${L},${lerp(B - r, T + r, 0.67)} ${L},${T + r} ` +
-    `C${L},${T} ${L},${T} ${L + r},${T} Z` // top-left corner
+    `C${lerp(eR, eL, 1 / 3)},${B + botBow} ${lerp(eR, eL, 2 / 3)},${B + botBow} ${eL},${B} ` +
+    `C${cBL},${B} ${cBL},${B} ${cBL},${B - r} ` + // bottom-left corner
+    // left edge (straight, leans with skew)
+    `C${lerp(cBL, cTL, 1 / 3)},${lerp(B - r, T + r, 1 / 3)} ${lerp(cBL, cTL, 2 / 3)},${lerp(B - r, T + r, 2 / 3)} ${cTL},${T + r} ` +
+    `C${cTL},${T} ${cTL},${T} ${tp(0)} Z` // top-left corner back to start
   );
 };
 
 const SHAPES = [
   nodeShape({ r: 8 }), // rounded node box
-  nodeShape({ r: 18 }), // stadium / pill
-  nodeShape({ r: 5, topBow: 11, botBow: 11 }), // database cylinder
+  nodeShape({ r: 19 }), // stadium / pill
+  nodeShape({ r: 4, skew: 16 }), // parallelogram
+  nodeShape({ r: 5, topBow: 10, botBow: 10 }), // database cylinder
+  nodeShape({ r: 7, bumps: 12 }), // cloud
   nodeShape({ r: 8 }), // back to box
 ];
 
-const MORPH_SECONDS = 2.6;
+const MORPH_SECONDS = 2.8;
 
 // Lid arc for the database beat: a full ellipse hugging the top of the cylinder.
 // Its stroke draws the front rim of the lid; opacity is keyframed to peak only
-// when the silhouette is the cylinder (third frame), so the rest of the time the
-// shape reads as a flat node and only "pops" 3D as the database.
+// on the database frame (index 3 of the six in SHAPES), so the rest of the time
+// the shape reads flat and only "pops" 3D as the database.
 const lidEllipse = () =>
   h(motion.ellipse, {
     key: "lid",
     cx: 100,
     cy: BOX.T,
-    rx: 84,
+    rx: 78,
     ry: 9,
     fill: "none",
     stroke: "rgba(10,12,20,0.55)",
     strokeWidth: 2,
     vectorEffect: "non-scaling-stroke",
     initial: { opacity: 0 },
-    animate: { opacity: [0, 0, 1, 0] },
+    animate: { opacity: [0, 0, 0, 1, 0, 0] },
     transition: { duration: MORPH_SECONDS, ease: "easeInOut", repeat: Infinity },
   });
 
@@ -74,7 +101,7 @@ export const installButtonImpl = ({ href, label }) =>
         display: "inline-flex",
         alignItems: "center",
         gap: "0.5rem",
-        padding: "0.85rem 1.65rem",
+        padding: "1.2rem 1.7rem",
         fontFamily: "var(--font-mono)",
         fontSize: "0.75rem",
         lineHeight: "1",
