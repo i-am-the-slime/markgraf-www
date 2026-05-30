@@ -1117,17 +1117,138 @@ arrowsLayerComponent = component "ArrowsLayer" \props -> Hooks.do
   initSt = { hold: Nothing :: Maybe HoldState, t: 0.0 }
 
 renderArrows :: Number -> Maybe HoldState -> Array JSX
-renderArrows _ _ = []
+renderArrows _ Nothing = []
+renderArrows t (Just h) = arrows t h
 
+-- The live arrow is a shooting star: a white-hot head racing along the path
+-- with a comet trail fading behind it. Already-completed chain links linger
+-- as a faint orange afterglow so the traced route stays readable.
 arrows :: Number -> HoldState -> Array JSX
-arrows t h = completed <> [ growing ]
+arrows t h = afterglows <> [ headStar ]
   where
   chainPositions = (\n -> ballPos t n.idx) <$> h.chain
   targetPos = ballPos t h.target.idx
-  completed = zipWith (arrowBetween 1.0) chainPositions (drop 1 chainPositions)
+  afterglows = zipWith afterglowTrail chainPositions (drop 1 chainPositions)
   tailPos = fromMaybe targetPos (last chainPositions)
   progress = clamp01 ((t - h.segStart) / segDuration)
-  growing = arrowBetween progress tailPos targetPos
+  headStar = shootingStar { from: tailPos, to: targetPos, progress }
+
+shootingStar :: { from :: Vec3, to :: Vec3, progress :: Number } -> JSX
+shootingStar { from, to, progress } =
+  if progress <= 0.0 || total < 0.001 then emptyGroup
+  else element (threejs "Group") { children: trailMeshes <> headMeshes }
+  where
+  emptyGroup = element (threejs "Group") {}
+
+  path = corneredPath from to
+  total = sum ((\s -> distance s.from s.to) <$> path)
+  headD = total * clamp01 progress
+  headP = pointAt path headD
+
+  steps = 16
+  trailLen = 2.4
+  samples = sampleAt <$> range 0 steps
+  sampleAt i = { p: pointAt path (max 0.0 (headD - trailLen * f)), f }
+    where
+    f = Int.toNumber i / Int.toNumber steps
+
+  trailMeshes = zipWith link samples (drop 1 samples)
+  link a b = glowSeg a.p b.p (radius a.f) (fade a.f) (trailColor a.f)
+  radius f = 0.06 * (1.0 - f) + 0.012
+  fade f = 0.9 * (1.0 - f) * (1.0 - f)
+
+  headMeshes =
+    [ glowSphere headP 0.34 "#ff8a5c" 0.18
+    , glowSphere headP 0.2 "#ffd9c2" 0.45
+    , glowSphere headP 0.11 "#ffffff" 0.95
+    ]
+
+afterglowTrail :: Vec3 -> Vec3 -> JSX
+afterglowTrail from to = element (threejs "Group") { children: segs }
+  where
+  segs = (\s -> glowSeg s.from s.to 0.025 0.22 "#ff8a5c") <$> corneredPath from to
+
+
+trailColor f = if f < 0.3 then "#ffd9c2" else "#ff8a5c"
+
+-- The same rounded L-path the old arrows used, but carried all the way to `to`
+-- (no cone tip) so a head can travel its full arc length.
+corneredPath :: Vec3 -> Vec3 -> Array { from :: Vec3, to :: Vec3 }
+corneredPath from to =
+  [ { from, to: leg1End } ]
+    <> arc1Segs
+    <> [ { from: leg2Start, to: leg2End } ]
+    <> arc2Segs
+    <> [ { from: leg3Start, to } ]
+  where
+  corner1 = { x: to.x, y: from.y, z: from.z }
+  corner2 = { x: to.x, y: to.y, z: from.z }
+  l1 = absN (corner1.x - from.x)
+  l2 = absN (corner2.y - corner1.y)
+  l3 = absN (to.z - corner2.z)
+  dirIn1  = { x: signN (corner1.x - from.x), y: 0.0, z: 0.0 }
+  dirOut1 = { x: 0.0, y: signN (corner2.y - corner1.y), z: 0.0 }
+  dirIn2  = dirOut1
+  dirOut2 = { x: 0.0, y: 0.0, z: signN (to.z - corner2.z) }
+  baseR = 0.45
+  maxR = min baseR (min l1 (min (l2 / 2.0) l3))
+  cornerR1 = if l1 > 0.001 && l2 > 0.001 then maxR else 0.0
+  cornerR2 = if l2 > 0.001 && l3 > 0.001 then maxR else 0.0
+  leg1End   = subVec corner1 (scaleVec dirIn1 cornerR1)
+  leg2Start = addVec corner1 (scaleVec dirOut1 cornerR1)
+  leg2End   = subVec corner2 (scaleVec dirIn2 cornerR2)
+  leg3Start = addVec corner2 (scaleVec dirOut2 cornerR2)
+  arc1Segs = if cornerR1 > 0.001 then arcSegments corner1 dirIn1 dirOut1 cornerR1 8 else []
+  arc2Segs = if cornerR2 > 0.001 then arcSegments corner2 dirIn2 dirOut2 cornerR2 8 else []
+
+pointAt :: Array { from :: Vec3, to :: Vec3 } -> Number -> Vec3
+pointAt segs d = case uncons segs of
+  Nothing -> { x: 0.0, y: 0.0, z: 0.0 }
+  Just { head: s, tail }
+    | d <= distance s.from s.to ->
+        lerpVec s.from s.to (clamp01 (d / max 1.0e-6 (distance s.from s.to)))
+    | otherwise -> case tail of
+        [] -> s.to
+        rest -> pointAt rest (d - distance s.from s.to)
+
+glowSeg :: Vec3 -> Vec3 -> Number -> Number -> String -> JSX
+glowSeg start end r opacity color =
+  if len < 0.001 then element (threejs "Group") {}
+  else element (threejs "Mesh")
+    { position: [ (start.x + end.x) * 0.5, (start.y + end.y) * 0.5, (start.z + end.z) * 0.5 ]
+    , quaternion: [ q.x, q.y, q.z, q.w ]
+    , raycast: noRaycast
+    , children:
+        [ element (threejs "CylinderGeometry") { args: [ r, r, len, 6.0 ] }
+        , glowMat color opacity
+        ]
+    }
+  where
+  dx = end.x - start.x
+  dy = end.y - start.y
+  dz = end.z - start.z
+  len = sqrt (dx * dx + dy * dy + dz * dz)
+  q = quatFromYTo (dx / len) (dy / len) (dz / len)
+
+glowSphere :: Vec3 -> Number -> String -> Number -> JSX
+glowSphere c r color opacity = element (threejs "Mesh")
+  { position: [ c.x, c.y, c.z ]
+  , raycast: noRaycast
+  , children:
+      [ element (threejs "SphereGeometry") { args: [ r, 12.0, 12.0 ] }
+      , glowMat color opacity
+      ]
+  }
+
+glowMat :: String -> Number -> JSX
+glowMat color opacity = meshBasicMaterial
+  { color
+  , transparent: true
+  , opacity
+  , depthWrite: false
+  , blending: 2
+  , toneMapped: false
+  }
 
 arrowBetween :: Number -> Vec3 -> Vec3 -> JSX
 arrowBetween progress from to = arrow { from, to, progress }
