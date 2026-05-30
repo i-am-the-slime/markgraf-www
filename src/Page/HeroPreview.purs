@@ -259,6 +259,7 @@ heroPage =
     , className: "relative z-10 snap-start snap-always h-screen w-full overflow-hidden"
     }
     [ heroLockup
+    , div { className: "absolute left-8 bottom-16 z-20" } [ heroInstallCta ]
     , spreadFolio "00" "hero"
     ]
 
@@ -277,7 +278,6 @@ heroLockup =
                 [ text "markgraf" ]
             ]
         , heroTagline
-        , heroInstallCta
         ]
     ]
 
@@ -755,9 +755,7 @@ previewPane src size visible gen activeOnMobile =
             , overflow: "hidden"
             }
         }
-        [ playerStrike
-        , playerShade
-        ]
+        [ playerReveal ]
   where
   player =
     markgrafPlayer
@@ -769,25 +767,14 @@ previewPane src size visible gen activeOnMobile =
       , height: size.h
       }
       # Monoid.guard (visible && size.w > 0.0 && size.h > 0.0)
-  -- The player itself flickers in on the exact same keyframes as the hero
-  -- wordmark (.player-strike reuses hero-wordmark-in: same 0.7s delay + 3.8s
-  -- run). Because the player is transparent and nothing sits behind it, its
-  -- off-beats reveal the scene through — the graph igniting like the neon does,
-  -- not a sheet flashing over a static graph or a dark box blinking in.
-  playerStrike =
+  -- The graph holds back until the wordmark has settled, then fades in cleanly
+  -- (.player-reveal). No flicker, no overlay — just a late reveal.
+  playerReveal =
     div
-      { className: "player-strike pointer-events-none"
+      { className: "player-reveal pointer-events-none"
       , style: css { position: "absolute", inset: "0" }
       }
       [ keyed (show gen) player ]
-  -- A steady darker overlay over the pane, deepening toward the bottom — the
-  -- graph lit from the wordmark overhead and falling into shadow at its foot.
-  playerShade =
-    div
-      { className: "player-shade pointer-events-none"
-      , style: css { position: "absolute", inset: "0" }
-      }
-      noJSX
 
 -- ---------------------------------------------------------------------------
 -- Tokenizer: produces colored <span> children for the highlight overlay.

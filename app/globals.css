@@ -273,18 +273,18 @@ body:has(.vhs-text-wrap.vhs-on)::after {
   }
 }
 
-/* The player itself igniting: its opacity rides the *same* keyframes as the hero
-   wordmark (hero-wordmark-in, same 0.7s delay + 3.8s run), so the graph strikes
-   on like a neon tube in perfect lockstep with the title. Both are plain CSS
-   from mount, so they stay in sync without any wiring. The player is transparent
-   with nothing behind it, so its off-beats reveal the scene through — never a
-   dark box — exactly as the wordmark's strike reveals the scene behind it. */
-.player-strike {
+/* The graph holds back until the wordmark has struck on and settled, then fades
+   in cleanly — no flicker, no veil, just a late reveal once the title owns the
+   screen. */
+.player-reveal {
   opacity: 0;
-  animation: hero-wordmark-in 3.8s linear 0.7s both;
+  animation: player-reveal 1s ease-out 4.5s both;
+}
+@keyframes player-reveal {
+  to { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .player-strike {
+  .player-reveal {
     animation: none;
     opacity: 1;
   }
@@ -295,20 +295,6 @@ body:has(.vhs-text-wrap.vhs-on)::after {
    container so it fits the playground pane instead of overflowing.  */
 .markgraf-player {
   display: block;
-}
-
-/* The wordmark overhead is the light source, so the player reads as lit from the
-   top and dropping into shadow toward the bottom. A steady gradient overlay sits
-   over the pane — clear up top where the light lands, deepening to a heavy dark
-   at the foot, well below the wordmark's brightness. */
-.player-shade {
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    transparent 38%,
-    rgba(6, 9, 16, 0.45) 70%,
-    rgba(6, 9, 16, 0.85) 100%
-  );
 }
 
 @layer base {
