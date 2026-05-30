@@ -101,7 +101,7 @@ export const installButtonImpl = ({ href, label }) =>
         display: "inline-flex",
         alignItems: "center",
         gap: "0.5rem",
-        padding: "1.2rem 1.7rem",
+        padding: "1.85rem 1.7rem",
         fontFamily: "var(--font-mono)",
         fontSize: "0.75rem",
         lineHeight: "1",
