@@ -402,15 +402,16 @@ installFrames =
     shape = nodeShapePath params
     arrive = Int.toNumber i * installStep
 
--- The cycle, ending back on the box so the loop is seamless.
+-- The cycle, ending back on the box so the loop is seamless. Sharp-cornered
+-- ("just edges") pass: corner radii near zero so the box and parallelogram read
+-- as crisp polygons with pointy corners rather than soft rounded ones.
 installShapes :: Array ShapeParams
 installShapes =
-  [ { r: 8.0, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: false } -- rounded node box
-  , { r: 19.0, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: false } -- stadium / pill
-  , { r: 4.0, skew: 16.0, topBow: 0.0, botBow: 0.0, cloud: false } -- parallelogram
-  , { r: 5.0, skew: 0.0, topBow: 10.0, botBow: 10.0, cloud: false } -- database cylinder
-  , { r: 7.0, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: true } -- cloud
-  , { r: 8.0, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: false } -- back to box
+  [ { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: false } -- node box
+  , { r: 0.0, skew: 16.0, topBow: 0.0, botBow: 0.0, cloud: false } -- parallelogram (pointy)
+  , { r: 1.5, skew: 0.0, topBow: 10.0, botBow: 10.0, cloud: false } -- database cylinder
+  , { r: 2.0, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: true } -- cloud
+  , { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: false } -- back to box
   ]
 
 type ShapeParams =
