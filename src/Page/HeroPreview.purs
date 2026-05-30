@@ -6,7 +6,6 @@ import Data.Array as Array
 import Data.Foldable (for_, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import Data.Number (infinity)
 import Data.Options ((:=))
 import Data.Traversable (traverse)
 import Effect.Random (random)
@@ -22,7 +21,7 @@ import Effect.Unsafe (unsafePerformEffect)
 import Data.Nullable (Nullable, null)
 import Data.String.Common (joinWith, toUpper)
 import DiagramShapes.Offscreen as DiagramShapes
-import Page.InstallShape3D (installShape3D)
+import Page.InstallButtonSDF (installButtonSDF)
 import Framer.Motion.MotionComponent as Motion
 import Framer.Motion.Types as Motion
 import Framer.Motion.Types (VariantLabel(..))
@@ -283,57 +282,12 @@ heroLockup =
         ]
     ]
 
--- The hero stays clean over the running scene: instead of the full command, a
--- compact pill that drops the reader to the install spread (folio 07) where the
--- copyable command lives. Its fill is one SVG path that morphs through markgraf's
--- own node shapes; the href rides the scroll-snap magazine for the smooth scroll,
--- same as the side nav. The morph machinery lives in the helpers below.
+-- The hero's call to action is the raymarched SDF button: a grey glassy shape
+-- morphing through markgraf's node silhouettes with the INSTALL text baked in,
+-- gas-filling on hover. The shape is the button; clicking it rides the scroll-
+-- snap magazine down to the install spread, same as the side nav.
 heroInstallCta :: JSX
-heroInstallCta =
-  Motion.createMotionElement "a"
-    { href: "#install"
-    , className: "hero-pill-in"
-    , style: css
-        { position: "relative"
-        , display: "inline-flex"
-        , alignItems: "center"
-        , gap: "0.55rem"
-        , padding: "0.6rem 1.4rem 0.6rem 0.7rem"
-        , fontFamily: "var(--font-mono)"
-        , fontSize: "0.78rem"
-        , lineHeight: "1"
-        , textTransform: "uppercase"
-        , letterSpacing: "0.28em"
-        , fontWeight: "600"
-        , color: "#f5f1e8"
-        , textDecoration: "none"
-        , pointerEvents: "auto"
-        , background: "#111622cc"
-        , border: "1px solid #2a3142"
-        , borderRadius: "9999px"
-        , backdropFilter: "blur(8px)"
-        }
-    , whileHover: { scale: 1.05 }
-    , whileTap: { scale: 0.95 }
-    , transition: { type: "spring", stiffness: 400.0, damping: 18.0 }
-    }
-    [ shapeIcon, label, arrow ]
-  where
-  -- A spinning, morphing 3D shape sits in the pill as the accent.
-  shapeIcon =
-    div
-      { style: css { position: "relative", width: "2.4rem", height: "2.4rem", flex: "0 0 auto" } }
-      [ installShape3D ]
-  label =
-    Motion.createMotionElement "span" { style: css { position: "relative" } } [ text "Install" ]
-  -- The arrow keeps a lazy bounce to pull the eye to the call to action.
-  arrow =
-    Motion.createMotionElement "span"
-      { style: css { position: "relative", color: "#ff3b1a" }
-      , animate: { y: [ 0.0, 3.0, 0.0 ] }
-      , transition: { duration: 1.2, ease: "easeInOut", repeat: infinity }
-      }
-      [ text "↓" ]
+heroInstallCta = installButtonSDF
 
 -- The tagline types itself in once the wordmark has caught: each word is its own
 -- inline-block carrying a staggered animation-delay, so the line resolves left to
