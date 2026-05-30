@@ -1,4 +1,7 @@
-import { CanvasTexture, LinearMipmapLinearFilter } from "three"
+// No `three` import here: r3f builds the CanvasTexture from this canvas with its
+// own THREE instance (see labelTexture in the .purs). Minting a texture from a
+// second THREE copy here never uploads through r3f's renderer — the sampler stays
+// black while numeric uniforms bind fine. So this file only does 2D drawing + reads.
 
 // Per-frame reads off the r3f root state, mirroring Scene.js's accessors.
 export const readClockElapsedImpl = (state) => state.clock.getElapsedTime()
@@ -10,34 +13,40 @@ export const readAspectImpl = (state) => state.size.width / state.size.height
 export const readBufferWidthImpl = (state) => state.size.width * state.viewport.dpr
 export const readBufferHeightImpl = (state) => state.size.height * state.viewport.dpr
 
-// Draws "INSTALL" to an offscreen 2D canvas in the brand font and hands back a
-// THREE.CanvasTexture. The shader stamps this as a black stencil on the morphing
-// shape. Pure drawing, so it stays in JS; all animation logic lives in PureScript.
-const drawTextTexture = (str) => {
+// Draw "INSTALL" to an offscreen 2D canvas in the brand font. r3f wraps the
+// returned canvas in a CanvasTexture and binds it to the shader's uText sampler.
+const drawLabel = (canvas, str) => {
+  const x = canvas.getContext("2d")
+  x.clearRect(0, 0, canvas.width, canvas.height)
+  x.fillStyle = "#fff"
+  x.font = '800 144px "Sinistre", "Sinistre Fallback", serif'
+  x.textAlign = "center"
+  x.textBaseline = "middle"
+  x.fontKerning = "normal"
+  x.letterSpacing = "8px"
+  x.fillText(str, 512 + 4, 128)
+}
+
+// EffectFn1 impl: uncurried, returns the canvas directly (runEffectFn1 wraps the effect).
+export const makeLabelCanvasImpl = (str) => {
   const c = document.createElement("canvas")
   c.width = 1024
   c.height = 256
-  const x = c.getContext("2d")
-  x.clearRect(0, 0, 1024, 256)
-  x.fillStyle = "#fff"
-  x.font = '700 140px "Space Grotesk", ui-sans-serif, sans-serif'
-  x.textAlign = "center"
-  x.textBaseline = "middle"
-  x.letterSpacing = "30px"
-  x.fillText(str, 512 + 13, 138)
-  const t = new CanvasTexture(c)
-  t.minFilter = LinearMipmapLinearFilter
-  t.anisotropy = 4
-  return t
+  drawLabel(c, str)
+  return c
 }
 
-export const makeTextTextureImpl = (str) => () => drawTextTexture(str)
-
-// Re-draw the label once the web font has actually loaded, so the brand face is
-// never missed on first paint. Calls back with the fresh texture.
-export const refreshTextOnFontLoadImpl = (str) => (handler) => () => {
+// Redraw the label once the brand web font has actually loaded (the first draw may
+// fall back to a system face), then flag the texture so r3f re-uploads the canvas.
+export const refreshLabelOnFontLoadImpl = (canvas) => (str) => (markDirty) => () => {
   if (!document.fonts) return
-  document.fonts.load('700 140px "Space Grotesk"').then(() => {
-    handler(drawTextTexture(str))()
+  document.fonts.load('800 144px "Sinistre"').then(() => {
+    drawLabel(canvas, str)
+    markDirty()
   })
+}
+
+// Flag a CanvasTexture so the renderer re-uploads it after the canvas is redrawn.
+export const markTextureDirtyImpl = (texture) => () => {
+  texture.needsUpdate = true
 }

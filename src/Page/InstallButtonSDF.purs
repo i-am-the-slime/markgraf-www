@@ -6,16 +6,17 @@ import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null)
 import Data.Number (exp, sin)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Uncurried (EffectFn1, EffectFn2, mkEffectFn1, runEffectFn1, runEffectFn2)
+import Effect.Uncurried (EffectFn1, runEffectFn1)
 import Effect.Unsafe (unsafePerformEffect)
 import React.Basic (JSX, ReactComponent, Ref, element)
 import React.Basic.Events (handler_)
-import React.Basic.Hooks (readRef, readRefMaybe, reactComponent, useEffectOnce, useRef, writeRef)
+import React.Basic.Hooks (readRef, readRefMaybe, reactComponent, useRef, useState', writeRef)
 import React.Basic.Hooks as Hooks
 import React.R3F.Hooks (RootState, applyProps, useFrame)
 import React.R3F.Three.Internal (threejs)
-import React.R3F.Three.Types (Object3D, Texture, placeholderTexture)
+import React.R3F.Three.Types (Object3D, placeholderTexture)
 import Yoga.React.DOM.HTML.A (a)
 import Yoga.React.DOM.Internal (css)
 import Yoga.React.R3F.Canvas (canvas)
@@ -60,7 +61,8 @@ installButton = unsafePerformEffect $ reactComponent "InstallButtonSDF" \_ -> Ho
 installSDFScene :: ReactComponent { hoveringRef :: Ref Boolean }
 installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \{ hoveringRef } -> Hooks.do
   matRef <- useRef null
-  textureRef <- useRef Nothing
+  texRef <- useRef null
+  createdRef <- useRef false
   prevTickRef <- useRef 0.0
   phaseRef <- useRef 0.0
   targetRef <- useRef 0.0
@@ -68,14 +70,10 @@ installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \{ hove
   yawRef <- useRef 0.0
   tiltRef <- useRef idleTilt
   fillRef <- useRef 0.0
-
-  useEffectOnce do
-    text <- makeTextTexture "INSTALL"
-    writeRef textureRef (Just text)
-    refreshTextOnFontLoad "INSTALL" \refreshed -> writeRef textureRef (Just refreshed)
-    pure (pure unit)
+  labelCanvas /\ setLabelCanvas <- useState' Nothing
 
   useFrame \rs _ -> do
+    ensureLabelCanvas createdRef texRef setLabelCanvas
     let t = readClockElapsed rs
     prevTick <- readRef prevTickRef
     writeRef prevTickRef t
@@ -90,7 +88,7 @@ installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \{ hove
     tilt <- easeTilt tiltRef hovering my t dt
     fill <- easeFill fillRef hovering dt
 
-    readRefMaybe matRef # withJust \m -> do
+    readRefMaybe matRef # withJust \m ->
       applyProps m
         { "uniforms-uTime-value": t
         , "uniforms-uPhase-value": phase
@@ -100,12 +98,26 @@ installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \{ hove
         , "uniforms-uMouse-value": [ mx * 0.5 * aspect, -my * 0.5 ]
         , "uniforms-uRes-value": [ readBufferWidth rs, readBufferHeight rs ]
         }
-      readRef textureRef >>= traverse_ \text -> applyProps m { "uniforms-uText-value": text }
 
-  pure (sdfQuad matRef)
+  pure (sdfQuad matRef texRef labelCanvas)
 
 withJust :: forall a. (a -> Effect Unit) -> Effect (Maybe a) -> Effect Unit
 withJust f m = m >>= traverse_ f
+
+-- Draw the label canvas on the first frame (client-side, where document exists)
+-- and stash it in state. The texture itself is built by r3f from this canvas (see
+-- sdfQuad's <canvasTexture>) so it shares r3f's THREE instance — a texture we mint
+-- from our own `import "three"` lands in a second THREE copy and never uploads.
+ensureLabelCanvas
+  :: Ref Boolean -> Ref (Nullable Object3D) -> (Maybe LabelCanvas -> Effect Unit)
+  -> Effect Unit
+ensureLabelCanvas createdRef texRef setLabelCanvas = readRef createdRef >>= case _ of
+  true -> pure unit
+  false -> do
+    writeRef createdRef true
+    canvas <- makeLabelCanvas "install"
+    setLabelCanvas (Just canvas)
+    refreshLabelOnFontLoad canvas "install" (readRefMaybe texRef # withJust markTextureDirty)
 
 -- ---------------------------------------------------------------------------
 -- Animation state machine, ported from the prototype's frame() — all over Refs.
@@ -172,12 +184,12 @@ shapeCount :: Number
 shapeCount = 6.0
 
 -- ---------------------------------------------------------------------------
--- The fullscreen quad: a ShaderMaterial raymarcher. uText starts as a
--- placeholder and is swapped for the drawn label once useEffectOnce runs.
+-- The fullscreen quad: a ShaderMaterial raymarcher. uText starts as a placeholder
+-- and is filled by the r3f-built <canvasTexture> once the label canvas is ready.
 -- ---------------------------------------------------------------------------
 
-sdfQuad :: Ref (Nullable Object3D) -> JSX
-sdfQuad matRef = element (threejs "Mesh")
+sdfQuad :: Ref (Nullable Object3D) -> Ref (Nullable Object3D) -> Maybe LabelCanvas -> JSX
+sdfQuad matRef texRef labelCanvas = element (threejs "Mesh")
   { frustumCulled: false
   , children:
       [ element (threejs "PlaneGeometry") { args: [ 2.0, 2.0 ] }
@@ -196,9 +208,31 @@ sdfQuad matRef = element (threejs "Mesh")
               , uMouse: { value: [ 0.0, 0.0 ] }
               , uText: { value: placeholderTexture }
               }
+          , children: labelTexture texRef labelCanvas
           }
       ]
   }
+
+-- r3f builds the CanvasTexture from our 2D canvas using ITS OWN THREE instance and
+-- binds it to the shader's uText sampler. The dashed attach path resolves to
+-- material.uniforms.uText.value, so r3f handles construction, upload and binding —
+-- no hand-mutated uniform, and no second THREE copy to mismatch the renderer.
+labelTexture :: Ref (Nullable Object3D) -> Maybe LabelCanvas -> JSX
+labelTexture texRef = case _ of
+  Nothing -> mempty
+  Just canvas -> element (threejs "CanvasTexture")
+    { ref: texRef
+    , args: [ canvas ]
+    , attach: "uniforms-uText-value"
+    , generateMipmaps: false
+    , minFilter: nearestFilter
+    , magFilter: nearestFilter
+    }
+
+-- THREE.NearestFilter; unfiltered hard texels give the label crunchy, aliased
+-- edges (no mipmaps, so a non-mipmap filter also avoids an incomplete-mip black).
+nearestFilter :: Number
+nearestFilter = 1003.0
 
 -- ---------------------------------------------------------------------------
 -- Shaders, ported verbatim from the prototype (dead uniforms/SDFs dropped:
@@ -364,12 +398,23 @@ foreign import readAspectImpl :: { | RootState } -> Number
 foreign import readBufferWidthImpl :: { | RootState } -> Number
 foreign import readBufferHeightImpl :: { | RootState } -> Number
 
-makeTextTexture :: String -> Effect Texture
-makeTextTexture = runEffectFn1 makeTextTextureImpl
+-- A 2D <canvas> with the label drawn on it (Sinistre 800, EffectFn1 impl). r3f turns it into a CanvasTexture
+-- (its THREE), so our FFI never touches three — see labelTexture in sdfQuad.
+foreign import data LabelCanvas :: Type
 
-foreign import makeTextTextureImpl :: EffectFn1 String Texture
+makeLabelCanvas :: String -> Effect LabelCanvas
+makeLabelCanvas = runEffectFn1 makeLabelCanvasImpl
 
-refreshTextOnFontLoad :: String -> (Texture -> Effect Unit) -> Effect Unit
-refreshTextOnFontLoad str handler = runEffectFn2 refreshTextOnFontLoadImpl str (mkEffectFn1 handler)
+foreign import makeLabelCanvasImpl :: EffectFn1 String LabelCanvas
 
-foreign import refreshTextOnFontLoadImpl :: EffectFn2 String (EffectFn1 Texture Unit) Unit
+-- Redraw the label when the brand font loads, then flag the texture for re-upload.
+refreshLabelOnFontLoad :: LabelCanvas -> String -> Effect Unit -> Effect Unit
+refreshLabelOnFontLoad = refreshLabelOnFontLoadImpl
+
+foreign import refreshLabelOnFontLoadImpl :: LabelCanvas -> String -> Effect Unit -> Effect Unit
+
+-- Mark the r3f-built CanvasTexture dirty so the renderer re-uploads the canvas.
+markTextureDirty :: Object3D -> Effect Unit
+markTextureDirty = markTextureDirtyImpl
+
+foreign import markTextureDirtyImpl :: Object3D -> Effect Unit
