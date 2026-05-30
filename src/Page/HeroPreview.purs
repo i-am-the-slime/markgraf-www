@@ -3,10 +3,10 @@ module Page.HeroPreview (mkHeroPreview) where
 import Prelude
 
 import Data.Array as Array
-import Data.Foldable (foldl, for_, traverse_)
+import Data.Foldable (for_, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import Data.Number (infinity, pi, sin, sqrt)
+import Data.Number (infinity, pi, sin)
 import Data.Options ((:=))
 import Data.Traversable (traverse)
 import Effect.Random (random)
@@ -330,12 +330,25 @@ heroInstallCta =
       }
       noJSX
   outline =
-    svgWrap [ fill ]
+    svgWrap [ fill, cloudTop ]
   fill =
     Motion.createMotionElement "path"
       { d: fromMaybe "" (Array.head installFrames.d)
       , fill: "#ff3b1a"
       , animate: { d: installFrames.d }
+      , transition: installMorphTransition
+      }
+      ([] :: Array JSX)
+  -- The real Ionicons v4 cloud, stuck on top of the rounded box and faded in only
+  -- on the cloud beat — so that frame reads as an actual cloud, not a procedural
+  -- approximation. Transformed from its 512 box to sit puffs-up over the body.
+  cloudTop =
+    Motion.createMotionElement "path"
+      { d: installCloudIconPath
+      , transform: installCloudIconTransform
+      , fill: "#ff3b1a"
+      , initial: { opacity: 0.0 }
+      , animate: { opacity: installFrames.cloud }
       , transition: installMorphTransition
       }
       ([] :: Array JSX)
@@ -387,35 +400,52 @@ installMorphTransition
 installMorphTransition =
   { duration: installTotal, times: installFrames.times, ease: "easeInOut", repeat: infinity }
 
--- The flat keyframe arrays handed to framer-motion: parallel paths and times,
--- expanded from installShapes with the arrive/hold doubling.
-installFrames :: { d :: Array String, times :: Array Number }
+-- The flat keyframe arrays handed to framer-motion: parallel paths, times and the
+-- cloud-overlay opacity, expanded from installShapes with the arrive/hold
+-- doubling. The cloud opacity is on only for the cloud frame's hold.
+installFrames :: { cloud :: Array Number, d :: Array String, times :: Array Number }
 installFrames =
-  { d: _.d <$> frames, times: _.t <$> frames }
+  { d: _.d <$> frames, times: _.t <$> frames, cloud: _.cloud <$> frames }
   where
   frames = Array.concat (Array.mapWithIndex frameFor installShapes)
   lastIdx = Array.length installShapes - 1
   frameFor i params =
-    [ { d: shape, t: arrive / installTotal } ]
-      <> (if i < lastIdx then [ { d: shape, t: (arrive + installDwell) / installTotal } ] else [])
+    [ { d: shape, t: arrive / installTotal, cloud } ]
+      <> (if i < lastIdx then [ { d: shape, t: (arrive + installDwell) / installTotal, cloud } ] else [])
     where
     shape = nodeShapePath params
     arrive = Int.toNumber i * installStep
+    cloud = if i == installCloudIndex then 1.0 else 0.0
 
--- The cycle, ending back on the box so the loop is seamless. Sharp-cornered
--- ("just edges") pass: corner radii near zero so the box and parallelogram read
--- as crisp polygons with pointy corners rather than soft rounded ones.
+installCloudIndex :: Int
+installCloudIndex = 3
+
+-- The cycle, ending back on the box so the loop is seamless. The cloud beat is a
+-- rounded box body; the Ionicons cloud overlay (above) supplies the puffs.
 installShapes :: Array ShapeParams
 installShapes =
-  [ { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: false } -- node box
-  , { r: 0.0, skew: 16.0, topBow: 0.0, botBow: 0.0, cloud: false } -- parallelogram (pointy)
-  , { r: 1.5, skew: 0.0, topBow: 10.0, botBow: 10.0, cloud: false } -- database cylinder
-  , { r: 2.0, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: true } -- cloud
-  , { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: false } -- back to box
+  [ { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- node box
+  , { r: 0.0, skew: 16.0, topBow: 0.0, botBow: 0.0 } -- parallelogram (pointy)
+  , { r: 1.5, skew: 0.0, topBow: 10.0, botBow: 10.0 } -- database cylinder
+  , { r: 10.0, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- rounded box (cloud body)
+  , { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- back to box
   ]
 
+-- Ionicons v4 md-cloud, with a transform mapping its 512 bounding box onto a wide
+-- patch sitting on top of the rounded box: puffs poke above the body, flat bottom
+-- tucks just inside it. translate out, scale down, translate the source origin.
+installCloudIconPath :: String
+installCloudIconPath =
+  "M403.002,217.001C388.998,148.002,328.998,96,256,96c-57.998,0-107.998,32.998-132.998,81.001"
+    <> "C63.002,183.002,16,233.998,16,296c0,65.996,53.999,120,120,120h260c55,0,100-45,100-100"
+    <> "C496,263.002,455.004,219.999,403.002,217.001z"
+
+installCloudIconTransform :: String
+installCloudIconTransform =
+  "translate(26 -12) scale(0.30833 0.14375) translate(-16 -96)"
+
 type ShapeParams =
-  { r :: Number, skew :: Number, topBow :: Number, botBow :: Number, cloud :: Boolean }
+  { r :: Number, skew :: Number, topBow :: Number, botBow :: Number }
 
 installBox :: { left :: Number, right :: Number, top :: Number, bottom :: Number }
 installBox = { left: 18.0, right: 182.0, top: 14.0, bottom: 52.0 }
@@ -459,21 +489,10 @@ nodeShapePath p =
   cTL = left + p.skew
   eR = right - p.r - p.skew
   eL = left + p.r - p.skew
-  -- How far the top edge lifts above `top` at t in 0..1. The cloud is markgraf's
-  -- trick: the upper silhouette of a row of heavily overlapping circles, which is
-  -- exactly the per-x max of their heights (at a valley both neighbours meet at
-  -- their intersection height). Heavy overlap keeps the scallops shallow and the
-  -- top plump; one hero circle sits right of centre. Otherwise a single arc.
-  liftAt t
-    | p.cloud = cloudLift t
-    | otherwise = p.topBow * sin (pi * t)
-  cloudLift t = foldl (\acc c -> max acc (bump t c)) 0.0 installCloudCircles
-  -- Each lobe is a circle whose centre is dropped below the top line, so a big
-  -- radius reads as a broad shallow dome rather than a tall ball; the max over
-  -- lobes is the cloud's upper silhouette.
-  bump t c = max 0.0 (sqrt (max 0.0 (c.r * c.r - dx * dx)) - c.drop)
-    where
-    dx = xAt t - (ax + c.f * w)
+  -- How far the top edge lifts above `top` at t in 0..1: a single smooth arc of
+  -- height topBow (the database lid), zero for the flat-topped shapes. The cloud
+  -- is no longer made here — it is the Ionicons overlay stuck on the box top.
+  liftAt t = p.topBow * sin (pi * t)
   -- a corner: a cubic whose two controls both sit on the corner vertex
   corner vx vy (ex /\ ey) = cubic (vx /\ vy) (vx /\ vy) (ex /\ ey)
   -- a straight edge: a cubic with its controls spaced along the line
@@ -489,16 +508,6 @@ lerp a b t = a + (b - a) * t
 
 installTopSegments :: Int
 installTopSegments = 16
-
--- The cloud's lobes, shaped after the Heroicons cloud: one broad dominant dome
--- left of centre and a smaller lobe to the right, joined by a gentle valley, flat
--- at the shoulders. `drop` lowers a lobe's centre so a big radius gives a wide,
--- shallow dome instead of a tall ball.
-installCloudCircles :: Array { f :: Number, r :: Number, drop :: Number }
-installCloudCircles =
-  [ { f: 0.37, r: 50.0, drop: 33.0 } -- broad main lobe, left of centre
-  , { f: 0.70, r: 21.0, drop: 7.0 } -- smaller lobe, right
-  ]
 
 -- One cubic-bezier path command from two control points and an endpoint.
 cubic :: Number /\ Number -> Number /\ Number -> Number /\ Number -> String
