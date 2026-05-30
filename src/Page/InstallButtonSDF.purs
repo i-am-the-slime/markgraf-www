@@ -3,7 +3,7 @@ module Page.InstallButtonSDF (installButtonSDF) where
 import Prelude
 
 import Data.Foldable (traverse_)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null)
 import Data.Number (exp, sin)
 import Effect (Effect)
@@ -25,30 +25,42 @@ import Yoga.React.R3F.Canvas (canvas)
 -- cursor on hover, and carries the black INSTALL letters with an orange comet
 -- shimmer wiping across them. The shape, with its baked-in text, IS the button.
 installButtonSDF :: JSX
-installButtonSDF =
-  a
-    { href: "#install"
-    , style: css
-        { position: "relative"
-        , display: "block"
-        , width: "18rem"
-        , height: "8rem"
-        , textDecoration: "none"
-        , pointerEvents: "auto"
-        }
-    }
-    [ canvas
-        { gl: { alpha: true }
-        , dpr: [ 1.0, 2.0 ]
-        , style: css { position: "absolute", inset: "0" }
-        , children: element installSDFScene {}
-        }
-    ]
+installButtonSDF = element installButton {}
 
-installSDFScene :: ReactComponent {}
-installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \_ -> Hooks.do
-  matRef <- useRef null
+-- Hover is tracked on the DOM anchor, not by raycasting the quad: the shader
+-- bypasses the camera, so the 2x2 plane only covers a sliver of the frustum and
+-- mesh pointer events would miss most of the visible shape. The anchor wraps the
+-- whole button, so enter/leave there is reliable. hoveringRef is shared into the
+-- scene, where useFrame reads it to drive the gas fill and the cursor tilt.
+installButton :: ReactComponent {}
+installButton = unsafePerformEffect $ reactComponent "InstallButtonSDF" \_ -> Hooks.do
   hoveringRef <- useRef false
+  pure $
+    a
+      { href: "#install"
+      , style: css
+          { position: "relative"
+          , display: "block"
+          , width: "18rem"
+          , height: "8rem"
+          , textDecoration: "none"
+          , pointerEvents: "auto"
+          }
+      , onPointerEnter: handler_ (writeRef hoveringRef true)
+      , onPointerLeave: handler_ (writeRef hoveringRef false)
+      }
+      [ canvas
+          { gl: { alpha: true }
+          , dpr: [ 1.0, 2.0 ]
+          , style: css { position: "absolute", inset: "0" }
+          , children: element installSDFScene { hoveringRef }
+          }
+      ]
+
+installSDFScene :: ReactComponent { hoveringRef :: Ref Boolean }
+installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \{ hoveringRef } -> Hooks.do
+  matRef <- useRef null
+  textureRef <- useRef Nothing
   prevTickRef <- useRef 0.0
   phaseRef <- useRef 0.0
   targetRef <- useRef 0.0
@@ -59,8 +71,8 @@ installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \_ -> H
 
   useEffectOnce do
     text <- makeTextTexture "INSTALL"
-    setText matRef text
-    refreshTextOnFontLoad "INSTALL" (setText matRef)
+    writeRef textureRef (Just text)
+    refreshTextOnFontLoad "INSTALL" \refreshed -> writeRef textureRef (Just refreshed)
     pure (pure unit)
 
   useFrame \rs _ -> do
@@ -78,20 +90,19 @@ installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \_ -> H
     tilt <- easeTilt tiltRef hovering my t dt
     fill <- easeFill fillRef hovering dt
 
-    readRefMaybe matRef # withJust \m -> applyProps m
-      { "uniforms-uTime-value": t
-      , "uniforms-uPhase-value": phase
-      , "uniforms-uRot-value": yaw
-      , "uniforms-uTilt-value": tilt
-      , "uniforms-uFill-value": fill
-      , "uniforms-uMouse-value": [ mx * 0.5 * aspect, -my * 0.5 ]
-      , "uniforms-uRes-value": [ readBufferWidth rs, readBufferHeight rs ]
-      }
+    readRefMaybe matRef # withJust \m -> do
+      applyProps m
+        { "uniforms-uTime-value": t
+        , "uniforms-uPhase-value": phase
+        , "uniforms-uRot-value": yaw
+        , "uniforms-uTilt-value": tilt
+        , "uniforms-uFill-value": fill
+        , "uniforms-uMouse-value": [ mx * 0.5 * aspect, -my * 0.5 ]
+        , "uniforms-uRes-value": [ readBufferWidth rs, readBufferHeight rs ]
+        }
+      readRef textureRef >>= traverse_ \text -> applyProps m { "uniforms-uText-value": text }
 
-  pure (sdfQuad matRef hoveringRef)
-
-setText :: Ref (Nullable Object3D) -> Texture -> Effect Unit
-setText matRef text = readRefMaybe matRef # withJust \m -> applyProps m { "uniforms-uText-value": text }
+  pure (sdfQuad matRef)
 
 withJust :: forall a. (a -> Effect Unit) -> Effect (Maybe a) -> Effect Unit
 withJust f m = m >>= traverse_ f
@@ -165,11 +176,9 @@ shapeCount = 6.0
 -- placeholder and is swapped for the drawn label once useEffectOnce runs.
 -- ---------------------------------------------------------------------------
 
-sdfQuad :: Ref (Nullable Object3D) -> Ref Boolean -> JSX
-sdfQuad matRef hoveringRef = element (threejs "Mesh")
+sdfQuad :: Ref (Nullable Object3D) -> JSX
+sdfQuad matRef = element (threejs "Mesh")
   { frustumCulled: false
-  , onPointerOver: handler_ (writeRef hoveringRef true)
-  , onPointerOut: handler_ (writeRef hoveringRef false)
   , children:
       [ element (threejs "PlaneGeometry") { args: [ 2.0, 2.0 ] }
       , element (threejs "ShaderMaterial")
