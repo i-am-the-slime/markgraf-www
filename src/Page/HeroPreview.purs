@@ -411,7 +411,7 @@ installShapePaths :: Array String
 installShapePaths = morphPath <$>
   [ boxSegs { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- node box
   , boxSegs { r: 0.0, skew: 16.0, topBow: 0.0, botBow: 0.0 } -- parallelogram (pointy)
-  , boxSegs { r: 1.5, skew: 0.0, topBow: 10.0, botBow: 10.0 } -- database cylinder
+  , boxSegs { r: 1.5, skew: 0.0, topBow: 17.0, botBow: 17.0 } -- database cylinder
   , cloudSegs -- Ionicons v4 cloud
   , boxSegs { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- back to box
   ]
@@ -483,10 +483,12 @@ cloudSegs = (\s -> { p0: tf s.p0, c1: tf s.c1, c2: tf s.c2, p3: tf s.p3 }) <$>
   ]
   where
   raw a b c d = { p0: a, c1: b, c2: c, p3: d }
-  -- map the 512 box [16,96..496,416] onto a wide patch of the install box
+  -- map the 512 box [16,96..496,416] onto the install footprint, but taller than
+  -- the box so the cloud reads full-height: puffs rise above the top, the body
+  -- fills down to near the bottom (overflow is visible, so the poke-out is fine).
   sx = (188.0 - 12.0) / 480.0
-  sy = (56.0 - 4.0) / 320.0
-  tf (x /\ y) = (12.0 + (x - 16.0) * sx) /\ (4.0 + (y - 96.0) * sy)
+  sy = (56.0 - (-10.0)) / 320.0
+  tf (x /\ y) = (12.0 + (x - 16.0) * sx) /\ (-10.0 + (y - 96.0) * sy)
 
 -- A point on a cubic at parameter t.
 cubicPoint :: Seg -> Number -> Pt
