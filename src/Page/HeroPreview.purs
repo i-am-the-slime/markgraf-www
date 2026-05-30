@@ -413,6 +413,7 @@ installShapePaths = morphPath <$>
   , boxSegs { r: 0.0, skew: 16.0, topBow: 0.0, botBow: 0.0 } -- parallelogram (pointy)
   , boxSegs { r: 1.5, skew: 0.0, topBow: 17.0, botBow: 17.0 } -- database cylinder
   , cloudSegs -- Ionicons v4 cloud
+  , chevronSegs 28.0 -- pointy hexagon (<==>)
   , boxSegs { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- back to box
   ]
 
@@ -443,11 +444,11 @@ boxSegs :: { r :: Number, skew :: Number, topBow :: Number, botBow :: Number } -
 boxSegs p =
   [ seg (tl /\ top) (mid tl tr 0.34 /\ (top - p.topBow)) (mid tl tr 0.66 /\ (top - p.topBow)) (tr /\ top)
   , seg (tr /\ top) (cTR /\ top) (cTR /\ top) (cTR /\ (top + p.r))
-  , straight (cTR /\ (top + p.r)) (cBR /\ (bottom - p.r))
+  , straightSeg (cTR /\ (top + p.r)) (cBR /\ (bottom - p.r))
   , seg (cBR /\ (bottom - p.r)) (cBR /\ bottom) (cBR /\ bottom) (br /\ bottom)
   , seg (br /\ bottom) (mid br bl 0.34 /\ (bottom + p.botBow)) (mid br bl 0.66 /\ (bottom + p.botBow)) (bl /\ bottom)
   , seg (bl /\ bottom) (cBL /\ bottom) (cBL /\ bottom) (cBL /\ (bottom - p.r))
-  , straight (cBL /\ (bottom - p.r)) (cTL /\ (top + p.r))
+  , straightSeg (cBL /\ (bottom - p.r)) (cTL /\ (top + p.r))
   , seg (cTL /\ (top + p.r)) (cTL /\ top) (cTL /\ top) (tl /\ top)
   ]
   where
@@ -462,12 +463,6 @@ boxSegs p =
   cTL = left + p.skew
   seg a b c d = { p0: a, c1: b, c2: c, p3: d }
   mid a b f = a + (b - a) * f
-  straight (sx /\ sy) (ex /\ ey) =
-    { p0: sx /\ sy
-    , c1: lerp sx ex (1.0 / 3.0) /\ lerp sy ey (1.0 / 3.0)
-    , c2: lerp sx ex (2.0 / 3.0) /\ lerp sy ey (2.0 / 3.0)
-    , p3: ex /\ ey
-    }
 
 -- The Ionicons v4 md-cloud, its seven cubics converted to absolute and mapped
 -- from the 512 source box into the install box's footprint.
@@ -489,6 +484,31 @@ cloudSegs = (\s -> { p0: tf s.p0, c1: tf s.c1, c2: tf s.c2, p3: tf s.p3 }) <$>
   sx = (188.0 - 12.0) / 480.0
   sy = (56.0 - (-10.0)) / 320.0
   tf (x /\ y) = (12.0 + (x - 16.0) * sx) /\ (-10.0 + (y - 96.0) * sy)
+
+-- A pointy hexagon (rectangle with the left and right sides drawn to a point):
+-- the `<==>` lozenge, after markgraf's chevronRect. `chev` is how far the flat
+-- top/bottom edges inset from the points. Straight edges only.
+chevronSegs :: Number -> Array Seg
+chevronSegs chev =
+  [ straightSeg ((left + chev) /\ top) ((right - chev) /\ top)
+  , straightSeg ((right - chev) /\ top) (right /\ midY)
+  , straightSeg (right /\ midY) ((right - chev) /\ bottom)
+  , straightSeg ((right - chev) /\ bottom) ((left + chev) /\ bottom)
+  , straightSeg ((left + chev) /\ bottom) (left /\ midY)
+  , straightSeg (left /\ midY) ((left + chev) /\ top)
+  ]
+  where
+  { left, right, top, bottom } = installBox
+  midY = (top + bottom) / 2.0
+
+-- A straight edge as a cubic with its controls spaced evenly along the line.
+straightSeg :: Pt -> Pt -> Seg
+straightSeg (sx /\ sy) (ex /\ ey) =
+  { p0: sx /\ sy
+  , c1: lerp sx ex (1.0 / 3.0) /\ lerp sy ey (1.0 / 3.0)
+  , c2: lerp sx ex (2.0 / 3.0) /\ lerp sy ey (2.0 / 3.0)
+  , p3: ex /\ ey
+  }
 
 -- A point on a cubic at parameter t.
 cubicPoint :: Seg -> Number -> Pt
