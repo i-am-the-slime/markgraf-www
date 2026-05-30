@@ -755,8 +755,8 @@ previewPane src size visible gen activeOnMobile =
             , overflow: "hidden"
             }
         }
-        [ playerIgnite
-        , playerStrike
+        [ playerStrike
+        , playerShade
         ]
   where
   player =
@@ -771,20 +771,21 @@ previewPane src size visible gen activeOnMobile =
       # Monoid.guard (visible && size.w > 0.0 && size.h > 0.0)
   -- The player itself flickers in on the exact same keyframes as the hero
   -- wordmark (.player-strike reuses hero-wordmark-in: same 0.7s delay + 3.8s
-  -- run), so its transparency strikes on like a neon tube in lockstep with the
-  -- title — not a sheet flashing over a static graph, but the graph igniting.
+  -- run). Because the player is transparent and nothing sits behind it, its
+  -- off-beats reveal the scene through — the graph igniting like the neon does,
+  -- not a sheet flashing over a static graph or a dark box blinking in.
   playerStrike =
     div
       { className: "player-strike pointer-events-none"
       , style: css { position: "absolute", inset: "0" }
       }
       [ keyed (show gen) player ]
-  -- A dark backing held behind the player, clearing on the inverse of the strike
-  -- so the player's own off-beats reveal black rather than the page behind it.
-  -- Ends fully clear, leaving the resting look untouched.
-  playerIgnite =
+  -- The wordmark overhead is the light source, so the graph is lit from the top
+  -- and falls into shadow toward the bottom. A steady top-to-bottom gradient
+  -- (.player-shade) sits over the player to carry that directional fall-off.
+  playerShade =
     div
-      { className: "player-ignite pointer-events-none"
+      { className: "player-shade pointer-events-none"
       , style: css { position: "absolute", inset: "0" }
       }
       noJSX
