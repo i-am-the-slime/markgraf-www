@@ -21,7 +21,7 @@ import Effect.Unsafe (unsafePerformEffect)
 import Data.Nullable (Nullable, null)
 import Data.String.Common (joinWith, toUpper)
 import DiagramShapes.Offscreen as DiagramShapes
-import Page.InstallButtonSDF (installButtonSDF)
+import Page.InstallButtonLazy (installButtonLazy)
 import Framer.Motion.MotionComponent as Motion
 import Framer.Motion.Types as Motion
 import Framer.Motion.Types (VariantLabel(..))
@@ -287,7 +287,7 @@ heroLockup =
 -- gas-filling on hover. The shape is the button; clicking it rides the scroll-
 -- snap magazine down to the install spread, same as the side nav.
 heroInstallCta :: JSX
-heroInstallCta = installButtonSDF
+heroInstallCta = installButtonLazy
 
 -- The tagline types itself in once the wordmark has caught: each word is its own
 -- inline-block carrying a staggered animation-delay, so the line resolves left to
