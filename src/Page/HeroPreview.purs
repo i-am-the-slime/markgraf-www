@@ -341,16 +341,17 @@ heroInstallCta =
       , transition: installMorphTransition
       }
       ([] :: Array JSX)
-  -- A wireframe edge tracing the same morphing outline, imitating the solid+wire
-  -- look of the 3D diagram shapes (a light low-opacity line over the fill).
+  -- Internal lat/long lines over the same morphing shape, imitating the solid+wire
+  -- look of the 3D diagram shapes. Lines only (no outline), so they read as a mesh
+  -- and never sit proud of the fill edge.
   wire =
     Motion.createMotionElement "path"
-      { d: fromMaybe "" (Array.head installFrames.d)
+      { d: fromMaybe "" (Array.head installFrames.wire)
       , fill: "none"
-      , stroke: "rgba(255,233,214,0.55)"
-      , strokeWidth: 1.1
+      , stroke: "rgba(255,233,214,0.45)"
+      , strokeWidth: 0.9
       , vectorEffect: "non-scaling-stroke"
-      , animate: { d: installFrames.d }
+      , animate: { d: installFrames.wire }
       , transition: installMorphTransition
       }
       ([] :: Array JSX)
@@ -375,7 +376,6 @@ heroInstallCta =
           , width: "100%"
           , height: "100%"
           , overflow: "visible"
-          , filter: "drop-shadow(0 0 5px rgba(255,59,26,0.35))"
           }
       }
       kids
@@ -395,33 +395,33 @@ installDwell :: Number
 installDwell = installStep - installMorph
 
 installTotal :: Number
-installTotal = installStep * Int.toNumber (Array.length installShapePaths - 1)
+installTotal = installStep * Int.toNumber (Array.length installShapePoints - 1)
 
 installMorphTransition
   :: { duration :: Number, ease :: String, repeat :: Number, times :: Array Number }
 installMorphTransition =
   { duration: installTotal, times: installFrames.times, ease: "easeInOut", repeat: infinity }
 
--- The flat keyframe arrays handed to framer-motion: parallel paths and times,
--- expanded from installShapePaths with the arrive/hold doubling, so each shape
--- holds then snaps to the next.
-installFrames :: { d :: Array String, times :: Array Number }
+-- The flat keyframe arrays handed to framer-motion: the fill outline, the matching
+-- wireframe (internal lat/long lines), and times — expanded from installShapePoints
+-- with the arrive/hold doubling so each shape holds then snaps to the next.
+installFrames :: { d :: Array String, times :: Array Number, wire :: Array String }
 installFrames =
-  { d: _.d <$> frames, times: _.t <$> frames }
+  { d: _.d <$> frames, wire: _.wire <$> frames, times: _.t <$> frames }
   where
-  frames = Array.concat (Array.mapWithIndex frameFor installShapePaths)
-  lastIdx = Array.length installShapePaths - 1
-  frameFor i shape =
-    [ { d: shape, t: arrive / installTotal } ]
-      <> (if i < lastIdx then [ { d: shape, t: (arrive + installDwell) / installTotal } ] else [])
+  frames = Array.concat (Array.mapWithIndex frameFor installShapePoints)
+  lastIdx = Array.length installShapePoints - 1
+  frameFor i pts =
+    [ { d: polyPath pts, wire: wirePath pts, t: arrive / installTotal } ]
+      <> (if i < lastIdx then [ { d: polyPath pts, wire: wirePath pts, t: (arrive + installDwell) / installTotal } ] else [])
     where
     arrive = Int.toNumber i * installStep
 
--- Every frame is the same shape resampled to the same point count, so any of them
--- morphs smoothly into any other (a box can become the literal Ionicons cloud).
--- The cycle ends back on the box so the loop is seamless.
-installShapePaths :: Array String
-installShapePaths = morphPath <$>
+-- Every frame is the same shape resampled to the same point count and winding, so
+-- any of them morphs smoothly into any other (a box can become the literal
+-- Ionicons cloud). The cycle ends back on the box so the loop is seamless.
+installShapePoints :: Array (Array Pt)
+installShapePoints = (normalisePoly <<< resampleClosed morphPoints <<< flattenSegs morphFlattenSteps) <$>
   [ boxSegs { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- node box
   , boxSegs { r: 0.0, skew: 16.0, topBow: 0.0, botBow: 0.0 } -- parallelogram (pointy)
   , boxSegs { r: 1.5, skew: 0.0, topBow: 17.0, botBow: 17.0 } -- database cylinder
@@ -429,14 +429,6 @@ installShapePaths = morphPath <$>
   , chevronSegs 28.0 -- pointy hexagon (<==>)
   , boxSegs { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- back to box
   ]
-
--- A shape's closed outline as a fixed-length, fixed-winding polygon path: flatten
--- its cubics to a dense polyline, resample to a common point count by arc length,
--- normalise winding and start point so point i lines up across shapes, then emit
--- as a polyline. This shared structure is what lets framer-motion tween any shape
--- into any other.
-morphPath :: Array Seg -> String
-morphPath = polyPath <<< normalisePoly <<< resampleClosed morphPoints <<< flattenSegs morphFlattenSteps
 
 morphPoints :: Int
 morphPoints = 64
@@ -601,8 +593,30 @@ lerpPt (ax /\ ay) (bx /\ by) t = lerp ax bx t /\ lerp ay by t
 polyPath :: Array Pt -> String
 polyPath pts = joinWith " " (Array.mapWithIndex cmd pts) <> " Z"
   where
-  cmd i (x /\ y) = (if i == 0 then "M" else "L") <> num x <> "," <> num y
-  num n = show (Int.toNumber (Int.round (n * 100.0)) / 100.0)
+  cmd i p = (if i == 0 then "M" else "L") <> ptStr p
+
+-- A wireframe over the same points: one pole-to-pole meridian plus a set of
+-- latitude chords (point k joined to its mirror point n-k). Drawn as internal
+-- lines only — the fill supplies the silhouette — so it reads as a wire mesh and
+-- never sits outside the shape. Fixed line count, so it morphs with the fill.
+wirePath :: Array Pt -> String
+wirePath pts = joinWith " " (Array.cons meridian latitudes)
+  where
+  n = Array.length pts
+  at i = fromMaybe (0.0 /\ 0.0) (Array.index pts (mod i n))
+  chord a b = "M" <> ptStr a <> " L" <> ptStr b
+  meridian = chord (at 0) (at (n / 2))
+  latitudes = (\j -> chord (at (latK j)) (at (n - latK j))) <$> Array.range 1 wireLatitudes
+  latK j = (n / 2) * j / (wireLatitudes + 1)
+
+wireLatitudes :: Int
+wireLatitudes = 7
+
+ptStr :: Pt -> String
+ptStr (x /\ y) = numStr x <> "," <> numStr y
+
+numStr :: Number -> String
+numStr n = show (Int.toNumber (Int.round (n * 100.0)) / 100.0)
 
 -- The tagline types itself in once the wordmark has caught: each word is its own
 -- inline-block carrying a staggered animation-delay, so the line resolves left to
