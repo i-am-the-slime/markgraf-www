@@ -290,12 +290,12 @@ heroInstallCta =
   a
     { href: "#install"
     , className:
-        "hero-pill-in pointer-events-auto inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.28em] "
-          <> "text-[#f5f1e8] bg-[#11162280] backdrop-blur-md border border-[#2a3142] rounded-full px-6 py-3 "
-          <> "hover:border-[#ff3b1a] hover:text-[#ff3b1a] transition-colors"
+        "hero-pill-in pointer-events-auto inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.28em] font-semibold "
+          <> "text-[#0f0f0f] bg-[#ff3b1a] border border-[#ff3b1a] rounded-full px-6 py-3 shadow-[0_0_24px_rgba(255,59,26,0.45)] "
+          <> "hover:bg-[#ff5436] hover:border-[#ff5436] hover:shadow-[0_0_32px_rgba(255,59,26,0.65)] transition-all"
     }
     [ text "Install"
-    , span { style: css { color: "#ff3b1a" } } [ text "↓" ]
+    , span {} [ text "↓" ]
     ]
 
 -- The tagline types itself in once the wordmark has caught: each word is its own
