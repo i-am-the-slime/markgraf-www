@@ -309,7 +309,7 @@ heroTagline =
   reveal i w =
     [ span
         { className: "hero-tagline-word"
-        , style: css { animationDelay: show (4700 + i * 120) <> "ms" }
+        , style: css { animationDelay: show (2700 + i * 120) <> "ms" }
         }
         [ text w ]
     , text " "

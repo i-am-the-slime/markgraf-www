@@ -243,8 +243,8 @@ body:has(.vhs-text-wrap.vhs-on)::after {
 }
 
 /* Lockup assembly: the tagline and install pill hold back until the wordmark
-   has caught (~4.5s), then arrive in sequence so the hero builds rather than
-   landing whole. Per-word delays are set inline (base 4.7s + index * step) so
+   has caught (~2.5s), then arrive in sequence so the hero builds rather than
+   landing whole. Per-word delays are set inline (base 2.7s + index * step) so
    the line types itself in; the pill follows once the last word lands. Both
    collapse to a plain appearance under reduced motion. */
 .hero-tagline-word {
@@ -257,7 +257,7 @@ body:has(.vhs-text-wrap.vhs-on)::after {
   to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 .hero-pill-in {
-  animation: hero-pill-in 0.6s ease-out 6s both;
+  animation: hero-pill-in 0.6s ease-out 4s both;
 }
 @keyframes hero-pill-in {
   from { opacity: 0; transform: translateY(0.5rem); }
@@ -278,7 +278,7 @@ body:has(.vhs-text-wrap.vhs-on)::after {
    screen. */
 .player-reveal {
   opacity: 0;
-  animation: player-reveal 1s ease-out 4.5s both;
+  animation: player-reveal 1s ease-out 2.5s both;
 }
 @keyframes player-reveal {
   to { opacity: 1; }
@@ -323,12 +323,12 @@ body:has(.vhs-text-wrap.vhs-on)::after {
      disabled the title just shows normally. */
   .hero-wordmark-in {
     /* Strike on like a neon tube, then never quite hold still: once the gas
-       catches (~4.5s) a faint hum takes over, sparse micro-flickers that read
+       catches (~2.5s) a faint hum takes over, sparse micro-flickers that read
        as a live tube rather than a pulse. The hum is listed last so it wins the
        opacity once its delay elapses; before that the ignition has the floor. */
     animation:
-      hero-wordmark-in 3.8s linear 0.7s both,
-      hero-neon-hum 7s linear 4.5s infinite;
+      hero-wordmark-in 1.8s linear 0.7s both,
+      hero-neon-hum 7s linear 2.5s infinite;
   }
   /* A real tube ignites in bursts — struck (lit) or dark, always snapping back
      to 0 between flashes, never dimming. Realism is in the cadence: wide dark
