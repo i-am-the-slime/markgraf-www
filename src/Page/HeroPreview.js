@@ -64,7 +64,7 @@ export const installButtonImpl = ({ href, label }) =>
           d: shapes[0],
           fill: "#ff3b1a",
           animate: { d: shapes },
-          transition: { duration: 7, ease: "easeInOut", repeat: Infinity },
+          transition: { duration: 2.2, ease: "easeInOut", repeat: Infinity },
         })
       ),
       h("span", { key: "label", style: { position: "relative" } }, label),
