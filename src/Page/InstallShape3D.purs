@@ -20,7 +20,8 @@ import Yoga.React.R3F.Hooks (useFrame)
 -- primitives. It is one superquadric surface whose two exponents animate: at
 -- (1,1) it is a sphere, near (0,0) a box, (0,1) a cylinder, (2.6,2.6) an
 -- octahedron. Lerping the exponents *is* the morph — same vertices throughout, so
--- it stays a single coherent mesh. Solid + wireframe, after the 3D scene's style.
+-- it stays one coherent mesh. The whole solid+wireframe group is built in the FFI
+-- and mounted via <primitive>, the robust r3f escape hatch for custom objects.
 installShape3D :: JSX
 installShape3D =
   canvas
@@ -38,34 +39,16 @@ installScene = unsafePerformEffect $ reactComponent "InstallScene" \_ -> Hooks.d
     let t = t0 + delta
     writeRef elapsed t
     let e = exponentsAt t
-    setPositions installGeometry (superPositions e.e1 e.e2 (t * 0.45))
+    setGroupPositions installGroup (superPositions e.e1 e.e2)
+    setGroupRotation installGroup (t * 0.45)
   pure sceneTree
 
 sceneTree :: JSX
-sceneTree =
-  element (threejs "Group") { children: [ ambient, directional, solidMesh, wireMesh ] }
-
-ambient :: JSX
-ambient = element (threejs "AmbientLight") { intensity: 0.75 }
-
-directional :: JSX
-directional = element (threejs "DirectionalLight") { position: [ 2.0, 3.0, 4.0 ], intensity: 1.4 }
-
-solidMesh :: JSX
-solidMesh =
-  element (threejs "Mesh") { geometry: installGeometry, frustumCulled: false, children: [ solidMaterial ] }
+sceneTree = element (threejs "Group") { children: [ ambient, directional, shape ] }
   where
-  solidMaterial =
-    element (threejs "MeshStandardMaterial")
-      { color: "#ff3b1a", roughness: 0.35, metalness: 0.12, side: 2 }
-
-wireMesh :: JSX
-wireMesh =
-  element (threejs "Mesh") { geometry: installGeometry, frustumCulled: false, children: [ wireMaterial ] }
-  where
-  wireMaterial =
-    element (threejs "MeshBasicMaterial")
-      { color: "#ffe9d6", wireframe: true, transparent: true, opacity: 0.22 }
+  ambient = element (threejs "AmbientLight") { intensity: 0.75 }
+  directional = element (threejs "DirectionalLight") { position: [ 2.0, 3.0, 4.0 ], intensity: 1.4 }
+  shape = element (threejs "primitive") { object: installGroup }
 
 -- ---------------------------------------------------------------------------
 -- Geometry: a superquadric surface as a (gridU+1) x (gridV+1) parametric grid.
@@ -77,30 +60,23 @@ gridU = 18
 gridV :: Int
 gridV = 36
 
--- One shared geometry, mutated in place each frame. Built once (CPU-side, before
--- any GL context) from the index list and the sphere's positions.
-installGeometry :: Geometry
-installGeometry = unsafePerformEffect (mkGeometry gridIndices (superPositions 1.0 1.0 0.0))
+-- The group (solid + wire meshes), built once and mutated in place each frame.
+installGroup :: ShapeGroup
+installGroup = unsafePerformEffect (mkShapeGroup gridIndices (superPositions 1.0 1.0))
 
--- The flattened [x,y,z,...] positions for exponents (e1,e2), spun about Y by `ay`
--- (with a fixed tilt) so the recompute also carries the rotation.
-superPositions :: Number -> Number -> Number -> Array Number
-superPositions e1 e2 ay =
+-- The flattened [x,y,z,...] positions for the superquadric with exponents e1,e2.
+superPositions :: Number -> Number -> Array Number
+superPositions e1 e2 =
   Array.range 0 gridU >>= \i -> Array.range 0 gridV >>= \j -> vert i j
   where
-  tilt = 0.5
-  vert i j = [ x1, ry, rz ]
+  vert i j = [ x, y, z ]
     where
     u = -(pi / 2.0) + pi * Int.toNumber i / Int.toNumber gridU
     v = -pi + 2.0 * pi * Int.toNumber j / Int.toNumber gridV
     cu = signpow (cos u) e1
-    x0 = cu * signpow (cos v) e2
-    y0 = cu * signpow (sin v) e2
-    z0 = signpow (sin u) e1
-    x1 = x0 * cos ay + z0 * sin ay
-    z1 = z0 * cos ay - x0 * sin ay
-    ry = y0 * cos tilt - z1 * sin tilt
-    rz = y0 * sin tilt + z1 * cos tilt
+    x = cu * signpow (cos v) e2
+    y = cu * signpow (sin v) e2
+    z = signpow (sin u) e1
 
 -- sign(b) * |b|^e — keeps the superquadric well defined for negative cos/sin.
 signpow :: Number -> Number -> Number
@@ -158,17 +134,22 @@ lerp :: Number -> Number -> Number -> Number
 lerp a b t = a + (b - a) * t
 
 -- ---------------------------------------------------------------------------
--- FFI: irreducible three.js geometry plumbing.
+-- FFI: irreducible three.js object assembly and mutation.
 -- ---------------------------------------------------------------------------
 
-foreign import data Geometry :: Type
+foreign import data ShapeGroup :: Type
 
-mkGeometry :: Array Int -> Array Number -> Effect Geometry
-mkGeometry = runEffectFn2 mkGeometryImpl
+mkShapeGroup :: Array Int -> Array Number -> Effect ShapeGroup
+mkShapeGroup = runEffectFn2 mkShapeGroupImpl
 
-foreign import mkGeometryImpl :: EffectFn2 (Array Int) (Array Number) Geometry
+foreign import mkShapeGroupImpl :: EffectFn2 (Array Int) (Array Number) ShapeGroup
 
-setPositions :: Geometry -> Array Number -> Effect Unit
-setPositions = runEffectFn2 setPositionsImpl
+setGroupPositions :: ShapeGroup -> Array Number -> Effect Unit
+setGroupPositions = runEffectFn2 setGroupPositionsImpl
 
-foreign import setPositionsImpl :: EffectFn2 Geometry (Array Number) Unit
+foreign import setGroupPositionsImpl :: EffectFn2 ShapeGroup (Array Number) Unit
+
+setGroupRotation :: ShapeGroup -> Number -> Effect Unit
+setGroupRotation = runEffectFn2 setGroupRotationImpl
+
+foreign import setGroupRotationImpl :: EffectFn2 ShapeGroup Number Unit
