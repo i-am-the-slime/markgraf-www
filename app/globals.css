@@ -273,6 +273,74 @@ body:has(.vhs-text-wrap.vhs-on)::after {
   }
 }
 
+/* A dark veil sitting over the player. Its opacity is the exact inverse of the
+   hero wordmark's strike-on (same 0.7s delay + 3.8s, same beat-for-beat cadence,
+   1 - that opacity at every keyframe), so as the neon flashes bright the veil
+   lifts and the player catches the light. Both are plain CSS from mount, so they
+   stay in sync without any wiring. Ends fully clear. */
+.player-ignite {
+  background: #080b14;
+  opacity: 0;
+  z-index: 2;
+  animation: player-ignite 3.8s linear 0.7s both;
+}
+@keyframes player-ignite {
+  0%, 5% { opacity: 1; }
+  6% { opacity: 0.6; }
+  7% { opacity: 1; }
+  9% { opacity: 0.3; }
+  10% { opacity: 1; }
+  11% { opacity: 0.7; }
+  12% { opacity: 1; }
+  13% { opacity: 0.1; }
+  14% { opacity: 1; }
+  31% { opacity: 1; }
+  32% { opacity: 0.5; }
+  34% { opacity: 0.5; }
+  35% { opacity: 1; }
+  36% { opacity: 0.4; }
+  37% { opacity: 1; }
+  38% { opacity: 0.6; }
+  39% { opacity: 1; }
+  40% { opacity: 0.3; }
+  41% { opacity: 1; }
+  48% { opacity: 1; }
+  49% { opacity: 0.15; }
+  51% { opacity: 0.15; }
+  52% { opacity: 1; }
+  53% { opacity: 0.7; }
+  54% { opacity: 1; }
+  55% { opacity: 0.2; }
+  56% { opacity: 1; }
+  57% { opacity: 0.5; }
+  58% { opacity: 1; }
+  64% { opacity: 1; }
+  65% { opacity: 0.1; }
+  66% { opacity: 1; }
+  67% { opacity: 0.4; }
+  68% { opacity: 1; }
+  69% { opacity: 0.2; }
+  70% { opacity: 1; }
+  74% { opacity: 1; }
+  75% { opacity: 0.2; }
+  76% { opacity: 1; }
+  77% { opacity: 0.2; }
+  78% { opacity: 1; }
+  79% { opacity: 0.2; }
+  80% { opacity: 1; }
+  84% { opacity: 1; }
+  85% { opacity: 0.2; }
+  86% { opacity: 1; }
+  88% { opacity: 0.2; animation-timing-function: ease-out; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-ignite {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* markgraf-react paints a <svg class="markgraf-player"> with intrinsic width
    and height attributes from the layout viewport.  Force it to scale to its
    container so it fits the playground pane instead of overflowing.  */

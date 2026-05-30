@@ -755,17 +755,29 @@ previewPane src size visible gen activeOnMobile =
             , overflow: "hidden"
             }
         }
-    $ keyed (show gen)
-    $
-      markgrafPlayer
-        { src
-        , renderer: "svg"
-        , theme: "dark"
-        , transparent: true
-        , width: size.w
-        , height: size.h
-        }
-        # Monoid.guard (visible && size.w > 0.0 && size.h > 0.0)
+        [ keyed (show gen) player
+        , playerIgnite
+        ]
+  where
+  player =
+    markgrafPlayer
+      { src
+      , renderer: "svg"
+      , theme: "dark"
+      , transparent: true
+      , width: size.w
+      , height: size.h
+      }
+      # Monoid.guard (visible && size.w > 0.0 && size.h > 0.0)
+  -- A dark veil over the player that flickers off in lockstep with the hero
+  -- wordmark striking on (same 0.7s delay + 3.8s run, inverse opacity), so the
+  -- player looks like it's catching the neon's light as the title ignites.
+  playerIgnite =
+    div
+      { className: "player-ignite pointer-events-none"
+      , style: css { position: "absolute", inset: "0" }
+      }
+      noJSX
 
 -- ---------------------------------------------------------------------------
 -- Tokenizer: produces colored <span> children for the highlight overlay.
