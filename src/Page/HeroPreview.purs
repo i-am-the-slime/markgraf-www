@@ -76,7 +76,9 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
   ratiosRef <- useRef ([] :: Array { id :: String, ratio :: Number })
   activeRef <- useRef ""
   activeSection /\ setActiveSection <- useState' "page-hero"
+  sceneLit /\ setSceneLit <- useState' false
   useEffectOnce $ installVhsBurst "vhs-text-wrap"
+  useEffectOnce $ onWordmarkLit (setSceneLit true)
   useEffectOnce $
     observeRatios "magazine" (_.id <$> sectionStates) \id ratio -> do
       ratios <- readRef ratiosRef
@@ -91,7 +93,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       { id: "magazine"
       , className: "relative bg-[#0f0f0f] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
       }
-      [ diagramShapesBackground
+      [ diagramShapesBackground sceneLit
       , scrim (activeSection == "playground")
       , sideNav { active: activeSection }
       , heroPage
@@ -115,9 +117,17 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
 -- Fixed full-viewport layer that the offscreen WebGL canvas paints into. Sits
 -- behind every section so per-section camera arms + ball morphs are visible
 -- as the user scrolls between spreads.
-diagramShapesBackground :: JSX
-diagramShapesBackground =
-  div { className: "fixed inset-0 z-0 pointer-events-none" }
+-- Held dark until the wordmark's neon catches, then faded up — so the title
+-- strikes on against black and the world powers up behind it. The worker is
+-- mounted from the start (its per-section poses still land); only the reveal
+-- waits on `lit`.
+diagramShapesBackground :: Boolean -> JSX
+diagramShapesBackground lit =
+  div
+    { className:
+        "fixed inset-0 z-0 pointer-events-none transition-opacity duration-[1200ms] ease-out "
+          <> if lit then "opacity-100" else "opacity-0"
+    }
     [ element diagramShapesComponent {} ]
 
 -- ---------------------------------------------------------------------------
@@ -1662,6 +1672,25 @@ installVhsBurst className = do
     Ref.read burstRef >>= traverse_ clearTimeout
     Ref.read scheduleRef >>= traverse_ clearTimeout
     setVhs false
+
+-- Fire `done` the moment the title's neon-in animation finishes — the beat the
+-- wordmark holds steady, "the light is on". Listening for animationend on the
+-- .hero-wordmark-in element keeps this locked to the CSS timing, and the name
+-- guard accepts the reduced-motion fade variant too. Returns a teardown.
+onWordmarkLit :: Effect Unit -> Effect (Effect Unit)
+onWordmarkLit done = do
+  els <- targets
+  listener <- eventListener \ev ->
+    when (lit (unsafeCoerce ev).animationName) done
+  for_ els \el -> addEventListenerWithOptions animationEnd listener passiveOpts (Element.toEventTarget el)
+  pure $ for_ els \el -> removeEventListener animationEnd listener false (Element.toEventTarget el)
+  where
+  animationEnd = EventType "animationend"
+  lit name = name == "hero-wordmark-in" || name == "hero-wordmark-fade"
+  targets = do
+    d <- window >>= document
+    hc <- Document.getElementsByClassName "hero-wordmark-in" (HTMLDocument.toDocument d)
+    HTMLCollection.toArray hc
 
 passiveOpts :: { capture :: Boolean, once :: Boolean, passive :: Boolean }
 passiveOpts = { capture: false, once: false, passive: true }
