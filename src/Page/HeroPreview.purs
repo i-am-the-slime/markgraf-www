@@ -6,6 +6,7 @@ import Data.Array as Array
 import Data.Foldable (for_, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Number (infinity, pi, sin, sqrt)
 import Data.Options ((:=))
 import Data.Traversable (traverse)
 import Effect.Random (random)
@@ -283,16 +284,218 @@ heroLockup =
 
 -- The hero stays clean over the running scene: instead of the full command, a
 -- compact pill that drops the reader to the install spread (folio 07) where the
--- copyable command lives. The pill's outline is an SVG path that morphs through
--- markgraf's own node shapes (see installButtonImpl); the href rides the
--- scroll-snap magazine for the smooth scroll, same as the side nav.
+-- copyable command lives. Its fill is one SVG path that morphs through markgraf's
+-- own node shapes; the href rides the scroll-snap magazine for the smooth scroll,
+-- same as the side nav. The morph machinery lives in the helpers below.
 heroInstallCta :: JSX
-heroInstallCta = installButton { href: "#install", label: "Install" }
+heroInstallCta =
+  Motion.createMotionElement "a"
+    { href: "#install"
+    , className: "hero-pill-in"
+    , style: css
+        { position: "relative"
+        , display: "inline-flex"
+        , alignItems: "center"
+        , gap: "0.5rem"
+        , padding: "2.1rem 1.9rem"
+        , fontFamily: "var(--font-mono)"
+        , fontSize: "0.75rem"
+        , lineHeight: "1"
+        , textTransform: "uppercase"
+        , letterSpacing: "0.28em"
+        , fontWeight: "600"
+        , color: "#0f0f0f"
+        , textDecoration: "none"
+        , pointerEvents: "auto"
+        }
+    , whileHover: { scale: 1.06 }
+    , whileTap: { scale: 0.94 }
+    , transition: { type: "spring", stiffness: 400.0, damping: 18.0 }
+    }
+    [ outline, label, arrow ]
+  where
+  outline =
+    svgWrap [ fill, lid ]
+  fill =
+    Motion.createMotionElement "path"
+      { d: fromMaybe "" (Array.head installFrames.d)
+      , fill: "#ff3b1a"
+      , animate: { d: installFrames.d }
+      , transition: installMorphTransition
+      }
+      ([] :: Array JSX)
+  -- A lid ellipse that only shows during the database beat, to sell its 3D read.
+  lid =
+    Motion.createMotionElement "ellipse"
+      { cx: 100.0
+      , cy: installBox.top
+      , rx: 78.0
+      , ry: 9.0
+      , fill: "none"
+      , stroke: "rgba(10,12,20,0.55)"
+      , strokeWidth: 2.0
+      , vectorEffect: "non-scaling-stroke"
+      , initial: { opacity: 0.0 }
+      , animate: { opacity: installFrames.lid }
+      , transition: installMorphTransition
+      }
+      ([] :: Array JSX)
+  label =
+    Motion.createMotionElement "span" { style: css { position: "relative" } } [ text "Install" ]
+  -- The arrow keeps a lazy bounce to pull the eye to the call to action.
+  arrow =
+    Motion.createMotionElement "span"
+      { style: css { position: "relative" }
+      , animate: { y: [ 0.0, 3.0, 0.0 ] }
+      , transition: { duration: 1.2, ease: "easeInOut", repeat: infinity }
+      }
+      [ text "↓" ]
+  svgWrap kids =
+    Motion.createMotionElement "svg"
+      { "aria-hidden": "true"
+      , viewBox: "0 0 200 64"
+      , preserveAspectRatio: "none"
+      , style: css
+          { position: "absolute"
+          , inset: "0"
+          , width: "100%"
+          , height: "100%"
+          , overflow: "visible"
+          , filter: "drop-shadow(0 0 18px rgba(255,59,26,0.5))"
+          }
+      }
+      kids
 
-foreign import installButtonImpl :: ReactComponent { href :: String, label :: String }
+-- The morph holds each shape, then snaps to the next: a new shape every
+-- installStep seconds with the move itself taking only installMorph. Each shape
+-- appears twice in the keyframes (arrive, then hold) so the segment between the
+-- pair is flat and only the segment into the next shape moves. The lid opacity
+-- rides the exact same timeline, so it is on for the whole database hold.
+installStep :: Number
+installStep = 1.5
 
-installButton :: { href :: String, label :: String } -> JSX
-installButton = element installButtonImpl
+installMorph :: Number
+installMorph = 0.45
+
+installDwell :: Number
+installDwell = installStep - installMorph
+
+installTotal :: Number
+installTotal = installStep * Int.toNumber (Array.length installShapes - 1)
+
+installMorphTransition
+  :: { duration :: Number, ease :: String, repeat :: Number, times :: Array Number }
+installMorphTransition =
+  { duration: installTotal, times: installFrames.times, ease: "easeInOut", repeat: infinity }
+
+-- The flat keyframe arrays handed to framer-motion: parallel paths, times and lid
+-- opacities, expanded from installShapes with the arrive/hold doubling.
+installFrames :: { d :: Array String, lid :: Array Number, times :: Array Number }
+installFrames =
+  { d: _.d <$> frames, lid: _.lid <$> frames, times: _.t <$> frames }
+  where
+  frames = Array.concat (Array.mapWithIndex frameFor installShapes)
+  lastIdx = Array.length installShapes - 1
+  frameFor i params =
+    [ { d: shape, t: arrive / installTotal, lid } ]
+      <> (if i < lastIdx then [ { d: shape, t: (arrive + installDwell) / installTotal, lid } ] else [])
+    where
+    shape = nodeShapePath params
+    arrive = Int.toNumber i * installStep
+    lid = if i == installDatabaseIndex then 1.0 else 0.0
+
+installDatabaseIndex :: Int
+installDatabaseIndex = 3
+
+-- The cycle, ending back on the box so the loop is seamless.
+installShapes :: Array ShapeParams
+installShapes =
+  [ { r: 8.0, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: false } -- rounded node box
+  , { r: 19.0, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: false } -- stadium / pill
+  , { r: 4.0, skew: 16.0, topBow: 0.0, botBow: 0.0, cloud: false } -- parallelogram
+  , { r: 5.0, skew: 0.0, topBow: 10.0, botBow: 10.0, cloud: false } -- database cylinder
+  , { r: 7.0, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: true } -- cloud
+  , { r: 8.0, skew: 0.0, topBow: 0.0, botBow: 0.0, cloud: false } -- back to box
+  ]
+
+type ShapeParams =
+  { r :: Number, skew :: Number, topBow :: Number, botBow :: Number, cloud :: Boolean }
+
+installBox :: { left :: Number, right :: Number, top :: Number, bottom :: Number }
+installBox = { left: 18.0, right: 182.0, top: 14.0, bottom: 52.0 }
+
+-- One node shape as a closed path: a move + a run of cubic segments (a high-res
+-- top edge so it can grow cloud lumps, one cubic per side and the bottom, four
+-- corners) + close. Every shape is this same skeleton with different numbers, so
+-- framer-motion tweens `d` smoothly between very different silhouettes.
+nodeShapePath :: ShapeParams -> String
+nodeShapePath p =
+  joinWith " "
+    ( [ "M" <> pt (xAt 0.0) (yAt 0.0) ]
+        <> topCubics
+        <> [ corner cTR top (cTR /\ (top + p.r))
+           , edge (cTR /\ (top + p.r)) (cBR /\ (bottom - p.r))
+           , corner cBR bottom (eR /\ bottom)
+           , edge' (eR /\ (bottom + p.botBow)) (eL /\ (bottom + p.botBow)) (eL /\ bottom)
+           , corner cBL bottom (cBL /\ (bottom - p.r))
+           , edge (cBL /\ (bottom - p.r)) (cTL /\ (top + p.r))
+           , corner cTL top (xAt 0.0 /\ yAt 0.0)
+           , "Z"
+           ]
+    )
+  where
+  { left, right, top, bottom } = installBox
+  ax = left + p.r + p.skew
+  bx = right - p.r + p.skew
+  w = bx - ax
+  xAt t = ax + t * w
+  yAt t = top - liftAt t
+  topCubics = Array.mapWithIndex topCubic (Array.range 0 (installTopSegments - 1))
+  topCubic i _ = cubic (xAt c1 /\ yAt c1) (xAt c2 /\ yAt c2) (xAt t1 /\ yAt t1)
+    where
+    t0 = Int.toNumber i / Int.toNumber installTopSegments
+    t1 = Int.toNumber (i + 1) / Int.toNumber installTopSegments
+    c1 = t0 + (t1 - t0) / 3.0
+    c2 = t0 + 2.0 * (t1 - t0) / 3.0
+  cTR = right + p.skew
+  cBR = right - p.skew
+  cBL = left - p.skew
+  cTL = left + p.skew
+  eR = right - p.r - p.skew
+  eL = left + p.r - p.skew
+  -- How far the top edge lifts above `top` at t in 0..1: a cloud of three
+  -- circles (small, big offset right, small), else a single smooth arc.
+  liftAt t
+    | p.cloud = max (cap 0.26 9.0 t) (max (cap 0.55 18.0 t) (cap 0.82 11.0 t))
+    | otherwise = p.topBow * sin (pi * t)
+  cap frac radius t = sqrt (max 0.0 (radius * radius - dx * dx))
+    where
+    dx = xAt t - (ax + frac * w)
+  -- a corner: a cubic whose two controls both sit on the corner vertex
+  corner vx vy (ex /\ ey) = cubic (vx /\ vy) (vx /\ vy) (ex /\ ey)
+  -- a straight edge: a cubic with its controls spaced along the line
+  edge (sx /\ sy) (ex /\ ey) =
+    cubic (lerp sx ex (1.0 / 3.0) /\ lerp sy ey (1.0 / 3.0))
+      (lerp sx ex (2.0 / 3.0) /\ lerp sy ey (2.0 / 3.0))
+      (ex /\ ey)
+  -- the bottom edge, whose controls bow it down by botBow
+  edge' c1 c2 e = cubic c1 c2 e
+
+lerp :: Number -> Number -> Number -> Number
+lerp a b t = a + (b - a) * t
+
+installTopSegments :: Int
+installTopSegments = 10
+
+-- One cubic-bezier path command from two control points and an endpoint.
+cubic :: Number /\ Number -> Number /\ Number -> Number /\ Number -> String
+cubic (c1x /\ c1y) (c2x /\ c2y) (ex /\ ey) =
+  "C" <> pt c1x c1y <> " " <> pt c2x c2y <> " " <> pt ex ey
+
+pt :: Number -> Number -> String
+pt x y = round2 x <> "," <> round2 y
+  where
+  round2 n = show (Int.toNumber (Int.round (n * 100.0)) / 100.0)
 
 -- The tagline types itself in once the wordmark has caught: each word is its own
 -- inline-block carrying a staggered animation-delay, so the line resolves left to
