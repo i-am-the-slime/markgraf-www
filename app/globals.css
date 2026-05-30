@@ -273,11 +273,28 @@ body:has(.vhs-text-wrap.vhs-on)::after {
   }
 }
 
-/* A dark veil sitting over the player. Its opacity is the exact inverse of the
+/* The player itself igniting: its opacity rides the *same* keyframes as the hero
+   wordmark (hero-wordmark-in, same 0.7s delay + 3.8s run), so the graph strikes
+   on like a neon tube in perfect lockstep with the title. Both are plain CSS
+   from mount, so they stay in sync without any wiring. The .player-ignite backing
+   below clears on the inverse, so the player's dark off-beats read as black. */
+.player-strike {
+  opacity: 0;
+  z-index: 3;
+  animation: hero-wordmark-in 3.8s linear 0.7s both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-strike {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* A dark veil sitting behind the player. Its opacity is the exact inverse of the
    hero wordmark's strike-on (same 0.7s delay + 3.8s, same beat-for-beat cadence,
-   1 - that opacity at every keyframe), so as the neon flashes bright the veil
-   lifts and the player catches the light. Both are plain CSS from mount, so they
-   stay in sync without any wiring. Ends fully clear. */
+   1 - that opacity at every keyframe), so on the player's dark off-beats this
+   backing is bright and the gap reads as black neon. Both are plain CSS from
+   mount, so they stay in sync without any wiring. Ends fully clear. */
 .player-ignite {
   background: #080b14;
   opacity: 0;

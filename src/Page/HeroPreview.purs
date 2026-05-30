@@ -755,8 +755,8 @@ previewPane src size visible gen activeOnMobile =
             , overflow: "hidden"
             }
         }
-        [ keyed (show gen) player
-        , playerIgnite
+        [ playerIgnite
+        , playerStrike
         ]
   where
   player =
@@ -769,9 +769,19 @@ previewPane src size visible gen activeOnMobile =
       , height: size.h
       }
       # Monoid.guard (visible && size.w > 0.0 && size.h > 0.0)
-  -- A dark veil over the player that flickers off in lockstep with the hero
-  -- wordmark striking on (same 0.7s delay + 3.8s run, inverse opacity), so the
-  -- player looks like it's catching the neon's light as the title ignites.
+  -- The player itself flickers in on the exact same keyframes as the hero
+  -- wordmark (.player-strike reuses hero-wordmark-in: same 0.7s delay + 3.8s
+  -- run), so its transparency strikes on like a neon tube in lockstep with the
+  -- title — not a sheet flashing over a static graph, but the graph igniting.
+  playerStrike =
+    div
+      { className: "player-strike pointer-events-none"
+      , style: css { position: "absolute", inset: "0" }
+      }
+      [ keyed (show gen) player ]
+  -- A dark backing held behind the player, clearing on the inverse of the strike
+  -- so the player's own off-beats reveal black rather than the page behind it.
+  -- Ends fully clear, leaving the resting look untouched.
   playerIgnite =
     div
       { className: "player-ignite pointer-events-none"
