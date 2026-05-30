@@ -22,6 +22,7 @@ import Data.Nullable (Nullable, null)
 import Data.String.Common (joinWith, toUpper)
 import DiagramShapes.Offscreen as DiagramShapes
 import Page.InstallButtonLazy (installButtonLazy)
+import Page.PlayerLazy (markgrafPlayerLazy)
 import Framer.Motion.MotionComponent as Motion
 import Framer.Motion.Types as Motion
 import Framer.Motion.Types (VariantLabel(..))
@@ -749,7 +750,7 @@ previewPane src size visible gen activeOnMobile =
         [ playerReveal ]
   where
   player =
-    markgrafPlayer
+    markgrafPlayerLazy
       { src
       , renderer: "svg"
       , theme: "dark"
@@ -1591,24 +1592,8 @@ scrambleStartDelay = 770.0
 ruleDrawDuration :: Number
 ruleDrawDuration = 0.4
 
-foreign import markgrafPlayerImpl :: forall a. ReactComponent { | a }
-
 diagramShapesComponent :: ReactComponent {}
 diagramShapesComponent = DiagramShapes.diagramShapesOffscreen
-
-markgrafPlayer
-  :: forall props props_
-   . Union props props_
-       ( src :: String
-       , renderer :: String
-       , theme :: String
-       , transparent :: Boolean
-       , width :: Number
-       , height :: Number
-       )
-  => { | props }
-  -> JSX
-markgrafPlayer = element markgrafPlayerImpl
 
 onElementResize
   :: String -> ({ w :: Number, h :: Number } -> Effect Unit) -> Effect (Effect Unit)

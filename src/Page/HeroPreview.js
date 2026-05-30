@@ -1,7 +1,3 @@
-import { MarkgrafPlayer } from "@markgrafhq/markgraf-react";
-
-export const markgrafPlayerImpl = MarkgrafPlayer;
-
 // Browser-native smooth scroll-into-view. Not in web-dom 6.0.0, so a one-line
 // shim suffices; PureScript decides which element gets it.
 export const scrollIntoViewSmoothImpl = (el) => () => {
