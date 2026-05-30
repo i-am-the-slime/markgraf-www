@@ -755,9 +755,7 @@ previewPane src size visible gen activeOnMobile =
             , overflow: "hidden"
             }
         }
-        [ playerStrike
-        , playerShade
-        ]
+        [ playerStrike ]
   where
   player =
     markgrafPlayer
@@ -780,15 +778,6 @@ previewPane src size visible gen activeOnMobile =
       , style: css { position: "absolute", inset: "0" }
       }
       [ keyed (show gen) player ]
-  -- The wordmark overhead is the light source, so the graph is lit from the top
-  -- and falls into shadow toward the bottom. A steady top-to-bottom gradient
-  -- (.player-shade) sits over the player to carry that directional fall-off.
-  playerShade =
-    div
-      { className: "player-shade pointer-events-none"
-      , style: css { position: "absolute", inset: "0" }
-      }
-      noJSX
 
 -- ---------------------------------------------------------------------------
 -- Tokenizer: produces colored <span> children for the highlight overlay.
