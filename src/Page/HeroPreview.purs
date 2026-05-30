@@ -3,7 +3,7 @@ module Page.HeroPreview (mkHeroPreview) where
 import Prelude
 
 import Data.Array as Array
-import Data.Foldable (for_, traverse_)
+import Data.Foldable (foldl, for_, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Number (infinity, pi, sin, sqrt)
@@ -312,8 +312,23 @@ heroInstallCta =
     , whileTap: { scale: 0.94 }
     , transition: { type: "spring", stiffness: 400.0, damping: 18.0 }
     }
-    [ outline, label, arrow ]
+    [ glow, outline, label, arrow ]
   where
+  -- A soft orange aura that stays a steady pill behind the morph, so the glow
+  -- reads as ambient light rather than tracing every wobble of the shape.
+  glow =
+    div
+      { style: css
+          { position: "absolute"
+          , inset: "8px 4px"
+          , borderRadius: "9999px"
+          , background: "#ff3b1a"
+          , filter: "blur(17px)"
+          , opacity: "0.45"
+          , pointerEvents: "none"
+          }
+      }
+      noJSX
   outline =
     svgWrap [ fill, lid ]
   fill =
@@ -361,7 +376,7 @@ heroInstallCta =
           , width: "100%"
           , height: "100%"
           , overflow: "visible"
-          , filter: "drop-shadow(0 0 18px rgba(255,59,26,0.5))"
+          , filter: "drop-shadow(0 0 5px rgba(255,59,26,0.35))"
           }
       }
       kids
@@ -463,14 +478,18 @@ nodeShapePath p =
   cTL = left + p.skew
   eR = right - p.r - p.skew
   eL = left + p.r - p.skew
-  -- How far the top edge lifts above `top` at t in 0..1: a cloud of three
-  -- circles (small, big offset right, small), else a single smooth arc.
+  -- How far the top edge lifts above `top` at t in 0..1. The cloud is markgraf's
+  -- trick: the upper silhouette of a row of heavily overlapping circles, which is
+  -- exactly the per-x max of their heights (at a valley both neighbours meet at
+  -- their intersection height). Heavy overlap keeps the scallops shallow and the
+  -- top plump; one hero circle sits right of centre. Otherwise a single arc.
   liftAt t
-    | p.cloud = max (cap 0.26 9.0 t) (max (cap 0.55 18.0 t) (cap 0.82 11.0 t))
+    | p.cloud = cloudLift t
     | otherwise = p.topBow * sin (pi * t)
-  cap frac radius t = sqrt (max 0.0 (radius * radius - dx * dx))
+  cloudLift t = foldl (\acc c -> max acc (bump t c)) 0.0 installCloudCircles
+  bump t c = sqrt (max 0.0 (c.r * c.r - dx * dx))
     where
-    dx = xAt t - (ax + frac * w)
+    dx = xAt t - (ax + c.f * w)
   -- a corner: a cubic whose two controls both sit on the corner vertex
   corner vx vy (ex /\ ey) = cubic (vx /\ vy) (vx /\ vy) (ex /\ ey)
   -- a straight edge: a cubic with its controls spaced along the line
@@ -485,7 +504,21 @@ lerp :: Number -> Number -> Number -> Number
 lerp a b t = a + (b - a) * t
 
 installTopSegments :: Int
-installTopSegments = 10
+installTopSegments = 16
+
+-- The cloud's circles, as fraction-of-top-width centres and pixel radii. Spaced
+-- ~0.18 of the width apart with radii ~16, so neighbours overlap well; the hero
+-- (r 20) sits right of centre, the end circles taper so the cloud closes near the
+-- corners. Mirrors markgraf's cloudCircles layout, fixed instead of seeded.
+installCloudCircles :: Array { f :: Number, r :: Number }
+installCloudCircles =
+  [ { f: 0.09, r: 13.0 }
+  , { f: 0.27, r: 16.0 }
+  , { f: 0.45, r: 16.0 }
+  , { f: 0.63, r: 20.0 }
+  , { f: 0.80, r: 16.0 }
+  , { f: 0.93, r: 12.0 }
+  ]
 
 -- One cubic-bezier path command from two control points and an endpoint.
 cubic :: Number /\ Number -> Number /\ Number -> Number /\ Number -> String
