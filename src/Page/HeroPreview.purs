@@ -3,10 +3,12 @@ module Page.HeroPreview (mkHeroPreview) where
 import Prelude
 
 import Data.Array as Array
-import Data.Foldable (for_, traverse_)
+import Data.Foldable (for_, sum, traverse_)
+import Data.FoldableWithIndex (foldlWithIndex)
+import Data.Tuple (fst, snd)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import Data.Number (infinity, pi, sin)
+import Data.Number (abs, atan2, infinity, pi, sqrt)
 import Data.Options ((:=))
 import Data.Traversable (traverse)
 import Effect.Random (random)
@@ -330,25 +332,12 @@ heroInstallCta =
       }
       noJSX
   outline =
-    svgWrap [ fill, cloudTop ]
+    svgWrap [ fill ]
   fill =
     Motion.createMotionElement "path"
       { d: fromMaybe "" (Array.head installFrames.d)
       , fill: "#ff3b1a"
       , animate: { d: installFrames.d }
-      , transition: installMorphTransition
-      }
-      ([] :: Array JSX)
-  -- The real Ionicons v4 cloud, stuck on top of the rounded box and faded in only
-  -- on the cloud beat — so that frame reads as an actual cloud, not a procedural
-  -- approximation. Transformed from its 512 box to sit puffs-up over the body.
-  cloudTop =
-    Motion.createMotionElement "path"
-      { d: installCloudIconPath
-      , transform: installCloudIconTransform
-      , fill: "#ff3b1a"
-      , initial: { opacity: 0.0 }
-      , animate: { opacity: installFrames.cloud }
       , transition: installMorphTransition
       }
       ([] :: Array JSX)
@@ -393,131 +382,192 @@ installDwell :: Number
 installDwell = installStep - installMorph
 
 installTotal :: Number
-installTotal = installStep * Int.toNumber (Array.length installShapes - 1)
+installTotal = installStep * Int.toNumber (Array.length installShapePaths - 1)
 
 installMorphTransition
   :: { duration :: Number, ease :: String, repeat :: Number, times :: Array Number }
 installMorphTransition =
   { duration: installTotal, times: installFrames.times, ease: "easeInOut", repeat: infinity }
 
--- The flat keyframe arrays handed to framer-motion: parallel paths, times and the
--- cloud-overlay opacity, expanded from installShapes with the arrive/hold
--- doubling. The cloud opacity is on only for the cloud frame's hold.
-installFrames :: { cloud :: Array Number, d :: Array String, times :: Array Number }
+-- The flat keyframe arrays handed to framer-motion: parallel paths and times,
+-- expanded from installShapePaths with the arrive/hold doubling, so each shape
+-- holds then snaps to the next.
+installFrames :: { d :: Array String, times :: Array Number }
 installFrames =
-  { d: _.d <$> frames, times: _.t <$> frames, cloud: _.cloud <$> frames }
+  { d: _.d <$> frames, times: _.t <$> frames }
   where
-  frames = Array.concat (Array.mapWithIndex frameFor installShapes)
-  lastIdx = Array.length installShapes - 1
-  frameFor i params =
-    [ { d: shape, t: arrive / installTotal, cloud } ]
-      <> (if i < lastIdx then [ { d: shape, t: (arrive + installDwell) / installTotal, cloud } ] else [])
+  frames = Array.concat (Array.mapWithIndex frameFor installShapePaths)
+  lastIdx = Array.length installShapePaths - 1
+  frameFor i shape =
+    [ { d: shape, t: arrive / installTotal } ]
+      <> (if i < lastIdx then [ { d: shape, t: (arrive + installDwell) / installTotal } ] else [])
     where
-    shape = nodeShapePath params
     arrive = Int.toNumber i * installStep
-    cloud = if i == installCloudIndex then 1.0 else 0.0
 
-installCloudIndex :: Int
-installCloudIndex = 3
-
--- The cycle, ending back on the box so the loop is seamless. The cloud beat is a
--- rounded box body; the Ionicons cloud overlay (above) supplies the puffs.
-installShapes :: Array ShapeParams
-installShapes =
-  [ { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- node box
-  , { r: 0.0, skew: 16.0, topBow: 0.0, botBow: 0.0 } -- parallelogram (pointy)
-  , { r: 1.5, skew: 0.0, topBow: 10.0, botBow: 10.0 } -- database cylinder
-  , { r: 10.0, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- rounded box (cloud body)
-  , { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- back to box
+-- Every frame is the same shape resampled to the same point count, so any of them
+-- morphs smoothly into any other (a box can become the literal Ionicons cloud).
+-- The cycle ends back on the box so the loop is seamless.
+installShapePaths :: Array String
+installShapePaths = morphPath <$>
+  [ boxSegs { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- node box
+  , boxSegs { r: 0.0, skew: 16.0, topBow: 0.0, botBow: 0.0 } -- parallelogram (pointy)
+  , boxSegs { r: 1.5, skew: 0.0, topBow: 10.0, botBow: 10.0 } -- database cylinder
+  , cloudSegs -- Ionicons v4 cloud
+  , boxSegs { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- back to box
   ]
 
--- Ionicons v4 md-cloud, with a transform mapping its 512 bounding box onto a wide
--- patch sitting on top of the rounded box: puffs poke above the body, flat bottom
--- tucks just inside it. translate out, scale down, translate the source origin.
-installCloudIconPath :: String
-installCloudIconPath =
-  "M403.002,217.001C388.998,148.002,328.998,96,256,96c-57.998,0-107.998,32.998-132.998,81.001"
-    <> "C63.002,183.002,16,233.998,16,296c0,65.996,53.999,120,120,120h260c55,0,100-45,100-100"
-    <> "C496,263.002,455.004,219.999,403.002,217.001z"
+-- A shape's closed outline as a fixed-length, fixed-winding polygon path: flatten
+-- its cubics to a dense polyline, resample to a common point count by arc length,
+-- normalise winding and start point so point i lines up across shapes, then emit
+-- as a polyline. This shared structure is what lets framer-motion tween any shape
+-- into any other.
+morphPath :: Array Seg -> String
+morphPath = polyPath <<< normalisePoly <<< resampleClosed morphPoints <<< flattenSegs morphFlattenSteps
 
-installCloudIconTransform :: String
-installCloudIconTransform =
-  "translate(26 -12) scale(0.30833 0.14375) translate(-16 -96)"
+morphPoints :: Int
+morphPoints = 64
 
-type ShapeParams =
-  { r :: Number, skew :: Number, topBow :: Number, botBow :: Number }
+morphFlattenSteps :: Int
+morphFlattenSteps = 18
+
+type Pt = Number /\ Number
+
+type Seg = { p0 :: Pt, c1 :: Pt, c2 :: Pt, p3 :: Pt }
 
 installBox :: { left :: Number, right :: Number, top :: Number, bottom :: Number }
 installBox = { left: 18.0, right: 182.0, top: 14.0, bottom: 52.0 }
 
--- One node shape as a closed path: a move + a run of cubic segments (a high-res
--- top edge so it can grow cloud lumps, one cubic per side and the bottom, four
--- corners) + close. Every shape is this same skeleton with different numbers, so
--- framer-motion tweens `d` smoothly between very different silhouettes.
-nodeShapePath :: ShapeParams -> String
-nodeShapePath p =
-  joinWith " "
-    ( [ "M" <> pt (xAt 0.0) (yAt 0.0) ]
-        <> topCubics
-        <> [ corner cTR top (cTR /\ (top + p.r))
-           , edge (cTR /\ (top + p.r)) (cBR /\ (bottom - p.r))
-           , corner cBR bottom (eR /\ bottom)
-           , edge' (eR /\ (bottom + p.botBow)) (eL /\ (bottom + p.botBow)) (eL /\ bottom)
-           , corner cBL bottom (cBL /\ (bottom - p.r))
-           , edge (cBL /\ (bottom - p.r)) (cTL /\ (top + p.r))
-           , corner cTL top (xAt 0.0 /\ yAt 0.0)
-           , "Z"
-           ]
-    )
+-- A rounded box as eight cubics, with `skew` leaning it into a parallelogram and
+-- topBow/botBow bowing the top/bottom edges out into a cylinder.
+boxSegs :: { r :: Number, skew :: Number, topBow :: Number, botBow :: Number } -> Array Seg
+boxSegs p =
+  [ seg (tl /\ top) (mid tl tr 0.34 /\ (top - p.topBow)) (mid tl tr 0.66 /\ (top - p.topBow)) (tr /\ top)
+  , seg (tr /\ top) (cTR /\ top) (cTR /\ top) (cTR /\ (top + p.r))
+  , straight (cTR /\ (top + p.r)) (cBR /\ (bottom - p.r))
+  , seg (cBR /\ (bottom - p.r)) (cBR /\ bottom) (cBR /\ bottom) (br /\ bottom)
+  , seg (br /\ bottom) (mid br bl 0.34 /\ (bottom + p.botBow)) (mid br bl 0.66 /\ (bottom + p.botBow)) (bl /\ bottom)
+  , seg (bl /\ bottom) (cBL /\ bottom) (cBL /\ bottom) (cBL /\ (bottom - p.r))
+  , straight (cBL /\ (bottom - p.r)) (cTL /\ (top + p.r))
+  , seg (cTL /\ (top + p.r)) (cTL /\ top) (cTL /\ top) (tl /\ top)
+  ]
   where
   { left, right, top, bottom } = installBox
-  ax = left + p.r + p.skew
-  bx = right - p.r + p.skew
-  w = bx - ax
-  xAt t = ax + t * w
-  yAt t = top - liftAt t
-  topCubics = Array.mapWithIndex topCubic (Array.range 0 (installTopSegments - 1))
-  topCubic i _ = cubic (xAt c1 /\ yAt c1) (xAt c2 /\ yAt c2) (xAt t1 /\ yAt t1)
-    where
-    t0 = Int.toNumber i / Int.toNumber installTopSegments
-    t1 = Int.toNumber (i + 1) / Int.toNumber installTopSegments
-    c1 = t0 + (t1 - t0) / 3.0
-    c2 = t0 + 2.0 * (t1 - t0) / 3.0
+  tl = left + p.r + p.skew
+  tr = right - p.r + p.skew
+  br = right - p.r - p.skew
+  bl = left + p.r - p.skew
   cTR = right + p.skew
   cBR = right - p.skew
   cBL = left - p.skew
   cTL = left + p.skew
-  eR = right - p.r - p.skew
-  eL = left + p.r - p.skew
-  -- How far the top edge lifts above `top` at t in 0..1: a single smooth arc of
-  -- height topBow (the database lid), zero for the flat-topped shapes. The cloud
-  -- is no longer made here — it is the Ionicons overlay stuck on the box top.
-  liftAt t = p.topBow * sin (pi * t)
-  -- a corner: a cubic whose two controls both sit on the corner vertex
-  corner vx vy (ex /\ ey) = cubic (vx /\ vy) (vx /\ vy) (ex /\ ey)
-  -- a straight edge: a cubic with its controls spaced along the line
-  edge (sx /\ sy) (ex /\ ey) =
-    cubic (lerp sx ex (1.0 / 3.0) /\ lerp sy ey (1.0 / 3.0))
-      (lerp sx ex (2.0 / 3.0) /\ lerp sy ey (2.0 / 3.0))
-      (ex /\ ey)
-  -- the bottom edge, whose controls bow it down by botBow
-  edge' c1 c2 e = cubic c1 c2 e
+  seg a b c d = { p0: a, c1: b, c2: c, p3: d }
+  mid a b f = a + (b - a) * f
+  straight (sx /\ sy) (ex /\ ey) =
+    { p0: sx /\ sy
+    , c1: lerp sx ex (1.0 / 3.0) /\ lerp sy ey (1.0 / 3.0)
+    , c2: lerp sx ex (2.0 / 3.0) /\ lerp sy ey (2.0 / 3.0)
+    , p3: ex /\ ey
+    }
+
+-- The Ionicons v4 md-cloud, its seven cubics converted to absolute and mapped
+-- from the 512 source box into the install box's footprint.
+cloudSegs :: Array Seg
+cloudSegs = (\s -> { p0: tf s.p0, c1: tf s.c1, c2: tf s.c2, p3: tf s.p3 }) <$>
+  [ raw (403.002 /\ 217.001) (388.998 /\ 148.002) (328.998 /\ 96.0) (256.0 /\ 96.0)
+  , raw (256.0 /\ 96.0) (198.002 /\ 96.0) (148.002 /\ 128.998) (123.002 /\ 177.001)
+  , raw (123.002 /\ 177.001) (63.002 /\ 183.002) (16.0 /\ 233.998) (16.0 /\ 296.0)
+  , raw (16.0 /\ 296.0) (16.0 /\ 361.996) (69.999 /\ 416.0) (136.0 /\ 416.0)
+  , raw (136.0 /\ 416.0) (222.67 /\ 416.0) (309.33 /\ 416.0) (396.0 /\ 416.0)
+  , raw (396.0 /\ 416.0) (451.0 /\ 416.0) (496.0 /\ 371.0) (496.0 /\ 316.0)
+  , raw (496.0 /\ 316.0) (496.0 /\ 263.002) (455.004 /\ 219.999) (403.002 /\ 217.001)
+  ]
+  where
+  raw a b c d = { p0: a, c1: b, c2: c, p3: d }
+  -- map the 512 box [16,96..496,416] onto a wide patch of the install box
+  sx = (188.0 - 12.0) / 480.0
+  sy = (56.0 - 4.0) / 320.0
+  tf (x /\ y) = (12.0 + (x - 16.0) * sx) /\ (4.0 + (y - 96.0) * sy)
+
+-- A point on a cubic at parameter t.
+cubicPoint :: Seg -> Number -> Pt
+cubicPoint s t = (a * p0x + b * c1x + c * c2x + d * p3x) /\ (a * p0y + b * c1y + c * c2y + d * p3y)
+  where
+  (p0x /\ p0y) = s.p0
+  (c1x /\ c1y) = s.c1
+  (c2x /\ c2y) = s.c2
+  (p3x /\ p3y) = s.p3
+  u = 1.0 - t
+  a = u * u * u
+  b = 3.0 * u * u * t
+  c = 3.0 * u * t * t
+  d = t * t * t
+
+-- Flatten cubics to a dense polyline (samples per segment, endpoints excluded so
+-- joins are not doubled).
+flattenSegs :: Int -> Array Seg -> Array Pt
+flattenSegs steps segs =
+  segs >>= \s -> (\i -> cubicPoint s (Int.toNumber i / Int.toNumber steps)) <$> Array.range 0 (steps - 1)
+
+-- Resample a closed polyline to `n` points spaced evenly by arc length.
+resampleClosed :: Int -> Array Pt -> Array Pt
+resampleClosed n pts = pointAtArc <$> ((\k -> total * Int.toNumber k / Int.toNumber n) <$> Array.range 0 (n - 1))
+  where
+  m = Array.length pts
+  at i = fromMaybe (0.0 /\ 0.0) (Array.index pts (mod i m))
+  edgeLen = Array.mapWithIndex (\i p -> dist p (at (i + 1))) pts
+  cumIncl = Array.scanl (+) 0.0 edgeLen
+  cumStart = Array.cons 0.0 (fromMaybe [] (Array.init cumIncl))
+  total = fromMaybe 0.0 (Array.last cumIncl)
+  pointAtArc target = lerpPt (at i) (at (i + 1)) f
+    where
+    i = fromMaybe 0 (Array.findLastIndex (_ <= target) cumStart)
+    segStart = fromMaybe 0.0 (Array.index cumStart i)
+    segLen = fromMaybe 1.0 (Array.index edgeLen i)
+    f = if segLen > 1.0e-6 then (target - segStart) / segLen else 0.0
+
+-- Make every polygon agree on winding (clockwise) and starting point (the vertex
+-- nearest straight up from the centroid), so point i corresponds across shapes.
+normalisePoly :: Array Pt -> Array Pt
+normalisePoly pts = Array.drop startIdx cw <> Array.take startIdx cw
+  where
+  cw = if signedArea pts < 0.0 then Array.reverse pts else pts
+  n = Array.length cw
+  cx = sum (fst <$> cw) / Int.toNumber n
+  cy = sum (snd <$> cw) / Int.toNumber n
+  upDist (px /\ py) = abs (angleWrap (atan2 (py - cy) (px - cx) - (-pi / 2.0)))
+  startIdx = _.i $ foldlWithIndex pick { i: 0, d: 1.0e18 } cw
+  pick i acc p = if upDist p < acc.d then { i, d: upDist p } else acc
+
+signedArea :: Array Pt -> Number
+signedArea pts = sum (Array.mapWithIndex term pts) / 2.0
+  where
+  m = Array.length pts
+  at i = fromMaybe (0.0 /\ 0.0) (Array.index pts (mod i m))
+  term i (ax /\ ay) = ax * by - bx * ay
+    where
+    (bx /\ by) = at (i + 1)
+
+-- Wrap an angle into (-pi, pi] so distances near the seam stay small.
+angleWrap :: Number -> Number
+angleWrap a = a - twoPi * Int.toNumber (Int.round (a / twoPi))
+  where
+  twoPi = 2.0 * pi
+
+dist :: Pt -> Pt -> Number
+dist (ax /\ ay) (bx /\ by) = sqrt ((ax - bx) * (ax - bx) + (ay - by) * (ay - by))
 
 lerp :: Number -> Number -> Number -> Number
 lerp a b t = a + (b - a) * t
 
-installTopSegments :: Int
-installTopSegments = 16
+lerpPt :: Pt -> Pt -> Number -> Pt
+lerpPt (ax /\ ay) (bx /\ by) t = lerp ax bx t /\ lerp ay by t
 
--- One cubic-bezier path command from two control points and an endpoint.
-cubic :: Number /\ Number -> Number /\ Number -> Number /\ Number -> String
-cubic (c1x /\ c1y) (c2x /\ c2y) (ex /\ ey) =
-  "C" <> pt c1x c1y <> " " <> pt c2x c2y <> " " <> pt ex ey
-
-pt :: Number -> Number -> String
-pt x y = round2 x <> "," <> round2 y
+-- A polygon as an SVG path: move to the first point, line to the rest, close.
+polyPath :: Array Pt -> String
+polyPath pts = joinWith " " (Array.mapWithIndex cmd pts) <> " Z"
   where
-  round2 n = show (Int.toNumber (Int.round (n * 100.0)) / 100.0)
+  cmd i (x /\ y) = (if i == 0 then "M" else "L") <> num x <> "," <> num y
+  num n = show (Int.toNumber (Int.round (n * 100.0)) / 100.0)
 
 -- The tagline types itself in once the wordmark has caught: each word is its own
 -- inline-block carrying a staggered animation-delay, so the line resolves left to
