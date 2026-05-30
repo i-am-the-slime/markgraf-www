@@ -292,16 +292,23 @@ body:has(.vhs-text-wrap.vhs-on)::after {
 
 /* markgraf-react paints a <svg class="markgraf-player"> with intrinsic width
    and height attributes from the layout viewport.  Force it to scale to its
-   container so it fits the playground pane instead of overflowing.
-
-   The wordmark overhead is the light source, so the graph reads as lit from the
-   top and dropping into shadow toward the bottom. #player-shade (defined in the
-   body) floods a vertical dark ramp, clips it to the player's own alpha and lays
-   it back over the graph — so only the painted nodes/edges/text darken at the
-   foot, never the transparent areas where the scene shows through. */
+   container so it fits the playground pane instead of overflowing.  */
 .markgraf-player {
   display: block;
-  filter: url(#player-shade);
+}
+
+/* The wordmark overhead is the light source, so the player reads as lit from the
+   top and dropping into shadow toward the bottom. A steady gradient overlay sits
+   over the pane — clear up top where the light lands, deepening to a heavy dark
+   at the foot, well below the wordmark's brightness. */
+.player-shade {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 38%,
+    rgba(6, 9, 16, 0.45) 70%,
+    rgba(6, 9, 16, 0.85) 100%
+  );
 }
 
 @layer base {

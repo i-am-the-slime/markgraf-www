@@ -755,7 +755,9 @@ previewPane src size visible gen activeOnMobile =
             , overflow: "hidden"
             }
         }
-        [ playerStrike ]
+        [ playerStrike
+        , playerShade
+        ]
   where
   player =
     markgrafPlayer
@@ -778,6 +780,14 @@ previewPane src size visible gen activeOnMobile =
       , style: css { position: "absolute", inset: "0" }
       }
       [ keyed (show gen) player ]
+  -- A steady darker overlay over the pane, deepening toward the bottom — the
+  -- graph lit from the wordmark overhead and falling into shadow at its foot.
+  playerShade =
+    div
+      { className: "player-shade pointer-events-none"
+      , style: css { position: "absolute", inset: "0" }
+      }
+      noJSX
 
 -- ---------------------------------------------------------------------------
 -- Tokenizer: produces colored <span> children for the highlight overlay.
