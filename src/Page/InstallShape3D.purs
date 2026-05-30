@@ -53,7 +53,7 @@ directional = element (threejs "DirectionalLight") { position: [ 2.0, 3.0, 4.0 ]
 
 solidMesh :: JSX
 solidMesh =
-  element (threejs "Mesh") { geometry: installGeometry, children: [ solidMaterial ] }
+  element (threejs "Mesh") { geometry: installGeometry, frustumCulled: false, children: [ solidMaterial ] }
   where
   solidMaterial =
     element (threejs "MeshStandardMaterial")
@@ -61,7 +61,7 @@ solidMesh =
 
 wireMesh :: JSX
 wireMesh =
-  element (threejs "Mesh") { geometry: installGeometry, children: [ wireMaterial ] }
+  element (threejs "Mesh") { geometry: installGeometry, frustumCulled: false, children: [ wireMaterial ] }
   where
   wireMaterial =
     element (threejs "MeshBasicMaterial")

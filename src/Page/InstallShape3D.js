@@ -12,6 +12,7 @@ export const mkGeometryImpl = (indices) => (positions) => () => {
     new THREE.BufferAttribute(new Float32Array(positions), 3)
   );
   g.computeVertexNormals();
+  g.computeBoundingSphere();
   return g;
 };
 
