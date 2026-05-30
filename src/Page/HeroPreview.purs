@@ -3,12 +3,10 @@ module Page.HeroPreview (mkHeroPreview) where
 import Prelude
 
 import Data.Array as Array
-import Data.Foldable (for_, sum, traverse_)
-import Data.FoldableWithIndex (foldlWithIndex)
-import Data.Tuple (fst, snd)
+import Data.Foldable (for_, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import Data.Number (abs, atan2, infinity, pi, sqrt)
+import Data.Number (infinity)
 import Data.Options ((:=))
 import Data.Traversable (traverse)
 import Effect.Random (random)
@@ -24,6 +22,7 @@ import Effect.Unsafe (unsafePerformEffect)
 import Data.Nullable (Nullable, null)
 import Data.String.Common (joinWith, toUpper)
 import DiagramShapes.Offscreen as DiagramShapes
+import Page.InstallShape3D (installShape3D)
 import Framer.Motion.MotionComponent as Motion
 import Framer.Motion.Types as Motion
 import Framer.Motion.Types (VariantLabel(..))
@@ -298,325 +297,43 @@ heroInstallCta =
         { position: "relative"
         , display: "inline-flex"
         , alignItems: "center"
-        , gap: "0.5rem"
-        , padding: "2.1rem 1.9rem"
+        , gap: "0.55rem"
+        , padding: "0.6rem 1.4rem 0.6rem 0.7rem"
         , fontFamily: "var(--font-mono)"
-        , fontSize: "0.75rem"
+        , fontSize: "0.78rem"
         , lineHeight: "1"
         , textTransform: "uppercase"
         , letterSpacing: "0.28em"
         , fontWeight: "600"
-        , color: "#0f0f0f"
+        , color: "#f5f1e8"
         , textDecoration: "none"
         , pointerEvents: "auto"
+        , background: "#111622cc"
+        , border: "1px solid #2a3142"
+        , borderRadius: "9999px"
+        , backdropFilter: "blur(8px)"
         }
-    , whileHover: { scale: 1.06 }
-    , whileTap: { scale: 0.94 }
+    , whileHover: { scale: 1.05 }
+    , whileTap: { scale: 0.95 }
     , transition: { type: "spring", stiffness: 400.0, damping: 18.0 }
     }
-    [ glow, outline, label, arrow ]
+    [ shapeIcon, label, arrow ]
   where
-  -- A soft orange aura that stays a steady pill behind the morph, so the glow
-  -- reads as ambient light rather than tracing every wobble of the shape.
-  glow =
+  -- A spinning, morphing 3D shape sits in the pill as the accent.
+  shapeIcon =
     div
-      { style: css
-          { position: "absolute"
-          , inset: "8px 4px"
-          , borderRadius: "9999px"
-          , background: "#ff3b1a"
-          , filter: "blur(17px)"
-          , opacity: "0.45"
-          , pointerEvents: "none"
-          }
-      }
-      noJSX
-  outline =
-    svgWrap [ fill, wire ]
-  fill =
-    Motion.createMotionElement "path"
-      { d: fromMaybe "" (Array.head installFrames.d)
-      , fill: "#ff3b1a"
-      , animate: { d: installFrames.d }
-      , transition: installMorphTransition
-      }
-      ([] :: Array JSX)
-  -- Internal lat/long lines over the same morphing shape, imitating the solid+wire
-  -- look of the 3D diagram shapes. Lines only (no outline), so they read as a mesh
-  -- and never sit proud of the fill edge.
-  wire =
-    Motion.createMotionElement "path"
-      { d: fromMaybe "" (Array.head installFrames.wire)
-      , fill: "none"
-      , stroke: "rgba(255,233,214,0.45)"
-      , strokeWidth: 0.9
-      , vectorEffect: "non-scaling-stroke"
-      , animate: { d: installFrames.wire }
-      , transition: installMorphTransition
-      }
-      ([] :: Array JSX)
+      { style: css { position: "relative", width: "2.4rem", height: "2.4rem", flex: "0 0 auto" } }
+      [ installShape3D ]
   label =
     Motion.createMotionElement "span" { style: css { position: "relative" } } [ text "Install" ]
   -- The arrow keeps a lazy bounce to pull the eye to the call to action.
   arrow =
     Motion.createMotionElement "span"
-      { style: css { position: "relative" }
+      { style: css { position: "relative", color: "#ff3b1a" }
       , animate: { y: [ 0.0, 3.0, 0.0 ] }
       , transition: { duration: 1.2, ease: "easeInOut", repeat: infinity }
       }
       [ text "↓" ]
-  svgWrap kids =
-    Motion.createMotionElement "svg"
-      { "aria-hidden": "true"
-      , viewBox: "0 0 200 64"
-      , preserveAspectRatio: "none"
-      , style: css
-          { position: "absolute"
-          , inset: "0"
-          , width: "100%"
-          , height: "100%"
-          , overflow: "visible"
-          }
-      }
-      kids
-
--- The morph holds each shape, then snaps to the next: a new shape every
--- installStep seconds with the move itself taking only installMorph. Each shape
--- appears twice in the keyframes (arrive, then hold) so the segment between the
--- pair is flat and only the segment into the next shape moves. The lid opacity
--- rides the exact same timeline, so it is on for the whole database hold.
-installStep :: Number
-installStep = 2.7
-
-installMorph :: Number
-installMorph = 0.45
-
-installDwell :: Number
-installDwell = installStep - installMorph
-
-installTotal :: Number
-installTotal = installStep * Int.toNumber (Array.length installShapePoints - 1)
-
-installMorphTransition
-  :: { duration :: Number, ease :: String, repeat :: Number, times :: Array Number }
-installMorphTransition =
-  { duration: installTotal, times: installFrames.times, ease: "easeInOut", repeat: infinity }
-
--- The flat keyframe arrays handed to framer-motion: the fill outline, the matching
--- wireframe (internal lat/long lines), and times — expanded from installShapePoints
--- with the arrive/hold doubling so each shape holds then snaps to the next.
-installFrames :: { d :: Array String, times :: Array Number, wire :: Array String }
-installFrames =
-  { d: _.d <$> frames, wire: _.wire <$> frames, times: _.t <$> frames }
-  where
-  frames = Array.concat (Array.mapWithIndex frameFor installShapePoints)
-  lastIdx = Array.length installShapePoints - 1
-  frameFor i pts =
-    [ { d: polyPath pts, wire: wirePath pts, t: arrive / installTotal } ]
-      <> (if i < lastIdx then [ { d: polyPath pts, wire: wirePath pts, t: (arrive + installDwell) / installTotal } ] else [])
-    where
-    arrive = Int.toNumber i * installStep
-
--- Every frame is the same shape resampled to the same point count and winding, so
--- any of them morphs smoothly into any other (a box can become the literal
--- Ionicons cloud). The cycle ends back on the box so the loop is seamless.
-installShapePoints :: Array (Array Pt)
-installShapePoints = (normalisePoly <<< resampleClosed morphPoints <<< flattenSegs morphFlattenSteps) <$>
-  [ boxSegs { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- node box
-  , boxSegs { r: 0.0, skew: 16.0, topBow: 0.0, botBow: 0.0 } -- parallelogram (pointy)
-  , boxSegs { r: 1.5, skew: 0.0, topBow: 17.0, botBow: 17.0 } -- database cylinder
-  , cloudSegs -- Ionicons v4 cloud
-  , chevronSegs 28.0 -- pointy hexagon (<==>)
-  , boxSegs { r: 1.5, skew: 0.0, topBow: 0.0, botBow: 0.0 } -- back to box
-  ]
-
-morphPoints :: Int
-morphPoints = 64
-
-morphFlattenSteps :: Int
-morphFlattenSteps = 18
-
-type Pt = Number /\ Number
-
-type Seg = { p0 :: Pt, c1 :: Pt, c2 :: Pt, p3 :: Pt }
-
-installBox :: { left :: Number, right :: Number, top :: Number, bottom :: Number }
-installBox = { left: 18.0, right: 182.0, top: 14.0, bottom: 52.0 }
-
--- A rounded box as eight cubics, with `skew` leaning it into a parallelogram and
--- topBow/botBow bowing the top/bottom edges out into a cylinder.
-boxSegs :: { r :: Number, skew :: Number, topBow :: Number, botBow :: Number } -> Array Seg
-boxSegs p =
-  [ seg (tl /\ top) (mid tl tr 0.34 /\ (top - p.topBow)) (mid tl tr 0.66 /\ (top - p.topBow)) (tr /\ top)
-  , seg (tr /\ top) (cTR /\ top) (cTR /\ top) (cTR /\ (top + p.r))
-  , straightSeg (cTR /\ (top + p.r)) (cBR /\ (bottom - p.r))
-  , seg (cBR /\ (bottom - p.r)) (cBR /\ bottom) (cBR /\ bottom) (br /\ bottom)
-  , seg (br /\ bottom) (mid br bl 0.34 /\ (bottom + p.botBow)) (mid br bl 0.66 /\ (bottom + p.botBow)) (bl /\ bottom)
-  , seg (bl /\ bottom) (cBL /\ bottom) (cBL /\ bottom) (cBL /\ (bottom - p.r))
-  , straightSeg (cBL /\ (bottom - p.r)) (cTL /\ (top + p.r))
-  , seg (cTL /\ (top + p.r)) (cTL /\ top) (cTL /\ top) (tl /\ top)
-  ]
-  where
-  { left, right, top, bottom } = installBox
-  tl = left + p.r + p.skew
-  tr = right - p.r + p.skew
-  br = right - p.r - p.skew
-  bl = left + p.r - p.skew
-  cTR = right + p.skew
-  cBR = right - p.skew
-  cBL = left - p.skew
-  cTL = left + p.skew
-  seg a b c d = { p0: a, c1: b, c2: c, p3: d }
-  mid a b f = a + (b - a) * f
-
--- The Ionicons v4 md-cloud, its seven cubics converted to absolute and mapped
--- from the 512 source box into the install box's footprint.
-cloudSegs :: Array Seg
-cloudSegs = (\s -> { p0: tf s.p0, c1: tf s.c1, c2: tf s.c2, p3: tf s.p3 }) <$>
-  [ raw (403.002 /\ 217.001) (388.998 /\ 148.002) (328.998 /\ 96.0) (256.0 /\ 96.0)
-  , raw (256.0 /\ 96.0) (198.002 /\ 96.0) (148.002 /\ 128.998) (123.002 /\ 177.001)
-  , raw (123.002 /\ 177.001) (63.002 /\ 183.002) (16.0 /\ 233.998) (16.0 /\ 296.0)
-  , raw (16.0 /\ 296.0) (16.0 /\ 361.996) (69.999 /\ 416.0) (136.0 /\ 416.0)
-  , raw (136.0 /\ 416.0) (222.67 /\ 416.0) (309.33 /\ 416.0) (396.0 /\ 416.0)
-  , raw (396.0 /\ 416.0) (451.0 /\ 416.0) (496.0 /\ 371.0) (496.0 /\ 316.0)
-  , raw (496.0 /\ 316.0) (496.0 /\ 263.002) (455.004 /\ 219.999) (403.002 /\ 217.001)
-  ]
-  where
-  raw a b c d = { p0: a, c1: b, c2: c, p3: d }
-  -- map the 512 box [16,96..496,416] onto the install footprint, but taller than
-  -- the box so the cloud reads full-height: puffs rise above the top, the body
-  -- fills down to near the bottom (overflow is visible, so the poke-out is fine).
-  sx = (188.0 - 12.0) / 480.0
-  sy = (56.0 - (-10.0)) / 320.0
-  tf (x /\ y) = (12.0 + (x - 16.0) * sx) /\ (-10.0 + (y - 96.0) * sy)
-
--- A pointy hexagon (rectangle with the left and right sides drawn to a point):
--- the `<==>` lozenge, after markgraf's chevronRect. `chev` is how far the flat
--- top/bottom edges inset from the points. Straight edges only.
-chevronSegs :: Number -> Array Seg
-chevronSegs chev =
-  [ straightSeg ((left + chev) /\ top) ((right - chev) /\ top)
-  , straightSeg ((right - chev) /\ top) (right /\ midY)
-  , straightSeg (right /\ midY) ((right - chev) /\ bottom)
-  , straightSeg ((right - chev) /\ bottom) ((left + chev) /\ bottom)
-  , straightSeg ((left + chev) /\ bottom) (left /\ midY)
-  , straightSeg (left /\ midY) ((left + chev) /\ top)
-  ]
-  where
-  { left, right, top, bottom } = installBox
-  midY = (top + bottom) / 2.0
-
--- A straight edge as a cubic with its controls spaced evenly along the line.
-straightSeg :: Pt -> Pt -> Seg
-straightSeg (sx /\ sy) (ex /\ ey) =
-  { p0: sx /\ sy
-  , c1: lerp sx ex (1.0 / 3.0) /\ lerp sy ey (1.0 / 3.0)
-  , c2: lerp sx ex (2.0 / 3.0) /\ lerp sy ey (2.0 / 3.0)
-  , p3: ex /\ ey
-  }
-
--- A point on a cubic at parameter t.
-cubicPoint :: Seg -> Number -> Pt
-cubicPoint s t = (a * p0x + b * c1x + c * c2x + d * p3x) /\ (a * p0y + b * c1y + c * c2y + d * p3y)
-  where
-  (p0x /\ p0y) = s.p0
-  (c1x /\ c1y) = s.c1
-  (c2x /\ c2y) = s.c2
-  (p3x /\ p3y) = s.p3
-  u = 1.0 - t
-  a = u * u * u
-  b = 3.0 * u * u * t
-  c = 3.0 * u * t * t
-  d = t * t * t
-
--- Flatten cubics to a dense polyline (samples per segment, endpoints excluded so
--- joins are not doubled).
-flattenSegs :: Int -> Array Seg -> Array Pt
-flattenSegs steps segs =
-  segs >>= \s -> (\i -> cubicPoint s (Int.toNumber i / Int.toNumber steps)) <$> Array.range 0 (steps - 1)
-
--- Resample a closed polyline to `n` points spaced evenly by arc length.
-resampleClosed :: Int -> Array Pt -> Array Pt
-resampleClosed n pts = pointAtArc <$> ((\k -> total * Int.toNumber k / Int.toNumber n) <$> Array.range 0 (n - 1))
-  where
-  m = Array.length pts
-  at i = fromMaybe (0.0 /\ 0.0) (Array.index pts (mod i m))
-  edgeLen = Array.mapWithIndex (\i p -> dist p (at (i + 1))) pts
-  cumIncl = Array.scanl (+) 0.0 edgeLen
-  cumStart = Array.cons 0.0 (fromMaybe [] (Array.init cumIncl))
-  total = fromMaybe 0.0 (Array.last cumIncl)
-  pointAtArc target = lerpPt (at i) (at (i + 1)) f
-    where
-    i = fromMaybe 0 (Array.findLastIndex (_ <= target) cumStart)
-    segStart = fromMaybe 0.0 (Array.index cumStart i)
-    segLen = fromMaybe 1.0 (Array.index edgeLen i)
-    f = if segLen > 1.0e-6 then (target - segStart) / segLen else 0.0
-
--- Make every polygon agree on winding (clockwise) and starting point (the vertex
--- nearest straight up from the centroid), so point i corresponds across shapes.
-normalisePoly :: Array Pt -> Array Pt
-normalisePoly pts = Array.drop startIdx cw <> Array.take startIdx cw
-  where
-  cw = if signedArea pts < 0.0 then Array.reverse pts else pts
-  n = Array.length cw
-  cx = sum (fst <$> cw) / Int.toNumber n
-  cy = sum (snd <$> cw) / Int.toNumber n
-  upDist (px /\ py) = abs (angleWrap (atan2 (py - cy) (px - cx) - (-pi / 2.0)))
-  startIdx = _.i $ foldlWithIndex pick { i: 0, d: 1.0e18 } cw
-  pick i acc p = if upDist p < acc.d then { i, d: upDist p } else acc
-
-signedArea :: Array Pt -> Number
-signedArea pts = sum (Array.mapWithIndex term pts) / 2.0
-  where
-  m = Array.length pts
-  at i = fromMaybe (0.0 /\ 0.0) (Array.index pts (mod i m))
-  term i (ax /\ ay) = ax * by - bx * ay
-    where
-    (bx /\ by) = at (i + 1)
-
--- Wrap an angle into (-pi, pi] so distances near the seam stay small.
-angleWrap :: Number -> Number
-angleWrap a = a - twoPi * Int.toNumber (Int.round (a / twoPi))
-  where
-  twoPi = 2.0 * pi
-
-dist :: Pt -> Pt -> Number
-dist (ax /\ ay) (bx /\ by) = sqrt ((ax - bx) * (ax - bx) + (ay - by) * (ay - by))
-
-lerp :: Number -> Number -> Number -> Number
-lerp a b t = a + (b - a) * t
-
-lerpPt :: Pt -> Pt -> Number -> Pt
-lerpPt (ax /\ ay) (bx /\ by) t = lerp ax bx t /\ lerp ay by t
-
--- A polygon as an SVG path: move to the first point, line to the rest, close.
-polyPath :: Array Pt -> String
-polyPath pts = joinWith " " (Array.mapWithIndex cmd pts) <> " Z"
-  where
-  cmd i p = (if i == 0 then "M" else "L") <> ptStr p
-
--- A wireframe over the same points: one pole-to-pole meridian plus a set of
--- latitude chords (point k joined to its mirror point n-k). Drawn as internal
--- lines only — the fill supplies the silhouette — so it reads as a wire mesh and
--- never sits outside the shape. Fixed line count, so it morphs with the fill.
-wirePath :: Array Pt -> String
-wirePath pts = joinWith " " (Array.cons meridian latitudes)
-  where
-  n = Array.length pts
-  at i = fromMaybe (0.0 /\ 0.0) (Array.index pts (mod i n))
-  chord a b = "M" <> ptStr a <> " L" <> ptStr b
-  meridian = chord (at 0) (at (n / 2))
-  latitudes = (\j -> chord (at (latK j)) (at (n - latK j))) <$> Array.range 1 wireLatitudes
-  latK j = (n / 2) * j / (wireLatitudes + 1)
-
-wireLatitudes :: Int
-wireLatitudes = 7
-
-ptStr :: Pt -> String
-ptStr (x /\ y) = numStr x <> "," <> numStr y
-
-numStr :: Number -> String
-numStr n = show (Int.toNumber (Int.round (n * 100.0)) / 100.0)
 
 -- The tagline types itself in once the wordmark has caught: each word is its own
 -- inline-block carrying a staggered animation-delay, so the line resolves left to
