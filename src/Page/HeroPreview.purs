@@ -332,11 +332,24 @@ heroInstallCta =
       }
       noJSX
   outline =
-    svgWrap [ fill ]
+    svgWrap [ fill, wire ]
   fill =
     Motion.createMotionElement "path"
       { d: fromMaybe "" (Array.head installFrames.d)
       , fill: "#ff3b1a"
+      , animate: { d: installFrames.d }
+      , transition: installMorphTransition
+      }
+      ([] :: Array JSX)
+  -- A wireframe edge tracing the same morphing outline, imitating the solid+wire
+  -- look of the 3D diagram shapes (a light low-opacity line over the fill).
+  wire =
+    Motion.createMotionElement "path"
+      { d: fromMaybe "" (Array.head installFrames.d)
+      , fill: "none"
+      , stroke: "rgba(255,233,214,0.55)"
+      , strokeWidth: 1.1
+      , vectorEffect: "non-scaling-stroke"
       , animate: { d: installFrames.d }
       , transition: installMorphTransition
       }
@@ -373,7 +386,7 @@ heroInstallCta =
 -- pair is flat and only the segment into the next shape moves. The lid opacity
 -- rides the exact same timeline, so it is on for the whole database hold.
 installStep :: Number
-installStep = 1.5
+installStep = 2.7
 
 installMorph :: Number
 installMorph = 0.45
