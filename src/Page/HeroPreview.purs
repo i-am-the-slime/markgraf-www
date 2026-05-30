@@ -330,28 +330,12 @@ heroInstallCta =
       }
       noJSX
   outline =
-    svgWrap [ fill, lid ]
+    svgWrap [ fill ]
   fill =
     Motion.createMotionElement "path"
       { d: fromMaybe "" (Array.head installFrames.d)
       , fill: "#ff3b1a"
       , animate: { d: installFrames.d }
-      , transition: installMorphTransition
-      }
-      ([] :: Array JSX)
-  -- A lid ellipse that only shows during the database beat, to sell its 3D read.
-  lid =
-    Motion.createMotionElement "ellipse"
-      { cx: 100.0
-      , cy: installBox.top
-      , rx: 78.0
-      , ry: 9.0
-      , fill: "none"
-      , stroke: "rgba(10,12,20,0.55)"
-      , strokeWidth: 2.0
-      , vectorEffect: "non-scaling-stroke"
-      , initial: { opacity: 0.0 }
-      , animate: { opacity: installFrames.lid }
       , transition: installMorphTransition
       }
       ([] :: Array JSX)
@@ -403,24 +387,20 @@ installMorphTransition
 installMorphTransition =
   { duration: installTotal, times: installFrames.times, ease: "easeInOut", repeat: infinity }
 
--- The flat keyframe arrays handed to framer-motion: parallel paths, times and lid
--- opacities, expanded from installShapes with the arrive/hold doubling.
-installFrames :: { d :: Array String, lid :: Array Number, times :: Array Number }
+-- The flat keyframe arrays handed to framer-motion: parallel paths and times,
+-- expanded from installShapes with the arrive/hold doubling.
+installFrames :: { d :: Array String, times :: Array Number }
 installFrames =
-  { d: _.d <$> frames, lid: _.lid <$> frames, times: _.t <$> frames }
+  { d: _.d <$> frames, times: _.t <$> frames }
   where
   frames = Array.concat (Array.mapWithIndex frameFor installShapes)
   lastIdx = Array.length installShapes - 1
   frameFor i params =
-    [ { d: shape, t: arrive / installTotal, lid } ]
-      <> (if i < lastIdx then [ { d: shape, t: (arrive + installDwell) / installTotal, lid } ] else [])
+    [ { d: shape, t: arrive / installTotal } ]
+      <> (if i < lastIdx then [ { d: shape, t: (arrive + installDwell) / installTotal } ] else [])
     where
     shape = nodeShapePath params
     arrive = Int.toNumber i * installStep
-    lid = if i == installDatabaseIndex then 1.0 else 0.0
-
-installDatabaseIndex :: Int
-installDatabaseIndex = 3
 
 -- The cycle, ending back on the box so the loop is seamless.
 installShapes :: Array ShapeParams
@@ -487,7 +467,10 @@ nodeShapePath p =
     | p.cloud = cloudLift t
     | otherwise = p.topBow * sin (pi * t)
   cloudLift t = foldl (\acc c -> max acc (bump t c)) 0.0 installCloudCircles
-  bump t c = sqrt (max 0.0 (c.r * c.r - dx * dx))
+  -- Each lobe is a circle whose centre is dropped below the top line, so a big
+  -- radius reads as a broad shallow dome rather than a tall ball; the max over
+  -- lobes is the cloud's upper silhouette.
+  bump t c = max 0.0 (sqrt (max 0.0 (c.r * c.r - dx * dx)) - c.drop)
     where
     dx = xAt t - (ax + c.f * w)
   -- a corner: a cubic whose two controls both sit on the corner vertex
@@ -506,18 +489,14 @@ lerp a b t = a + (b - a) * t
 installTopSegments :: Int
 installTopSegments = 16
 
--- The cloud's circles, as fraction-of-top-width centres and pixel radii. Spaced
--- ~0.18 of the width apart with radii ~16, so neighbours overlap well; the hero
--- (r 20) sits right of centre, the end circles taper so the cloud closes near the
--- corners. Mirrors markgraf's cloudCircles layout, fixed instead of seeded.
-installCloudCircles :: Array { f :: Number, r :: Number }
+-- The cloud's lobes, shaped after the Heroicons cloud: one broad dominant dome
+-- left of centre and a smaller lobe to the right, joined by a gentle valley, flat
+-- at the shoulders. `drop` lowers a lobe's centre so a big radius gives a wide,
+-- shallow dome instead of a tall ball.
+installCloudCircles :: Array { f :: Number, r :: Number, drop :: Number }
 installCloudCircles =
-  [ { f: 0.09, r: 13.0 }
-  , { f: 0.27, r: 16.0 }
-  , { f: 0.45, r: 16.0 }
-  , { f: 0.63, r: 20.0 }
-  , { f: 0.80, r: 16.0 }
-  , { f: 0.93, r: 12.0 }
+  [ { f: 0.37, r: 50.0, drop: 33.0 } -- broad main lobe, left of centre
+  , { f: 0.70, r: 21.0, drop: 7.0 } -- smaller lobe, right
   ]
 
 -- One cubic-bezier path command from two control points and an endpoint.
