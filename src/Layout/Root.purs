@@ -53,6 +53,24 @@ retro = """
     border: 3px inset #808080; padding: 2px 6px; letter-spacing: 4px; font-weight: bold; }
   .nsf-new { color: #ff0000; font-weight: bold; font-family: "Courier New", monospace; }
   .nsf-title { font-size: 42px; font-weight: bold; letter-spacing: -1px; }
+  /* The graph diagram, rendered the 1996 way: a table whose edge cells morph
+     between a ring and a star by toggling visibility. No JavaScript, no SVG —
+     just CSS keyframes flipping opacity on <td> contents. */
+  .nsf-graph { border-collapse: collapse; margin: 4px auto; background: #000;
+    border: 3px ridge #c0c0c0; }
+  .nsf-graph td { width: 34px; height: 34px; padding: 0; text-align: center;
+    vertical-align: middle; font-family: "Courier New", monospace; font-size: 22px;
+    line-height: 34px; color: #00ffaa; }
+  .nsf-node { display: inline-block; width: 24px; height: 24px; line-height: 21px;
+    border: 2px solid #ffff00; border-radius: 50%; background: #113300; color: #ffff00;
+    font-weight: bold; font-size: 14px; }
+  .nsf-core { animation: nsf-core 4s ease-in-out infinite; }
+  .nsf-ring-edge { animation: nsf-ring 4s ease-in-out infinite; }
+  .nsf-star-edge { animation: nsf-star 4s ease-in-out infinite; color: #ff66ff; }
+  @keyframes nsf-ring { 0%,42% { opacity: 1; } 50%,92% { opacity: 0; } 100% { opacity: 1; } }
+  @keyframes nsf-star { 0%,42% { opacity: 0; } 50%,92% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes nsf-core { 0%,42% { box-shadow: none; border-color: #ffff00; }
+    50%,92% { box-shadow: 0 0 10px #ff66ff; border-color: #ff66ff; } 100% { box-shadow: none; } }
 </style>
 
 <center>
@@ -77,18 +95,56 @@ retro = """
 <hr class="nsf-rule">
 
 <div class="nsf-card">
+  <table class="nsf-graph">
+    <tr>
+      <td><span class="nsf-node">A</span></td>
+      <td><span class="nsf-ring-edge">&#9472;</span></td>
+      <td><span class="nsf-ring-edge">&#9472;</span></td>
+      <td><span class="nsf-ring-edge">&#9472;</span></td>
+      <td><span class="nsf-node">B</span></td>
+    </tr>
+    <tr>
+      <td><span class="nsf-ring-edge">&#9474;</span></td>
+      <td><span class="nsf-star-edge">&#9586;</span></td>
+      <td></td>
+      <td><span class="nsf-star-edge">&#9585;</span></td>
+      <td><span class="nsf-ring-edge">&#9474;</span></td>
+    </tr>
+    <tr>
+      <td><span class="nsf-ring-edge">&#9474;</span></td>
+      <td></td>
+      <td><span class="nsf-node nsf-core">E</span></td>
+      <td></td>
+      <td><span class="nsf-ring-edge">&#9474;</span></td>
+    </tr>
+    <tr>
+      <td><span class="nsf-ring-edge">&#9474;</span></td>
+      <td><span class="nsf-star-edge">&#9585;</span></td>
+      <td></td>
+      <td><span class="nsf-star-edge">&#9586;</span></td>
+      <td><span class="nsf-ring-edge">&#9474;</span></td>
+    </tr>
+    <tr>
+      <td><span class="nsf-node">C</span></td>
+      <td><span class="nsf-ring-edge">&#9472;</span></td>
+      <td><span class="nsf-ring-edge">&#9472;</span></td>
+      <td><span class="nsf-ring-edge">&#9472;</span></td>
+      <td><span class="nsf-node">D</span></td>
+    </tr>
+  </table>
+  <font color="#00ffaa" face="Courier New" size="2">fig. 1 &mdash; one (1) animated graph diagram, hand-cranked in HTML tables</font>
+  <hr class="nsf-rule">
   <font color="#ffffff" face="Times New Roman" size="4">
-    <b>Whoa there, cowboy.</b> You have JavaScript turned off.<br>
-    This rad website renders <i>short animated graph diagrams</i> from a tiny
-    declarative source language &mdash; live, in glorious 3D WebGL.<br><br>
-    None of that works without scripts. <span class="nsf-blink nsf-new">&lt;ENABLE JAVASCRIPT&gt;</span>
-    to see the real thing.
+    JavaScript is switched off, so the real diagrams &mdash; <i>short animated graphs
+    from a tiny declarative source language</i>, live in WebGL &mdash; can't run.
+    What you see above is the closest 1996 could get.<br><br>
+    <span class="nsf-blink nsf-new">&lt;TURN JAVASCRIPT ON&gt;</span> for the real thing.
   </font>
 </div>
 
 <marquee behavior="scroll" direction="left" scrollamount="6">
   <font color="#00ffff" face="Courier New">
-    &#9658; best viewed in Netscape Navigator 4.0 at 800x600 &#9658; please turn on your speakers &#9658; this page is Y2K compliant &#9658; works on my machine &#9658;
+    &#9658; best viewed in Netscape Navigator 4.0 at 800x600 &#9658; please turn on your speakers for the MIDI &#9658; this page is Y2K compliant &#9658;
   </font>
 </marquee>
 
@@ -112,7 +168,7 @@ retro = """
 <hr class="nsf-rule">
 
 <p><font face="Comic Sans MS" color="#888888" size="2">
-  &copy; 1996&ndash;2026 markgraf &middot; hand-coded in Notepad &middot; do not steal
+  &copy; 1996&ndash;2026 markgraf &middot; hand-coded in Notepad
 </font></p>
 
 </center>
