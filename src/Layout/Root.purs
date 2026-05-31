@@ -26,7 +26,8 @@ noScriptFallback :: JSX
 noScriptFallback = createBuiltinElement_ "noscript" (unsafeCoerce { dangerouslySetInnerHTML: { __html: retro } })
 
 retro :: String
-retro = """
+retro =
+  """
 <style>
   @font-face { font-family: "Commit Mono"; src: url("/markgraf-www/fonts/CommitMono-Regular.woff2") format("woff2"); font-display: swap; }
   #mg-app { display: none !important; }
@@ -308,10 +309,10 @@ retro = """
 </div>
 """
 
-metadata ::
-  { title :: String
-  , description :: String
-  }
+metadata
+  :: { title :: String
+     , description :: String
+     }
 metadata =
   { title: "markgraf — animated graph diagrams"
   , description: "Render short animated graph diagrams from a tiny declarative source language."

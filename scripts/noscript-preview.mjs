@@ -28,10 +28,12 @@ const MIME = {
 
 const extractRetro = () => {
   const src = readFileSync(ROOT, "utf8")
-  const open = 'retro = """'
-  const start = src.indexOf(open)
-  if (start < 0) return "<pre>could not find retro string in " + ROOT + "</pre>"
-  const from = start + open.length
+  // Find the `retro =` binding, then the opening `"""` — tolerant of the binding and
+  // the triple-quote sitting on separate lines (purs-tidy reformats it that way).
+  const decl = src.indexOf("retro =")
+  const open = decl < 0 ? -1 : src.indexOf('"""', decl)
+  if (open < 0) return "<pre>could not find retro string in " + ROOT + "</pre>"
+  const from = open + 3
   const end = src.indexOf('"""', from)
   return src.slice(from, end).replaceAll("/markgraf-www/", "/")
 }
