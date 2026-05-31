@@ -72,9 +72,11 @@ retro =
     font-family: "Commit Mono", ui-monospace, monospace; }
   .nsf-inline { color: #ff8a5c; }
   .nsf-demo { max-width: min(1500px, 94vw); }
-  .nsf-sbs { margin: 14px auto; border-collapse: collapse; }
+  .nsf-sbs { margin: 14px auto; border-collapse: collapse; width: 100%; }
   .nsf-sbs td { vertical-align: middle; padding: 0 24px; }
-  .nsf-src { margin: 0; padding: 20px 24px; font: 14px/1.7 "Commit Mono", ui-monospace, monospace;
+  .nsf-sbs td:first-child { text-align: left; }
+  .nsf-sbs td:last-child { text-align: right; }
+  .nsf-src { display: inline-block; margin: 0; padding: 20px 24px; font: 14px/1.7 "Commit Mono", ui-monospace, monospace;
     color: #c8cdd9; white-space: pre; }
   .nsf-src .k { color: #ff8a5c; }
   .nsf-src .d { color: #ff3b1a; }
@@ -221,7 +223,7 @@ retro =
     </td>
     <td>
       <video width="440" autoplay loop muted playsinline preload="auto" disablepictureinpicture disableremoteplayback
-             style="display:block; pointer-events:none">
+             style="display:inline-block; pointer-events:none">
         <source src="/markgraf-www/markgraf-demo.mp4" type="video/mp4">
         <img src="/markgraf-www/markgraf-demo.webp" alt="markgraf animated graph diagram" width="440">
       </video>

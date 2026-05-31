@@ -78,7 +78,7 @@ createServer((req, res) => {
   const file = join("public", normalize(url).replace(/^(\.\.[/\\])+/, ""))
   readFile(file, (err, buf) => {
     if (err) { res.writeHead(404); res.end("not found: " + url); return }
-    res.writeHead(200, { "content-type": MIME[extname(file)] || "application/octet-stream" })
+    res.writeHead(200, { "content-type": MIME[extname(file)] || "application/octet-stream", "cache-control": "no-store" })
     res.end(buf)
   })
 }).listen(PORT, () => console.log(`[noscript-preview] http://localhost:${PORT}  (live-reloads on ${ROOT} save)`))
