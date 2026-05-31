@@ -59,7 +59,7 @@ retro =
   }
   .nsf-rule { height: 1px; border: 0; margin: 16px auto; width: 86%;
     background: linear-gradient(90deg, transparent, #ff3b1a 30%, #ff8a5c 50%, #ff3b1a 70%, transparent); }
-  .nsf-card { border: 1px solid #2a3142; background: rgba(15,15,15,0.82); margin: 16px auto;
+  .nsf-card { background: rgba(15,15,15,0.82); margin: 16px auto;
     padding: 14px 18px; max-width: 660px; box-shadow: 0 0 24px rgba(255,59,26,0.12); }
   a { color: #ff8a5c; text-decoration: none; }
   a:hover { color: #f5f1e8; }
@@ -86,7 +86,7 @@ retro =
   .nsf-term-body { margin: 0; padding: 13px 15px; color: #f5f1e8; font-size: 14px; white-space: pre-wrap;
     font-family: "Commit Mono", ui-monospace, monospace; }
   .nsf-prompt { color: #ff3b1a; font-weight: bold; -webkit-user-select: none; user-select: none; }
-  .nsf-inline { background: #0a0a0a; border: 1px solid #2a3142; color: #ff8a5c; padding: 2px 7px; }
+  .nsf-inline { background: #0a0a0a; color: #ff8a5c; padding: 2px 7px; }
   .nsf-demo { max-width: 900px; }
   .nsf-sbs { margin: 14px auto; border-collapse: collapse; }
   .nsf-sbs td { vertical-align: middle; padding: 0 9px; }
@@ -155,7 +155,7 @@ retro =
 <div class="nsf-content">
 <center>
 
-<table border="0" cellpadding="14" cellspacing="0" bgcolor="#0a0a0a" align="center" style="border:1px solid #2a3142">
+<table border="0" cellpadding="14" cellspacing="0" align="center">
   <tr><td align="center">
     <span class="nsf-amber nsf-title">markgraf</span>
   </td></tr>
@@ -186,10 +186,9 @@ retro =
     </td>
     <td>
       <video width="420" autoplay loop muted playsinline preload="auto" disablepictureinpicture disableremoteplayback
-             style="border:1px solid #2a3142; display:block; pointer-events:none">
+             style="display:block; pointer-events:none">
         <source src="/markgraf-www/markgraf-demo.mp4" type="video/mp4">
-        <img src="/markgraf-www/markgraf-demo.webp" alt="markgraf animated graph diagram" width="420"
-             style="border:1px solid #2a3142">
+        <img src="/markgraf-www/markgraf-demo.webp" alt="markgraf animated graph diagram" width="420">
       </video>
     </td>
   </tr></table>
