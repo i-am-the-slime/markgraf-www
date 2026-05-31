@@ -153,18 +153,14 @@ retro =
 <div class="nsf-content">
 <center>
 
-<marquee behavior="alternate" scrollamount="14" bgcolor="#151515">
-  <font size="5" color="#ff8a5c" face="Commit Mono">&#9733;&#9733;&#9733; WELCOME TO MARKGRAF.DEV &#9733;&#9733;&#9733; ANIMATED GRAPH DIAGRAMS FROM A TINY SOURCE LANGUAGE &#9733;&#9733;&#9733;</font>
-</marquee>
-
 <table border="0" cellpadding="14" cellspacing="0" bgcolor="#0a0a0a" align="center" style="border:1px solid #2a3142">
   <tr><td align="center">
-    <span class="nsf-amber nsf-title">~* M A R K G R A F *~</span>
+    <span class="nsf-amber nsf-title">markgraf</span>
   </td></tr>
 </table>
 
 <div class="nsf-card nsf-demo">
-  <font color="#ff8a5c" face="Commit Mono" size="2"><b>&#9658; LIVE DEMO</b> &mdash; this source compiles to this animation</font>
+  <font color="#ff8a5c" face="Commit Mono" size="2"><b>Live demo</b> &mdash; this source compiles to this animation.</font>
   <table class="nsf-sbs"><tr>
     <td>
       <div class="nsf-win">
@@ -195,11 +191,11 @@ retro =
       </video>
     </td>
   </tr></table>
-  <font color="#8a94a8" face="Commit Mono" size="2">fig. 0 &mdash; markgraf renders the source (left) into the diagram (right): client &#8594; API &#8594; DB &#8594; cache</font>
+  <font color="#8a94a8" face="Commit Mono" size="2">markgraf renders the source on the left into the animation on the right.</font>
 </div>
 
 <div class="nsf-card">
-  <font color="#ff8a5c" face="Commit Mono" size="4"><b>&#9658; INSTALL IT</b></font>
+  <font color="#ff8a5c" face="Commit Mono" size="4"><b>Install</b></font>
   <div class="nsf-win" style="max-width:520px; margin:12px auto">
     <div class="nsf-titlebar">
       <span class="nsf-sysbtn"><span class="nsf-sysbar"></span></span>
