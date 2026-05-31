@@ -11,16 +11,108 @@ import * as Web_DOM_ShadowRoot from "../Web.DOM.ShadowRoot/index.js";
 import * as Web_Internal_FFI from "../Web.Internal.FFI/index.js";
 var show = /* #__PURE__ */ Data_Show.show(Web_DOM_ShadowRoot.showShadowRootMode);
 var map = /* #__PURE__ */ Data_Functor.map(Effect.functorEffect);
+var Start = /* #__PURE__ */ (function () {
+    function Start() {
+
+    };
+    Start.value = new Start();
+    return Start;
+})();
+var Center = /* #__PURE__ */ (function () {
+    function Center() {
+
+    };
+    Center.value = new Center();
+    return Center;
+})();
+var End = /* #__PURE__ */ (function () {
+    function End() {
+
+    };
+    End.value = new End();
+    return End;
+})();
+var Nearest = /* #__PURE__ */ (function () {
+    function Nearest() {
+
+    };
+    Nearest.value = new Nearest();
+    return Nearest;
+})();
+var Auto = /* #__PURE__ */ (function () {
+    function Auto() {
+
+    };
+    Auto.value = new Auto();
+    return Auto;
+})();
+var Instant = /* #__PURE__ */ (function () {
+    function Instant() {
+
+    };
+    Instant.value = new Instant();
+    return Instant;
+})();
+var Smooth = /* #__PURE__ */ (function () {
+    function Smooth() {
+
+    };
+    Smooth.value = new Smooth();
+    return Smooth;
+})();
+var showScrollLogicalPosition = {
+    show: function (v) {
+        if (v instanceof Start) {
+            return "start";
+        };
+        if (v instanceof Center) {
+            return "center";
+        };
+        if (v instanceof End) {
+            return "end";
+        };
+        if (v instanceof Nearest) {
+            return "nearest";
+        };
+        throw new Error("Failed pattern match at Web.DOM.Element (line 212, column 1 - line 216, column 27): " + [ v.constructor.name ]);
+    }
+};
+var show1 = /* #__PURE__ */ Data_Show.show(showScrollLogicalPosition);
+var showScrollBehavior = {
+    show: function (v) {
+        if (v instanceof Auto) {
+            return "auto";
+        };
+        if (v instanceof Instant) {
+            return "instant";
+        };
+        if (v instanceof Smooth) {
+            return "smooth";
+        };
+        throw new Error("Failed pattern match at Web.DOM.Element (line 204, column 1 - line 207, column 25): " + [ v.constructor.name ]);
+    }
+};
+var show2 = /* #__PURE__ */ Data_Show.show(showScrollBehavior);
 var toParentNode = Unsafe_Coerce.unsafeCoerce;
 var toNonDocumentTypeChildNode = Unsafe_Coerce.unsafeCoerce;
 var toNode = Unsafe_Coerce.unsafeCoerce;
 var toEventTarget = Unsafe_Coerce.unsafeCoerce;
 var toChildNode = Unsafe_Coerce.unsafeCoerce;
-var prefix = function ($3) {
-    return Data_Nullable.toMaybe($foreign["_prefix"]($3));
+var prefix = function ($11) {
+    return Data_Nullable.toMaybe($foreign["_prefix"]($11));
 };
-var namespaceURI = function ($4) {
-    return Data_Nullable.toMaybe($foreign["_namespaceURI"]($4));
+var optionsToProps = function (options) {
+    return {
+        behavior: show2(options.behavior),
+        block: show1(options.block),
+        inline: show1(options.inline)
+    };
+};
+var scrollIntoViewWithOptions = function ($12) {
+    return $foreign["_scrollIntoViewWithOptions"](optionsToProps($12));
+};
+var namespaceURI = function ($13) {
+    return Data_Nullable.toMaybe($foreign["_namespaceURI"]($13));
 };
 var initToProps = function (init) {
     return {
@@ -28,14 +120,14 @@ var initToProps = function (init) {
         delegatesFocus: init.delegatesFocus
     };
 };
-var getElementsByTagNameNS = function ($5) {
-    return $foreign["_getElementsByTagNameNS"](Data_Nullable.toNullable($5));
+var getElementsByTagNameNS = function ($14) {
+    return $foreign["_getElementsByTagNameNS"](Data_Nullable.toNullable($14));
 };
 var getAttribute = function (attr) {
-    var $6 = map(Data_Nullable.toMaybe);
-    var $7 = $foreign["_getAttribute"](attr);
-    return function ($8) {
-        return $6($7($8));
+    var $15 = map(Data_Nullable.toMaybe);
+    var $16 = $foreign["_getAttribute"](attr);
+    return function ($17) {
+        return $15($16($17));
     };
 };
 var fromParentNode = /* #__PURE__ */ Web_Internal_FFI.unsafeReadProtoTagged("Element");
@@ -44,14 +136,14 @@ var fromNode = /* #__PURE__ */ Web_Internal_FFI.unsafeReadProtoTagged("Element")
 var fromEventTarget = /* #__PURE__ */ Web_Internal_FFI.unsafeReadProtoTagged("Element");
 var fromChildNode = /* #__PURE__ */ Web_Internal_FFI.unsafeReadProtoTagged("Element");
 var closest = function (qs) {
-    var $9 = map(Data_Nullable.toMaybe);
-    var $10 = $foreign["_closest"](qs);
-    return function ($11) {
-        return $9($10($11));
+    var $18 = map(Data_Nullable.toMaybe);
+    var $19 = $foreign["_closest"](qs);
+    return function ($20) {
+        return $18($19($20));
     };
 };
-var attachShadow = function ($12) {
-    return $foreign["_attachShadow"](initToProps($12));
+var attachShadow = function ($21) {
+    return $foreign["_attachShadow"](initToProps($21));
 };
 export {
     localName,
@@ -63,6 +155,7 @@ export {
     setClassName,
     getElementsByTagName,
     getElementsByClassName,
+    attributes,
     setAttribute,
     hasAttribute,
     removeAttribute,
@@ -77,7 +170,8 @@ export {
     clientLeft,
     clientWidth,
     clientHeight,
-    getBoundingClientRect
+    getBoundingClientRect,
+    scrollIntoView
 } from "./foreign.js";
 export {
     fromNode,
@@ -95,6 +189,16 @@ export {
     getElementsByTagNameNS,
     getAttribute,
     closest,
-    attachShadow
+    attachShadow,
+    scrollIntoViewWithOptions,
+    Auto,
+    Instant,
+    Smooth,
+    Start,
+    Center,
+    End,
+    Nearest,
+    showScrollBehavior,
+    showScrollLogicalPosition
 };
 //# sourceMappingURL=index.js.map

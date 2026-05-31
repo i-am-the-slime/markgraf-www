@@ -46,6 +46,18 @@ workspace:
       path: /Users/mark/code/yoga-r3f
     web-font-loading:
       path: /Users/mark/code/purescript-web-font-loading
+    web-dom:
+      git: https://github.com/i-am-the-slime/purescript-web-dom.git
+      ref: 49f0f025bf4a21ca42759ec7fef1e0f65470ecac
+      dependencies:
+        - effect
+        - enums
+        - maybe
+        - newtype
+        - nullable
+        - prelude
+        - unsafe-coerce
+        - web-events
     web-proletarian:
       git: https://github.com/rowtype-yoga/purescript-web-proletarian.git
       ref: 0ee3de080dcc538fe0db3e735ddb02a67de736a2

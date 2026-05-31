@@ -36,7 +36,7 @@ var type_ = function () {
         if (v === "childList") {
             return MutationRecordChildList.value;
         };
-        throw new Error("Failed pattern match at Web.DOM.MutationRecord (line 36, column 18 - line 39, column 43): " + [ v.constructor.name ]);
+        throw new Error("Failed pattern match at Web.DOM.MutationRecord (line 38, column 18 - line 41, column 43): " + [ v.constructor.name ]);
     };
     var $4 = map(stringToType);
     return function ($5) {

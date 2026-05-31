@@ -69,6 +69,8 @@ export function getElementsByClassName(classNames) {
   };
 }
 
+export const attributes = (element) => () => element.attributes;
+
 export function setAttribute(name) {
   return function (value) {
     return function (element) {
@@ -205,6 +207,20 @@ export function _attachShadow(props) {
   return function (el) {
     return function() {
       return el.attachShadow(props);
+    };
+  };
+}
+
+export function scrollIntoView(el) {
+  return function () {
+    el.scrollIntoView();
+  };
+}
+
+export function _scrollIntoViewWithOptions(props) {
+  return function (el) {
+    return function () {
+      el.scrollIntoView(props);
     };
   };
 }

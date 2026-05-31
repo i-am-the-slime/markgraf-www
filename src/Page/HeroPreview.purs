@@ -6,6 +6,7 @@ import Data.Array as Array
 import Data.Foldable (for_, traverse_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Newtype (un)
 import Data.Options ((:=))
 import Data.Traversable (traverse)
 import Effect.Random (random)
@@ -38,6 +39,8 @@ import Web.DOM.DOMTokenList as DOMTokenList
 import Web.DOM.Document as Document
 import Web.DOM.Element as Element
 import Web.DOM.HTMLCollection as HTMLCollection
+import Web.DOM.ClassName (ClassName(..))
+import Web.DOM.ElementId (ElementId(..))
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.Event.Event (EventType(..))
 import Web.Event.EventTarget (addEventListenerWithOptions, eventListener, removeEventListener)
@@ -1608,7 +1611,7 @@ onElementResize elemId cb = findElementById elemId >>= case _ of
 findElementById :: String -> Effect (Maybe Element.Element)
 findElementById elemId = do
   doc <- window >>= document
-  getElementById elemId (toNonElementParentNode doc)
+  getElementById (ElementId elemId) (toNonElementParentNode doc)
 
 installScrollSync :: String -> String -> Effect (Effect Unit)
 installScrollSync taId preId = do
@@ -1634,7 +1637,7 @@ installVhsBurst className = do
   let
     targets = do
       d <- window >>= document
-      hc <- Document.getElementsByClassName className (HTMLDocument.toDocument d)
+      hc <- Document.getElementsByClassName (ClassName className) (HTMLDocument.toDocument d)
       HTMLCollection.toArray hc
     setVhs on = do
       els <- targets
@@ -1674,7 +1677,7 @@ onWordmarkLit done = do
   lit name = name == "hero-wordmark-in" || name == "hero-wordmark-fade"
   targets = do
     d <- window >>= document
-    hc <- Document.getElementsByClassName "hero-wordmark-in" (HTMLDocument.toDocument d)
+    hc <- Document.getElementsByClassName (ClassName "hero-wordmark-in") (HTMLDocument.toDocument d)
     HTMLCollection.toArray hc
 
 passiveOpts :: { capture :: Boolean, once :: Boolean, passive :: Boolean }
@@ -1686,11 +1689,9 @@ passiveOpts = { capture: false, once: false, passive: true }
 scrollSectionIntoView :: String -> Effect Unit
 scrollSectionIntoView id = do
   doc <- window >>= document
-  getElementById id (toNonElementParentNode doc) >>= case _ of
+  getElementById (ElementId id) (toNonElementParentNode doc) >>= case _ of
     Nothing -> pure unit
-    Just el -> scrollIntoViewSmoothImpl el
-
-foreign import scrollIntoViewSmoothImpl :: Element.Element -> Effect Unit
+    Just el -> Element.scrollIntoViewWithOptions { behavior: Element.Smooth, block: Element.Start, inline: Element.Nearest } el
 
 -- Find the neighbour of `current` in `sectionStates`, offset by `dir` (+1 down,
 -- -1 up), clamped to the ends.
@@ -1759,7 +1760,7 @@ observeRatios rootId ids cb = do
   obs <- IO.newIntersectionObserver
     (\entries _ -> for_ entries \e -> do
         id <- Element.id e.target
-        cb id e.intersectionRatio)
+        cb (un ElementId id) e.intersectionRatio)
     ( IO.thresholds := [ 0.0, 0.25, 0.5, 0.75, 1.0 ]
         <> maybe mempty (\r -> IO.root := r) rootEl
     )

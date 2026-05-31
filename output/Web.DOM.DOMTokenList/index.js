@@ -12,11 +12,17 @@ var item = function (index) {
     };
 };
 export {
-    add,
+    length,
     contains,
+    add,
     remove,
     toggle,
-    toggleForce
+    toggleForce,
+    replace,
+    supports,
+    getValue,
+    setValue,
+    tokens
 } from "./foreign.js";
 export {
     item

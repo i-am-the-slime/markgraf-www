@@ -740,6 +740,20 @@
           "untagged-union"
         ]
       },
+      "web-dom": {
+        "git": "https://github.com/i-am-the-slime/purescript-web-dom.git",
+        "ref": "49f0f025bf4a21ca42759ec7fef1e0f65470ecac",
+        "dependencies": [
+          "effect",
+          "enums",
+          "maybe",
+          "newtype",
+          "nullable",
+          "prelude",
+          "unsafe-coerce",
+          "web-events"
+        ]
+      },
       "web-font-loading": {
         "path": "/Users/mark/code/purescript-web-font-loading"
       },
@@ -1970,9 +1984,9 @@
       ]
     },
     "web-dom": {
-      "type": "registry",
-      "version": "6.0.0",
-      "integrity": "sha256-rVeqkxChkjqisDvOujy9BMEgGqJkwX3t6g21bXfiG5o=",
+      "type": "git",
+      "url": "https://github.com/i-am-the-slime/purescript-web-dom.git",
+      "rev": "49f0f025bf4a21ca42759ec7fef1e0f65470ecac",
       "dependencies": [
         "effect",
         "enums",
