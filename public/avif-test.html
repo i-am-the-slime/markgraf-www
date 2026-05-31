@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>AVIF vs WebP — animation check</title>
+<style>
+  body { background:#0f0f0f; color:#c8cdd9; font-family:ui-monospace,Menlo,monospace; text-align:center; margin:0; padding:28px 16px; }
+  h1 { color:#ff8a5c; font-weight:700; font-size:18px; }
+  .row { display:flex; flex-wrap:wrap; gap:24px; justify-content:center; align-items:flex-start; margin-top:20px; }
+  figure { margin:0; }
+  img { width:480px; max-width:90vw; border:1px solid #2a3142; display:block; }
+  figcaption { margin-top:8px; font-size:13px; color:#8a94a8; }
+  .accent { color:#ff3b1a; font-weight:700; }
+  p.note { color:#8a94a8; font-size:13px; max-width:640px; margin:24px auto 0; line-height:1.5; }
+</style></head>
+<body>
+  <h1>&#9658; does your browser animate the AVIF?</h1>
+  <div class="row">
+    <figure>
+      <img src="/markgraf-demo.avif" alt="animated AVIF">
+      <figcaption><span class="accent">AVIF</span> &mdash; 0.67 MB, 60fps</figcaption>
+    </figure>
+    <figure>
+      <img src="/markgraf-demo.webp" alt="animated WebP">
+      <figcaption><span class="accent">WebP</span> &mdash; 1.83 MB, 60fps</figcaption>
+    </figure>
+  </div>
+  <p class="note">
+    Both are real animated images (720 frames, infinite loop). If the AVIF on the left
+    plays, your browser supports animated AVIF. If it's frozen on a single frame while
+    the WebP plays, it doesn't &mdash; which is the whole point: that frozen state is
+    what Safari/Firefox users would get.
+  </p>
+</body></html>
