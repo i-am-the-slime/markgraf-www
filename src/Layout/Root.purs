@@ -112,26 +112,21 @@ retro = """
   .nsf-src .l { color: #5a6478; font-style: italic; }
   .nsf-src .c { color: #4a5468; font-style: italic; }
 
-  .nsf-obj { position: absolute; top: 50%; left: 50%; width: 90px; height: 90px; margin: -45px 0 0 -45px;
-    transform-style: preserve-3d; }
-  /* Fly-in: each shape streaks from a screen edge to its resting spot (once, on load),
-     then the cube inside keeps tumbling forever. */
-  .nsf-fly { transform-style: preserve-3d; opacity: 0;
-    animation-duration: 1.9s; animation-timing-function: cubic-bezier(0.16,0.82,0.28,1); animation-fill-mode: forwards; }
-  .nsf-fly1 { animation-name: nsf-fly1; animation-delay: 0.05s; }
-  .nsf-fly2 { animation-name: nsf-fly2; animation-delay: 0.20s; }
-  .nsf-fly3 { animation-name: nsf-fly3; animation-delay: 0.35s; }
-  .nsf-fly4 { animation-name: nsf-fly4; animation-delay: 0.50s; }
-  .nsf-fly5 { animation-name: nsf-fly5; animation-delay: 0.65s; }
-  @keyframes nsf-fly1 { 0% { transform: translate3d(-85vw,-55vh,-700px) scale(0.3); opacity: 0; } 55% { opacity: 1; } 100% { transform: translate3d(0,0,0) scale(1); opacity: 1; } }
-  @keyframes nsf-fly2 { 0% { transform: translate3d(85vw,-50vh,-900px) scale(0.3); opacity: 0; } 55% { opacity: 1; } 100% { transform: translate3d(0,0,0) scale(1); opacity: 1; } }
-  @keyframes nsf-fly3 { 0% { transform: translate3d(-75vw,55vh,-600px) scale(0.3); opacity: 0; } 55% { opacity: 1; } 100% { transform: translate3d(0,0,0) scale(1); opacity: 1; } }
-  @keyframes nsf-fly4 { 0% { transform: translate3d(80vw,52vh,-1000px) scale(0.3); opacity: 0; } 55% { opacity: 1; } 100% { transform: translate3d(0,0,0) scale(1); opacity: 1; } }
-  @keyframes nsf-fly5 { 0% { transform: translate3d(0,-72vh,-1100px) scale(0.3); opacity: 0; } 55% { opacity: 1; } 100% { transform: translate3d(0,0,0) scale(1); opacity: 1; } }
+  /* Each cube starts off-screen (per-cube --sx/--sy) and flies toward the centre while
+     receding deep in Z — so it shrinks to nothing at a single vanishing point, fades
+     out, and loops back to its edge. ~20 of them give a continuous inward stream. */
+  .nsf-fly { position: absolute; top: 50%; left: 50%; width: 90px; height: 90px; margin: -45px 0 0 -45px;
+    transform-style: preserve-3d; opacity: 0;
+    animation-name: nsf-vanish; animation-timing-function: ease-in; animation-iteration-count: infinite; }
+  @keyframes nsf-vanish {
+    0%   { transform: translate3d(var(--sx), var(--sy), 240px); opacity: 0; }
+    12%  { opacity: 0.7; }
+    78%  { opacity: 0.5; }
+    100% { transform: translate3d(0px, 0px, -1500px); opacity: 0; }
+  }
   .nsf-cube { position: relative; width: 90px; height: 90px; transform-style: preserve-3d; }
   .nsf-cube > i { position: absolute; left: 0; top: 0; width: 90px; height: 90px; box-sizing: border-box;
-    border: 1px solid rgba(255,138,92,0.5); background: rgba(255,59,26,0.035);
-    box-shadow: inset 0 0 16px rgba(255,59,26,0.1); }
+    border: 1px solid rgba(150,160,180,0.32); background: rgba(42,49,66,0.30); }
   .nsf-cube > i:nth-child(1) { transform: rotateY(0deg)   translateZ(45px); }
   .nsf-cube > i:nth-child(2) { transform: rotateY(90deg)  translateZ(45px); }
   .nsf-cube > i:nth-child(3) { transform: rotateY(180deg) translateZ(45px); }
@@ -147,21 +142,26 @@ retro = """
 </style>
 
 <div class="nsf-space">
-  <div class="nsf-obj" style="transform: translate3d(-150px,-30px,-120px) scale(0.72)">
-    <div class="nsf-fly nsf-fly1"><div class="nsf-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  </div>
-  <div class="nsf-obj" style="transform: translate3d(160px,-46px,-40px) scale(0.92)">
-    <div class="nsf-fly nsf-fly2"><div class="nsf-cube nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  </div>
-  <div class="nsf-obj" style="transform: translate3d(-120px,70px,30px) scale(1.1)">
-    <div class="nsf-fly nsf-fly3"><div class="nsf-cube nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  </div>
-  <div class="nsf-obj" style="transform: translate3d(130px,86px,-80px) scale(0.8)">
-    <div class="nsf-fly nsf-fly4"><div class="nsf-cube nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  </div>
-  <div class="nsf-obj" style="transform: translate3d(10px,-96px,60px) scale(1.25)">
-    <div class="nsf-fly nsf-fly5"><div class="nsf-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  </div>
+  <div class="nsf-fly" style="--sx:-62vw;--sy:-30vh;animation-duration:8.5s;animation-delay:0s"><div class="nsf-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:60vw;--sy:-26vh;animation-duration:9.2s;animation-delay:-0.5s"><div class="nsf-cube nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-55vw;--sy:34vh;animation-duration:7.8s;animation-delay:-1.0s"><div class="nsf-cube nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:58vw;--sy:40vh;animation-duration:10.0s;animation-delay:-1.4s"><div class="nsf-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:4vw;--sy:-58vh;animation-duration:8.0s;animation-delay:-1.9s"><div class="nsf-cube nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-8vw;--sy:56vh;animation-duration:9.5s;animation-delay:-2.3s"><div class="nsf-cube nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-70vw;--sy:6vh;animation-duration:7.6s;animation-delay:-2.8s"><div class="nsf-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:68vw;--sy:-8vh;animation-duration:8.8s;animation-delay:-3.2s"><div class="nsf-cube nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:40vw;--sy:-46vh;animation-duration:9.0s;animation-delay:-3.7s"><div class="nsf-cube nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-44vw;--sy:-42vh;animation-duration:7.9s;animation-delay:-4.1s"><div class="nsf-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:52vw;--sy:28vh;animation-duration:10.2s;animation-delay:-4.6s"><div class="nsf-cube nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-50vw;--sy:18vh;animation-duration:8.3s;animation-delay:-5.0s"><div class="nsf-cube nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:18vw;--sy:54vh;animation-duration:9.1s;animation-delay:-5.5s"><div class="nsf-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-22vw;--sy:-54vh;animation-duration:7.7s;animation-delay:-5.9s"><div class="nsf-cube nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:64vw;--sy:14vh;animation-duration:8.6s;animation-delay:-6.4s"><div class="nsf-cube nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-64vw;--sy:-12vh;animation-duration:9.8s;animation-delay:-6.8s"><div class="nsf-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:30vw;--sy:46vh;animation-duration:8.1s;animation-delay:-7.3s"><div class="nsf-cube nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-34vw;--sy:48vh;animation-duration:9.3s;animation-delay:-7.7s"><div class="nsf-cube nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:46vw;--sy:-34vh;animation-duration:7.8s;animation-delay:-8.2s"><div class="nsf-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-16vw;--sy:-60vh;animation-duration:8.9s;animation-delay:-8.6s"><div class="nsf-cube nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
 </div>
 <div class="nsf-scan"></div>
 
