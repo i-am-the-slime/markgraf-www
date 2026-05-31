@@ -38,6 +38,8 @@ retro =
     text-align: center;
     overflow-x: hidden;
   }
+  ::selection { background: #ff3b1a; color: #0f0f0f; }
+  ::-moz-selection { background: #ff3b1a; color: #0f0f0f; }
 
   /* "Our 3D shapes in space", approximated in pure CSS — a fixed perspective stage
      behind the content. Wireframe cubes (real DOM face nodes) fly in from the screen
