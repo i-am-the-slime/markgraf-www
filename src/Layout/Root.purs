@@ -50,7 +50,7 @@ retro =
 
   /* CRT scanlines over everything, and the real content layer above the rain. */
   .nsf-scan { position: fixed; inset: 0; z-index: 2; pointer-events: none;
-    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.20) 0 1px, transparent 1px 3px); }
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.08) 0 1px, transparent 1px 3px); }
   .nsf-content { position: relative; z-index: 1; padding: 8px 0 28px; }
 
   .nsf-amber {
@@ -66,16 +66,16 @@ retro =
   .nsf-title { font-family: "Sinistre", "Sinistre Fallback", serif; font-size: 52px;
     font-weight: bold; letter-spacing: -1px; }
 
-  /* Code + command blocks: plain dark panels, no window chrome. */
-  .nsf-term-body { margin: 12px auto; padding: 14px 18px; max-width: 480px; background: #0a0a0a;
-    color: #f5f1e8; font-size: 15px; white-space: pre-wrap; border-radius: 6px;
+  /* Code + command blocks: no chrome, no background — straight on the page. */
+  .nsf-term-body { margin: 12px auto; padding: 6px 0; max-width: 480px;
+    color: #f5f1e8; font-size: 15px; white-space: pre-wrap;
     font-family: "Commit Mono", ui-monospace, monospace; }
-  .nsf-inline { background: #0a0a0a; color: #ff8a5c; padding: 2px 7px; }
+  .nsf-inline { color: #ff8a5c; }
   .nsf-demo { max-width: 900px; }
   .nsf-sbs { margin: 14px auto; border-collapse: collapse; }
   .nsf-sbs td { vertical-align: middle; padding: 0 9px; }
   .nsf-src { margin: 0; padding: 20px 24px; font: 16px/1.7 "Commit Mono", ui-monospace, monospace;
-    color: #c8cdd9; white-space: pre; background: #0a0a0a; border-radius: 6px; }
+    color: #c8cdd9; white-space: pre; }
   .nsf-src .k { color: #ff8a5c; }
   .nsf-src .d { color: #ff3b1a; }
   .nsf-src .a { color: #ff3b1a; }
