@@ -66,20 +66,22 @@ retro =
   .nsf-title { font-family: "Sinistre", "Sinistre Fallback", serif; font-size: 52px;
     font-weight: bold; letter-spacing: -1px; }
 
-  /* Windows 3.11 window chrome — raised grey bevel, navy title bar, system-menu box on
-     the left, minimize/maximize triangle buttons on the right. Used for both the code
-     editor and the install command window. */
-  .nsf-win { background: #c0c0c0; border: 2px outset #c0c0c0; padding: 3px; text-align: left; }
-  .nsf-titlebar { display: flex; align-items: center; gap: 2px; height: 19px; padding: 1px 2px; background: #000080; }
-  .nsf-sysbtn { flex: 0 0 auto; width: 17px; height: 15px; background: #c0c0c0; border: 1px outset #c0c0c0;
-    display: inline-flex; align-items: center; justify-content: center; }
-  .nsf-sysbar { display: block; width: 10px; height: 3px; background: #000; border-top: 1px solid #fff; }
-  .nsf-titletext { flex: 1; text-align: center; color: #fff; white-space: nowrap; overflow: hidden;
-    font: bold 12px "MS Sans Serif", Tahoma, Geneva, sans-serif; letter-spacing: 0.3px; }
-  .nsf-winbtns { flex: 0 0 auto; display: flex; }
-  .nsf-winbtn { width: 17px; height: 15px; background: #c0c0c0; border: 1px outset #c0c0c0; color: #000;
-    display: inline-flex; align-items: center; justify-content: center; font: 8px sans-serif; line-height: 1; }
-  .nsf-client { margin-top: 3px; background: #0a0a0a; border: 2px solid; border-color: #808080 #ffffff #ffffff #808080; }
+  /* Classic Mac OS (System 6/7) window chrome — thin black outline, pinstriped title bar
+     with a close box on the left, a zoom box on the right, and the title sitting in a
+     white gap in the stripes. Used for both the code editor and the install window. */
+  .nsf-win { background: #fff; border: 1px solid #000; box-shadow: 1px 1px 0 #000; text-align: left; }
+  .nsf-titlebar { position: relative; height: 20px; border-bottom: 1px solid #000;
+    background: repeating-linear-gradient(to bottom, #000 0 2px, #fff 2px 5px); }
+  .nsf-sysbtn { position: absolute; left: 7px; top: 50%; transform: translateY(-50%);
+    width: 12px; height: 12px; background: #fff; border: 1px solid #000;
+    box-shadow: inset 0 0 0 1px #fff, inset 0 0 0 2px #000; }
+  .nsf-winbtns { position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+    width: 12px; height: 12px; background: #fff; border: 1px solid #000;
+    box-shadow: inset 0 0 0 1px #fff, inset 0 0 0 2px #000; }
+  .nsf-titletext { position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+    height: 20px; line-height: 20px; background: #fff; padding: 0 10px; color: #000;
+    font: bold 12px Geneva, Tahoma, Verdana, sans-serif; white-space: nowrap; }
+  .nsf-client { background: #0a0a0a; }
 
   /* Contents that live inside those windows. */
   .nsf-term-body { margin: 0; padding: 13px 15px; color: #f5f1e8; font-size: 14px; white-space: pre-wrap;
@@ -218,14 +220,14 @@ retro =
 </table>
 
 <div class="nsf-card nsf-demo">
-  <font color="#ff8a5c" face="Commit Mono" size="2"><b>Live demo</b> &mdash; this source compiles to this animation.</font>
+  <font color="#ff8a5c" face="Commit Mono" size="2"><b>Demo</b> &mdash; this source compiles to this animation.</font>
   <table class="nsf-sbs"><tr>
     <td>
       <div class="nsf-win">
         <div class="nsf-titlebar">
-          <span class="nsf-sysbtn"><span class="nsf-sysbar"></span></span>
+          <span class="nsf-sysbtn"></span>
           <span class="nsf-titletext">EXAMPLE.MARKGRAF</span>
-          <span class="nsf-winbtns"><span class="nsf-winbtn">&#9660;</span><span class="nsf-winbtn">&#9650;</span></span>
+          <span class="nsf-winbtns"></span>
         </div>
         <div class="nsf-client">
 <pre class="nsf-src"><span class="k">frame</span> <span class="s">"a simple read"</span> {
@@ -260,7 +262,7 @@ retro =
     <div class="nsf-titlebar">
       <span class="nsf-sysbtn"><span class="nsf-sysbar"></span></span>
       <span class="nsf-titletext">CMD</span>
-      <span class="nsf-winbtns"><span class="nsf-winbtn">&#9660;</span><span class="nsf-winbtn">&#9650;</span></span>
+      <span class="nsf-winbtns"></span>
     </div>
     <div class="nsf-client">
       <pre class="nsf-term-body"><span class="nsf-prompt">C:\&gt;</span> brew install markgrafhq/tap/markgraf</pre>
