@@ -23,6 +23,13 @@ import Unsafe.Coerce (unsafeCoerce)
 noRaycast :: forall a. a
 noRaycast = unsafeCoerce (\_ _ -> unit)
 
+-- r3f's drawing-buffer aspect. `size` isn't in the typed RootState row, so coerce
+-- to the shape we need and do the division here rather than in a JS accessor.
+frameAspect :: forall r. { | r } -> Number
+frameAspect rs = s.width / s.height
+  where
+  s = (unsafeCoerce rs :: { size :: { width :: Number, height :: Number } }).size
+
 -- Mutable per-ball byte buffer for marking connected/last-color state. Allocated
 -- once and mutated in place to avoid array reallocs on the hot path.
 foreign import data U8Array :: Type
@@ -272,7 +279,7 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
     interval <- readRef intervalRef
     lastT <- readRef lastPaintRef
     when (t - lastT >= interval) do
-      let aspect = readAspect rs
+      let aspect = frameAspect rs
       writeRef lastPaintRef t
       writeRef frameRef { t, aspect }
 
@@ -1485,7 +1492,6 @@ applyCamera
 applyCamera = applyCameraImpl
 
 foreign import readClockElapsed :: forall r. { | r } -> Number
-foreign import readAspect :: forall r. { | r } -> Number
 foreign import parallelogramGeometryImpl :: Number -> Number -> Number -> Number -> JSX
 foreign import roundedRectGeometryImpl :: Number -> Number -> Number -> Number -> JSX
 foreign import installStartChainListenerImpl :: Effect Unit -> Effect (Effect Unit)

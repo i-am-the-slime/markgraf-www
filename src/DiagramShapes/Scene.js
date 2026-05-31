@@ -1,11 +1,8 @@
 import React from "react"
-import { Shape, ExtrudeGeometry, Vector3 } from "three"
+import { Shape, ExtrudeGeometry } from "three"
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 
 export const readClockElapsed = (state) => state.clock.getElapsedTime()
-export const readPointerX = (state) => state.pointer.x
-export const readPointerY = (state) => state.pointer.y
-export const readAspect = (state) => state.size.width / state.size.height
 
 const pgCache = new Map()
 const getParallelogram = (w, h, skew, depth) => {
@@ -67,27 +64,6 @@ export const roundedRectGeometryImpl = (w) => (h) => (r) => (depth) =>
     object: getRoundedRect(w, h, r, depth),
     attach: "geometry",
   })
-
-const _projTmp = new Vector3()
-export const hoveredBallIndex = (state) => {
-  const { camera, pointer, scene } = state
-  scene.updateMatrixWorld(true)
-  let bestIdx = -1
-  let bestDist = 0.04
-  scene.traverse((o) => {
-    if (!o.userData || typeof o.userData.ballIndex !== "number") return
-    o.getWorldPosition(_projTmp)
-    _projTmp.project(camera)
-    const dx = _projTmp.x - pointer.x
-    const dy = _projTmp.y - pointer.y
-    const d = Math.sqrt(dx * dx + dy * dy)
-    if (d < bestDist) {
-      bestDist = d
-      bestIdx = o.userData.ballIndex
-    }
-  })
-  return bestIdx
-}
 
 // Typed-array helpers. Used by Scene.purs as mutable per-ball buffers so we
 // avoid `Array.index` (boxed) and `updateAt` (whole-array copy) on the per-frame
