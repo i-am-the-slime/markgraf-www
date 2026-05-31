@@ -95,6 +95,18 @@ retro = """
     font-family: "Courier New", monospace; }
   .nsf-prompt { color: #ff3b1a; font-weight: bold; }
   .nsf-inline { background: #0a0a0a; border: 1px solid #2a3142; color: #ff8a5c; padding: 2px 7px; }
+
+  /* The .markgraf source shown beside the demo gif. */
+  .nsf-demo { max-width: 880px; }
+  .nsf-sbs { margin: 12px auto; border-collapse: collapse; }
+  .nsf-sbs td { vertical-align: top; padding: 0 8px; }
+  .nsf-src { text-align: left; background: #0a0a0a; border: 1px solid #2a3142; border-radius: 6px;
+    padding: 12px 14px; margin: 0; font: 13px/1.5 "Courier New", monospace; color: #c8cdd9; white-space: pre; }
+  .nsf-src .k { color: #ff3b1a; font-weight: bold; }
+  .nsf-src .d { color: #ff8a5c; }
+  .nsf-src .a { color: #ff3b1a; font-weight: bold; }
+  .nsf-src .s { color: #f5f1e8; }
+  .nsf-src .l { color: #5a6478; }
 </style>
 
 <div class="nsf-rain">
@@ -134,12 +146,26 @@ retro = """
 
 <hr class="nsf-rule">
 
-<div class="nsf-card">
-  <font color="#ff8a5c" face="Courier New" size="2"><b>&#9658; LIVE DEMO</b> &mdash; pre-recorded, because your JavaScript is off</font><br>
-  <img src="/markgraf-www/markgraf-demo.gif" alt="markgraf animated graph diagram" width="480"
-       style="max-width:100%;height:auto;border:1px solid #2a3142;margin-top:10px;image-rendering:auto">
-  <br>
-  <font color="#8a94a8" face="Courier New" size="2">fig. 0 &mdash; an actual markgraf render: client &#8594; API &#8594; DB &#8594; cache</font>
+<div class="nsf-card nsf-demo">
+  <font color="#ff8a5c" face="Courier New" size="2"><b>&#9658; LIVE DEMO</b> &mdash; this source compiles to this animation</font>
+  <table class="nsf-sbs"><tr>
+    <td>
+<pre class="nsf-src"><span class="k">frame</span> <span class="s">"a simple read"</span> {
+  <span class="d">+node</span> client <span class="s">"Client"</span>
+  <span class="d">+node</span> api    <span class="s">"API"</span>
+  <span class="d">+edge</span> client api
+
+  client <span class="a">-&gt;</span> api <span class="l">|GET /user/42
+                 asks the API
+                 for one user record|</span>
+}</pre>
+    </td>
+    <td>
+      <img src="/markgraf-www/markgraf-demo.gif" alt="markgraf animated graph diagram" width="420"
+           style="border:1px solid #2a3142; image-rendering:auto">
+    </td>
+  </tr></table>
+  <font color="#8a94a8" face="Courier New" size="2">fig. 0 &mdash; markgraf renders the source (left) into the diagram (right): client &#8594; API &#8594; DB &#8594; cache</font>
 </div>
 
 <div class="nsf-card">
