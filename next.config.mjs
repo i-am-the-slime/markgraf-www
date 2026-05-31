@@ -9,6 +9,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const rscLoader = path.resolve(here, "node_modules/next-purs-rsc/purescript-rsc-loader.js");
 
 const config = {
+  output: "export",
   basePath: "/markgraf-www",
   images: { unoptimized: true },
   trailingSlash: true,

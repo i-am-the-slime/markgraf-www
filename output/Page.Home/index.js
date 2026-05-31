@@ -8,7 +8,7 @@ import * as Yoga_Om from "../Yoga.Om/index.js";
 import * as Yoga_React_Om from "../Yoga.React.Om/index.js";
 var page = /* #__PURE__ */ (function () {
     var heroComponent = Effect_Unsafe.unsafePerformEffect(Component_HeroPreview.mkHeroPreview);
-    return Next.nextPage()()()(Next.parsePathFieldsNilRow)()({
+    return Next.nextPage()()()()(Next.queryPresentNil)(Next.parsePathFieldsNilRow)()({
         reflectSymbol: function () {
             return "Root";
         }
