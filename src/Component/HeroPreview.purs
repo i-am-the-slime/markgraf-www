@@ -981,7 +981,7 @@ integrationsSection =
             { className: "display-glow text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
             , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
             }
-            "Runs everywhere."
+            "Integrations"
         , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed mb-10" }
             [ text "One "
             , inlineCode "```markgraf"
