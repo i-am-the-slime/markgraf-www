@@ -60,7 +60,6 @@ import Yoga.React.DOM.HTML.Button (button)
 import Yoga.React.DOM.HTML.Code (code) as H
 import Yoga.React.DOM.HTML.Div (div)
 import Yoga.React.DOM.HTML.H (h1, h2)
-import Yoga.React.DOM.HTML.Img (img)
 import Yoga.React.DOM.HTML.Main (main)
 import Yoga.React.DOM.HTML.Nav (nav)
 import Yoga.React.DOM.HTML.P (p)
@@ -115,7 +114,6 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       , labQuoteSection
       , labHangSection
       , labIconsSection
-      , labPhotoSection
       , labRightHangSection
       , navArrows { active: activeSection }
       , crtOverlay
@@ -1378,46 +1376,6 @@ iconCard kind heading body =
         , p { className: "text-[14px] leading-[1.5] text-[#8a94a8]" }
             [ text body ]
         ]
-    ]
-
-labPhotoSection :: JSX
-labPhotoSection =
-  H.section
-    { id: "lab-photo"
-    , className: "relative snap-start snap-always h-screen overflow-hidden z-10"
-    }
-    [ labStage "absolute inset-0 grid grid-cols-12"
-        [ labItem "col-span-12 md:col-span-7 relative bg-[#11162a] overflow-hidden"
-            [ img
-                { src: "/markgraf-www/mascot/christoph-source.png"
-                , alt: "Christoph"
-                , className: "absolute inset-0 w-full h-full object-cover grayscale contrast-125"
-                , style: css { filter: "grayscale(1) contrast(1.15)" }
-                }
-            , div
-                { className: "absolute bottom-6 left-6 font-mono text-[10px] uppercase tracking-[0.3em] text-[#f5f1e8]/70"
-                }
-                [ text "fig. 01 — christoph, source" ]
-            ]
-        , labItem "col-span-12 md:col-span-5 flex flex-col justify-center px-8 sm:px-12 py-12 gap-10"
-            [ sectionLabel "lab-e / photo"
-            , h2
-                { className: "text-[9vw] sm:text-[5vw] leading-[0.9] tracking-[-0.025em] font-bold"
-                , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
-                }
-                "The mascot."
-            , div { className: "flex flex-col gap-4 max-w-[34ch]" }
-                [ p
-                    { className: "text-[18px] leading-[1.5] text-[#e8e4d8] italic"
-                    , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif", fontWeight: "300" }
-                    }
-                    [ text "His name is Christoph. He keeps the source." ]
-                , p { className: "text-[15px] leading-[1.6] text-[#c8cdd9]" }
-                    [ text "He does not draw. He does not animate. He waits for the compiler. The compiler does the work." ]
-                ]
-            ]
-        ]
-    , spreadFolio "lab-e" "photo"
     ]
 
 -- Mirror of lab-c: skinny editorial sidebar hard-left, headline hangs right.
