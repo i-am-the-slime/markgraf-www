@@ -135,6 +135,14 @@ retro = """
 <hr class="nsf-rule">
 
 <div class="nsf-card">
+  <font color="#ff8a5c" face="Courier New" size="2"><b>&#9658; LIVE DEMO</b> &mdash; pre-recorded, because your JavaScript is off</font><br>
+  <img src="/markgraf-www/markgraf-demo.gif" alt="markgraf animated graph diagram" width="480"
+       style="max-width:100%;height:auto;border:1px solid #2a3142;margin-top:10px;image-rendering:auto">
+  <br>
+  <font color="#8a94a8" face="Courier New" size="2">fig. 0 &mdash; an actual markgraf render: client &#8594; API &#8594; DB &#8594; cache</font>
+</div>
+
+<div class="nsf-card">
   <table class="nsf-graph">
     <tr>
       <td><span class="nsf-node">A</span></td>
