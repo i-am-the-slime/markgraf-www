@@ -206,7 +206,7 @@ retro =
   <font color="#ff8a5c" face="Commit Mono" size="2"><b>Demo</b> &mdash; this source compiles to this animation.</font>
   <table class="nsf-sbs"><tr>
     <td>
-<pre class="nsf-src"><span class="k">frame</span> <span class="s">"a simple read"</span> {
+<pre class="nsf-src"><span class="k">frame</span> <span class="s">""</span> {
   <span class="d">+node</span> client <span class="s">"Client"</span>
   <span class="d">+node</span> api    <span class="s">"API"</span>
   <span class="d">+node</span> db     <span class="s">"Database"</span>
