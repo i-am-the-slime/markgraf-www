@@ -14,9 +14,9 @@ default { children } = html { lang: "en" } [ body {} [ noScriptFallback, appShel
   where
   appShell = div { id: "mg-app", style: css { display: "contents" } } [ children ]
 
--- The no-JS experience: a 1996 "under construction" page reskinned in markgraf's own
--- dark-grey + orange palette, with a CSS-only Matrix code-rain backdrop. The whole
--- thing lives inside a single <noscript> so browsers with scripting on never parse a
+-- The no-JS experience: markgraf's dark-grey + orange palette over a fixed perspective
+-- field of low-poly boxes flying into a central vanishing point (pure CSS, real DOM
+-- faces). The whole thing lives inside a single <noscript> so browsers with scripting on never parse a
 -- byte of it; only when JS is disabled does the inner <style> kick in — hiding the real
 -- (WebGL) app and taking over. It is prerendered into static HTML at build time
 -- (dangerouslySetInnerHTML emits it verbatim), so no JavaScript runs to produce or show
@@ -42,9 +42,8 @@ retro =
   ::-moz-selection { background: #ff3b1a; color: #0f0f0f; }
 
   /* "Our 3D shapes in space", approximated in pure CSS — a fixed perspective stage
-     behind the content. Wireframe cubes (real DOM face nodes) fly in from the screen
-     edges and assemble into a slowly tumbling cluster in the middle, like the WebGL
-     scene the no-JS visitor is missing. */
+     behind the content holding a field of low-poly boxes (real DOM faces), a nod to
+     the WebGL scene the no-JS visitor is missing. */
   .nsf-space { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
     perspective: 900px; perspective-origin: 50% 50%; }
 
@@ -83,9 +82,9 @@ retro =
   .nsf-src .l { color: #5a6478; font-style: italic; }
   .nsf-src .c { color: #4a5468; font-style: italic; }
 
-  /* Each cube starts off-screen (per-cube --sx/--sy) and flies toward the centre while
+  /* Each box starts off-screen (per-box --sx/--sy) and flies toward the centre while
      receding deep in Z — so it shrinks to nothing at a single vanishing point, fades
-     out, and loops back to its edge. ~20 of them give a continuous inward stream. */
+     out, and loops back to its edge. ~70 of them give a continuous inward stream. */
   .nsf-fly { position: absolute; top: 50%; left: 50%; width: 90px; height: 90px; margin: -45px 0 0 -45px;
     transform-style: preserve-3d; opacity: 0;
     animation-name: nsf-vanish; animation-timing-function: ease-in; animation-iteration-count: infinite; }
@@ -95,9 +94,9 @@ retro =
     78%  { opacity: 0.5; }
     100% { transform: translate3d(0px, 0px, -1500px); opacity: 0; }
   }
-  /* Low-poly shapes (Star Fox vibes), all built from real DOM faces and flat-shaded with
-     translucent grey; back faces hidden so they read solid. Three kinds, mixed across the
-     swarm: cube, flat extruded slab, and octahedron (8-triangle diamond). */
+  /* Low-poly shapes: extruded rectangular boxes built from real DOM faces, flat-shaded
+     with translucent grey, back faces hidden so they read solid. Each flyer sets its own
+     width/height/thickness (--w/--h/--d) inline, so the swarm is boxes of varied profile. */
   .nsf-shape { position: relative; width: 90px; height: 90px; transform-style: preserve-3d; }
   .nsf-shape > i { position: absolute; left: 50%; top: 50%; box-sizing: border-box;
     border: 1px solid rgba(150,160,180,0.30); background: rgba(42,49,66,0.42);
