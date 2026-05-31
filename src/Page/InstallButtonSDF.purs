@@ -2,12 +2,15 @@ module Page.InstallButtonSDF (installButtonSDF) where
 
 import Prelude
 
+import Control.Promise (Promise, toAffE)
 import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null)
 import Data.Number (exp, sin)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Effect.Aff (Aff, launchAff_)
+import Effect.Class (liftEffect)
 import Effect.Uncurried (EffectFn1, runEffectFn1)
 import Effect.Unsafe (unsafePerformEffect)
 import React.Basic (JSX, ReactComponent, Ref, element)
@@ -17,6 +20,7 @@ import React.Basic.Hooks as Hooks
 import React.R3F.Hooks (RootState, applyProps, useFrame)
 import React.R3F.Three.Internal (threejs)
 import React.R3F.Three.Types (Object3D, placeholderTexture)
+import Unsafe.Coerce (unsafeCoerce)
 import Yoga.React.DOM.HTML.A (a)
 import Yoga.React.DOM.Internal (css)
 import Yoga.React.R3F.Canvas (canvas)
@@ -85,9 +89,10 @@ installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \{ hove
 
     phase <- advancePhase phaseRef targetRef lastSwitchRef now dt
     hovering <- readRef hoveringRef
-    let mx = readPointerX rs
-        my = readPointerY rs
-        aspect = readAspect rs
+    let st = frameState rs
+        mx = st.pointer.x
+        my = st.pointer.y
+        aspect = st.size.width / st.size.height
     yaw <- easeYaw yawRef hovering mx now dt
     tilt <- easeTilt tiltRef hovering my now dt
     fill <- easeFill fillRef hovering dt
@@ -100,7 +105,9 @@ installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \{ hove
         , "uniforms-uTilt-value": tilt
         , "uniforms-uFill-value": fill
         , "uniforms-uMouse-value": [ mx * 0.5 * aspect, -my * 0.5 ]
-        , "uniforms-uRes-value": [ readBufferWidth rs, readBufferHeight rs ]
+        -- shader projects gl_FragCoord against uRes => the drawing-buffer size
+        -- (CSS size x dpr), computed here rather than in the FFI
+        , "uniforms-uRes-value": [ st.size.width * st.viewport.dpr, st.size.height * st.viewport.dpr ]
         }
 
   pure (sdfQuad matRef texRef labelCanvas)
@@ -119,9 +126,15 @@ ensureLabelCanvas createdRef texRef setLabelCanvas = readRef createdRef >>= case
   true -> pure unit
   false -> do
     writeRef createdRef true
-    canvas <- makeLabelCanvas "install"
+    canvas <- makeLabelCanvas labelConfig
     setLabelCanvas (Just canvas)
-    refreshLabelOnFontLoad canvas "install" (readRefMaybe texRef # withJust markTextureDirty)
+    -- The first draw may use a fallback face; once the brand font loads, repaint and
+    -- flag the texture for re-upload. Sequenced here in PureScript, not in the FFI.
+    launchAff_ do
+      awaitFont labelConfig.font
+      liftEffect do
+        redrawLabel canvas labelConfig
+        readRefMaybe texRef >>= traverse_ markTextureDirty
 
 -- ---------------------------------------------------------------------------
 -- Animation state machine, ported from the prototype's frame() — all over Refs.
@@ -379,44 +392,58 @@ sdfFrag =
   """
 
 -- ---------------------------------------------------------------------------
--- FFI: per-frame reads off the r3f root state, and the text-canvas texture.
+-- Per-frame state + the label canvas. All maths/config is here; the .js only
+-- does the irreducible browser bits (2D drawing, the font-load promise).
 -- ---------------------------------------------------------------------------
 
-readPointerX :: { | RootState } -> Number
-readPointerX = readPointerXImpl
+-- `size`/`viewport` aren't in the typed RootState row, so coerce to the shape we
+-- need and read it in PureScript — the aspect and buffer-size maths stay here.
+type FrameState =
+  { pointer :: { x :: Number, y :: Number }
+  , size :: { width :: Number, height :: Number }
+  , viewport :: { dpr :: Number }
+  }
 
-readPointerY :: { | RootState } -> Number
-readPointerY = readPointerYImpl
+frameState :: { | RootState } -> FrameState
+frameState = unsafeCoerce
 
-readAspect :: { | RootState } -> Number
-readAspect = readAspectImpl
+-- What to paint on the label canvas — the text, font and metrics all live here in
+-- PureScript; the .js only applies them to a 2D context (no design choices in JS).
+type LabelConfig =
+  { text :: String
+  , font :: String
+  , letterSpacing :: String
+  , offsetX :: Number
+  }
 
-readBufferWidth :: { | RootState } -> Number
-readBufferWidth = readBufferWidthImpl
+labelConfig :: LabelConfig
+labelConfig =
+  { text: "install"
+  , font: "800 144px \"Sinistre\", \"Sinistre Fallback\", serif"
+  , letterSpacing: "8px"
+  , offsetX: 4.0
+  }
 
-readBufferHeight :: { | RootState } -> Number
-readBufferHeight = readBufferHeightImpl
-
-foreign import readPointerXImpl :: { | RootState } -> Number
-foreign import readPointerYImpl :: { | RootState } -> Number
-foreign import readAspectImpl :: { | RootState } -> Number
-foreign import readBufferWidthImpl :: { | RootState } -> Number
-foreign import readBufferHeightImpl :: { | RootState } -> Number
-
--- A 2D <canvas> with the label drawn on it (Sinistre 800, EffectFn1 impl). r3f turns it into a CanvasTexture
+-- A 2D <canvas> with the label painted on it. r3f turns it into a CanvasTexture
 -- (its THREE), so our FFI never touches three — see labelTexture in sdfQuad.
 foreign import data LabelCanvas :: Type
 
-makeLabelCanvas :: String -> Effect LabelCanvas
+makeLabelCanvas :: LabelConfig -> Effect LabelCanvas
 makeLabelCanvas = runEffectFn1 makeLabelCanvasImpl
 
-foreign import makeLabelCanvasImpl :: EffectFn1 String LabelCanvas
+foreign import makeLabelCanvasImpl :: EffectFn1 LabelConfig LabelCanvas
 
--- Redraw the label when the brand font loads, then flag the texture for re-upload.
-refreshLabelOnFontLoad :: LabelCanvas -> String -> Effect Unit -> Effect Unit
-refreshLabelOnFontLoad = refreshLabelOnFontLoadImpl
+-- Repaint the existing canvas (after the brand font has loaded).
+redrawLabel :: LabelCanvas -> LabelConfig -> Effect Unit
+redrawLabel = redrawLabelImpl
 
-foreign import refreshLabelOnFontLoadImpl :: LabelCanvas -> String -> Effect Unit -> Effect Unit
+foreign import redrawLabelImpl :: LabelCanvas -> LabelConfig -> Effect Unit
+
+-- The brand font's load as an Aff, so PureScript sequences the redraw + re-upload.
+awaitFont :: String -> Aff Unit
+awaitFont = toAffE <<< awaitFontImpl
+
+foreign import awaitFontImpl :: String -> Effect (Promise Unit)
 
 -- Mark the r3f-built CanvasTexture dirty so the renderer re-uploads the canvas.
 markTextureDirty :: Object3D -> Effect Unit

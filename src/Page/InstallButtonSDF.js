@@ -1,51 +1,41 @@
-// No `three` import here: r3f builds the CanvasTexture from this canvas with its
-// own THREE instance (see labelTexture in the .purs). Minting a texture from a
-// second THREE copy here never uploads through r3f's renderer — the sampler stays
-// black while numeric uniforms bind fine. So this file only does 2D drawing + reads.
+// Irreducible browser bits only — no logic, no design choices. The label text,
+// font, metrics, the per-frame maths and the load/redraw sequencing all live in
+// the PureScript; this file just talks to the 2D canvas + Font Loading API.
+//
+// No `three` import either: r3f builds the CanvasTexture from this canvas with its
+// own THREE instance (a texture minted from a second THREE copy never uploads).
 
-// Per-frame reads off the r3f root state, mirroring Scene.js's accessors.
-export const readPointerXImpl = (state) => state.pointer.x
-export const readPointerYImpl = (state) => state.pointer.y
-export const readAspectImpl = (state) => state.size.width / state.size.height
-// The shader projects from gl_FragCoord against uRes, so it needs the
-// drawing-buffer size (CSS size x device-pixel-ratio), not the CSS size.
-export const readBufferWidthImpl = (state) => state.size.width * state.viewport.dpr
-export const readBufferHeightImpl = (state) => state.size.height * state.viewport.dpr
-
-// Draw "INSTALL" to an offscreen 2D canvas in the brand font. r3f wraps the
-// returned canvas in a CanvasTexture and binds it to the shader's uText sampler.
-const drawLabel = (canvas, str) => {
+// Paint a label config { text, font, letterSpacing, offsetX } onto a 2D canvas.
+const draw = (canvas, cfg) => {
   const x = canvas.getContext("2d")
   x.clearRect(0, 0, canvas.width, canvas.height)
   x.fillStyle = "#fff"
-  x.font = '800 144px "Sinistre", "Sinistre Fallback", serif'
+  x.font = cfg.font
   x.textAlign = "center"
   x.textBaseline = "middle"
   x.fontKerning = "normal"
-  x.letterSpacing = "8px"
-  x.fillText(str, 512 + 4, 128)
+  x.letterSpacing = cfg.letterSpacing
+  x.fillText(cfg.text, canvas.width / 2 + cfg.offsetX, canvas.height / 2)
 }
 
 // EffectFn1 impl: uncurried, returns the canvas directly (runEffectFn1 wraps the effect).
-export const makeLabelCanvasImpl = (str) => {
+export const makeLabelCanvasImpl = (cfg) => {
   const c = document.createElement("canvas")
   c.width = 1024
   c.height = 256
-  drawLabel(c, str)
+  draw(c, cfg)
   return c
 }
 
-// Redraw the label once the brand web font has actually loaded (the first draw may
-// fall back to a system face), then flag the texture so r3f re-uploads the canvas.
-export const refreshLabelOnFontLoadImpl = (canvas) => (str) => (markDirty) => () => {
-  if (!document.fonts) return
-  document.fonts.load('800 144px "Sinistre"').then(() => {
-    drawLabel(canvas, str)
-    markDirty()
-  })
-}
+export const redrawLabelImpl = (canvas) => (cfg) => () => draw(canvas, cfg)
 
-// Flag a CanvasTexture so the renderer re-uploads it after the canvas is redrawn.
+// The brand font's load as an Effect (Promise Unit); PureScript sequences the
+// redraw + texture re-upload off it. Resolves immediately if the API is absent.
+export const awaitFontImpl = (font) => () =>
+  typeof document !== "undefined" && document.fonts
+    ? document.fonts.load(font).then(() => {})
+    : Promise.resolve()
+
 export const markTextureDirtyImpl = (texture) => () => {
   texture.needsUpdate = true
 }
