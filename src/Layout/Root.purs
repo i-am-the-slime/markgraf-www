@@ -28,11 +28,12 @@ noScriptFallback = createBuiltinElement_ "noscript" (unsafeCoerce { dangerouslyS
 retro :: String
 retro = """
 <style>
+  @font-face { font-family: "Commit Mono"; src: url("/markgraf-www/fonts/CommitMono-Regular.woff2") format("woff2"); font-display: swap; }
   #mg-app { display: none !important; }
   html, body { margin: 0; padding: 0; background: #0f0f0f; }
   body {
     color: #c8cdd9;
-    font-family: "Courier New", monospace;
+    font-family: "Commit Mono", ui-monospace, monospace;
     text-align: center;
     overflow-x: hidden;
   }
@@ -42,7 +43,7 @@ retro = """
   .nsf-rain { position: fixed; inset: 0; overflow: hidden; z-index: 0; pointer-events: none;
     -webkit-mask-image: linear-gradient(180deg, transparent, #000 8%, #000 86%, transparent);
             mask-image: linear-gradient(180deg, transparent, #000 8%, #000 86%, transparent); }
-  .nsf-col { position: absolute; top: 0; width: 1ch; font: 700 16px/1.05 "Courier New", monospace;
+  .nsf-col { position: absolute; top: 0; width: 1ch; font: 700 16px/1.05 "Commit Mono", ui-monospace, monospace;
     color: #ff3b1a; opacity: 0.5; white-space: normal; word-break: break-all;
     text-shadow: 0 0 7px rgba(255,59,26,0.7);
     animation-name: nsf-fall; animation-timing-function: linear; animation-iteration-count: infinite; }
@@ -66,7 +67,7 @@ retro = """
   a { color: #ff8a5c; text-decoration: none; }
   a:hover { color: #f5f1e8; }
   a:visited { color: #ff3b1a; }
-  .nsf-counter { font-family: "Courier New", monospace; background: #000; color: #ff7a1a;
+  .nsf-counter { font-family: "Commit Mono", ui-monospace, monospace; background: #000; color: #ff7a1a;
     border: 1px solid #2a3142; padding: 3px 8px; letter-spacing: 5px; font-weight: bold; }
   .nsf-new { color: #ff3b1a; font-weight: bold; }
   .nsf-title { font-family: "Sinistre", "Sinistre Fallback", serif; font-size: 52px;
@@ -76,7 +77,7 @@ retro = """
      ring and a star by toggling opacity. No JavaScript, no SVG — just CSS keyframes. */
   .nsf-graph { border-collapse: collapse; margin: 4px auto; background: #0a0a0a; border: 1px solid #2a3142; }
   .nsf-graph td { width: 34px; height: 34px; padding: 0; text-align: center; vertical-align: middle;
-    font-family: "Courier New", monospace; font-size: 22px; line-height: 34px; color: #ff8a5c; }
+    font-family: "Commit Mono", ui-monospace, monospace; font-size: 22px; line-height: 34px; color: #ff8a5c; }
   .nsf-node { display: inline-block; width: 24px; height: 24px; line-height: 21px;
     border: 2px solid #ff3b1a; border-radius: 50%; background: #1a1f2e; color: #ff8a5c;
     font-weight: bold; font-size: 14px; }
@@ -92,7 +93,7 @@ retro = """
     max-width: 520px; margin: 12px auto; overflow: hidden; }
   .nsf-term-bar { background: #1a1f2e; color: #8a94a8; font-size: 11px; padding: 6px 11px; letter-spacing: 1px; }
   .nsf-term-body { margin: 0; padding: 13px 15px; color: #f5f1e8; font-size: 14px; white-space: pre-wrap;
-    font-family: "Courier New", monospace; }
+    font-family: "Commit Mono", ui-monospace, monospace; }
   .nsf-prompt { color: #ff3b1a; font-weight: bold; }
   .nsf-inline { background: #0a0a0a; border: 1px solid #2a3142; color: #ff8a5c; padding: 2px 7px; }
 
@@ -101,7 +102,7 @@ retro = """
   .nsf-sbs { margin: 12px auto; border-collapse: collapse; }
   .nsf-sbs td { vertical-align: top; padding: 0 8px; }
   .nsf-src { text-align: left; background: #0a0a0a; border: 1px solid #2a3142; border-radius: 6px;
-    padding: 12px 14px; margin: 0; font: 13px/1.5 "Courier New", monospace; color: #c8cdd9; white-space: pre; }
+    padding: 12px 14px; margin: 0; font: 13px/1.5 "Commit Mono", ui-monospace, monospace; color: #c8cdd9; white-space: pre; }
   .nsf-src .k { color: #ff3b1a; font-weight: bold; }
   .nsf-src .d { color: #ff8a5c; }
   .nsf-src .a { color: #ff3b1a; font-weight: bold; }
@@ -129,7 +130,7 @@ retro = """
 <center>
 
 <marquee behavior="alternate" scrollamount="14" bgcolor="#151515">
-  <font size="5" color="#ff8a5c" face="Courier New">&#9733;&#9733;&#9733; WELCOME TO MARKGRAF.DEV &#9733;&#9733;&#9733; you are visitor number 0000042 &#9733;&#9733;&#9733;</font>
+  <font size="5" color="#ff8a5c" face="Commit Mono">&#9733;&#9733;&#9733; WELCOME TO MARKGRAF.DEV &#9733;&#9733;&#9733; you are visitor number 0000042 &#9733;&#9733;&#9733;</font>
 </marquee>
 
 <table border="0" cellpadding="14" cellspacing="0" bgcolor="#0a0a0a" align="center" style="border:1px solid #2a3142">
@@ -140,14 +141,14 @@ retro = """
 
 <p>
   <img src="/markgraf-www/under-construction.gif" alt="under construction" width="72" height="72" align="middle" border="0">
-  <span class="nsf-blink"><font color="#ff3b1a" face="Courier New" size="6">&nbsp;UNDER CONSTRUCTION&nbsp;</font></span>
+  <span class="nsf-blink"><font color="#ff3b1a" face="Commit Mono" size="6">&nbsp;UNDER CONSTRUCTION&nbsp;</font></span>
   <img src="/markgraf-www/under-construction.gif" alt="under construction" width="72" height="72" align="middle" border="0">
 </p>
 
 <hr class="nsf-rule">
 
 <div class="nsf-card nsf-demo">
-  <font color="#ff8a5c" face="Courier New" size="2"><b>&#9658; LIVE DEMO</b> &mdash; this source compiles to this animation</font>
+  <font color="#ff8a5c" face="Commit Mono" size="2"><b>&#9658; LIVE DEMO</b> &mdash; this source compiles to this animation</font>
   <table class="nsf-sbs"><tr>
     <td>
 <pre class="nsf-src"><span class="k">frame</span> <span class="s">"a simple read"</span> {
@@ -165,7 +166,7 @@ retro = """
            style="border:1px solid #2a3142; image-rendering:auto">
     </td>
   </tr></table>
-  <font color="#8a94a8" face="Courier New" size="2">fig. 0 &mdash; markgraf renders the source (left) into the diagram (right): client &#8594; API &#8594; DB &#8594; cache</font>
+  <font color="#8a94a8" face="Commit Mono" size="2">fig. 0 &mdash; markgraf renders the source (left) into the diagram (right): client &#8594; API &#8594; DB &#8594; cache</font>
 </div>
 
 <div class="nsf-card">
@@ -206,9 +207,9 @@ retro = """
       <td><span class="nsf-node">D</span></td>
     </tr>
   </table>
-  <font color="#8a94a8" face="Courier New" size="2">fig. 1 &mdash; one (1) animated graph diagram, hand-cranked in HTML tables</font>
+  <font color="#8a94a8" face="Commit Mono" size="2">fig. 1 &mdash; one (1) animated graph diagram, hand-cranked in HTML tables</font>
   <hr class="nsf-rule">
-  <font color="#c8cdd9" face="Courier New" size="4">
+  <font color="#c8cdd9" face="Commit Mono" size="4">
     JavaScript is switched off, so the real diagrams &mdash; <i>short animated graphs
     from a tiny declarative source language</i>, live in WebGL &mdash; can't run.
     What you see above is the closest 1996 could get.<br><br>
@@ -219,16 +220,16 @@ retro = """
 <hr class="nsf-rule">
 
 <div class="nsf-card">
-  <font color="#ff8a5c" face="Courier New" size="4"><b>&#9658; INSTALL IT</b></font>
+  <font color="#ff8a5c" face="Commit Mono" size="4"><b>&#9658; INSTALL IT</b></font>
   <div class="nsf-term">
     <div class="nsf-term-bar">&#9679; &#9679; &#9679;&nbsp;&nbsp;bash</div>
     <pre class="nsf-term-body"><span class="nsf-prompt">$</span> brew install markgrafhq/tap/markgraf</pre>
   </div>
-  <font color="#8a94a8" face="Courier New" size="2">
+  <font color="#8a94a8" face="Commit Mono" size="2">
     &hellip; or, inside Claude Code: <span class="nsf-inline">/plugin install markgraf@i-am-the-slime</span>
   </font>
   <hr class="nsf-rule">
-  <font face="Courier New" color="#ff8a5c" size="2">
+  <font face="Commit Mono" color="#ff8a5c" size="2">
     [ <a href="https://github.com/markgrafhq/homebrew-tap">homebrew tap</a> ]
     &nbsp;&middot;&nbsp;
     [ <a href="https://github.com/markgrafhq/homebrew-tap/tree/main/examples">examples</a> ]
@@ -240,7 +241,7 @@ retro = """
 </div>
 
 <marquee behavior="scroll" direction="left" scrollamount="6">
-  <font color="#ff8a5c" face="Courier New">
+  <font color="#ff8a5c" face="Commit Mono">
     &#9658; please turn on your speakers for the MIDI &#9658; this page is Y2K compliant &#9658; best experienced with the lights off &#9658; the compiler does the work &#9658;
   </font>
 </marquee>
@@ -248,12 +249,12 @@ retro = """
 <hr class="nsf-rule">
 
 <table cellpadding="6" align="center"><tr>
-  <td><font color="#8a94a8" face="Courier New" size="2">visitors since 1996:</font></td>
+  <td><font color="#8a94a8" face="Commit Mono" size="2">visitors since 1996:</font></td>
   <td><span class="nsf-counter">0&nbsp;0&nbsp;0&nbsp;0&nbsp;0&nbsp;4&nbsp;2</span></td>
 </tr></table>
 
 <p>
-  <font face="Courier New" color="#5a6478" size="2">
+  <font face="Commit Mono" color="#5a6478" size="2">
     [ <a href="#">&#9758; sign my guestbook</a> ]
     &nbsp;&middot;&nbsp;
     [ <a href="#">join the WEBRING</a> &#9756; ]
@@ -262,7 +263,7 @@ retro = """
 
 <hr class="nsf-rule">
 
-<p><font face="Courier New" color="#5a6478" size="2">
+<p><font face="Commit Mono" color="#5a6478" size="2">
   &copy; 1996&ndash;2026 markgraf &middot; hand-coded in Notepad
 </font></p>
 
