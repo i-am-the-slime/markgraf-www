@@ -119,34 +119,14 @@ retro =
     border: 1px solid rgba(150,160,180,0.30); background: rgba(42,49,66,0.42);
     -webkit-backface-visibility: hidden; backface-visibility: hidden; }
 
-  /* cube */
-  .s-cube > i { width: 78px; height: 78px; }
-  .s-cube > i:nth-child(1) { transform: translate(-50%,-50%) rotateY(0deg)   translateZ(39px); }
-  .s-cube > i:nth-child(2) { transform: translate(-50%,-50%) rotateY(90deg)  translateZ(39px); }
-  .s-cube > i:nth-child(3) { transform: translate(-50%,-50%) rotateY(180deg) translateZ(39px); }
-  .s-cube > i:nth-child(4) { transform: translate(-50%,-50%) rotateY(270deg) translateZ(39px); }
-  .s-cube > i:nth-child(5) { transform: translate(-50%,-50%) rotateX(90deg)  translateZ(39px); }
-  .s-cube > i:nth-child(6) { transform: translate(-50%,-50%) rotateX(-90deg) translateZ(39px); }
-
-  /* flat extruded rectangle (104 x 58 x 16) */
-  .s-slab > i:nth-child(1) { width: 104px; height: 58px; transform: translate(-50%,-50%) translateZ(8px); }
-  .s-slab > i:nth-child(2) { width: 104px; height: 58px; transform: translate(-50%,-50%) rotateY(180deg) translateZ(8px); }
-  .s-slab > i:nth-child(3) { width: 16px;  height: 58px; transform: translate(-50%,-50%) rotateY(90deg)  translateZ(52px); }
-  .s-slab > i:nth-child(4) { width: 16px;  height: 58px; transform: translate(-50%,-50%) rotateY(-90deg) translateZ(52px); }
-  .s-slab > i:nth-child(5) { width: 104px; height: 16px; transform: translate(-50%,-50%) rotateX(90deg)  translateZ(29px); }
-  .s-slab > i:nth-child(6) { width: 104px; height: 16px; transform: translate(-50%,-50%) rotateX(-90deg) translateZ(29px); }
-
-  /* octahedron — 8 triangular faces (4 up to the top apex, 4 down to the bottom) */
-  .s-oct > i { width: 74px; height: 64px; border: 0; background: rgba(42,49,66,0.5);
-    clip-path: polygon(50% 0%, 100% 100%, 0% 100%); }
-  .s-oct > i:nth-child(1) { transform: translate(-50%,-50%) rotateY(45deg)  rotateX(-35deg) translateZ(26px); }
-  .s-oct > i:nth-child(2) { transform: translate(-50%,-50%) rotateY(135deg) rotateX(-35deg) translateZ(26px); }
-  .s-oct > i:nth-child(3) { transform: translate(-50%,-50%) rotateY(225deg) rotateX(-35deg) translateZ(26px); }
-  .s-oct > i:nth-child(4) { transform: translate(-50%,-50%) rotateY(315deg) rotateX(-35deg) translateZ(26px); }
-  .s-oct > i:nth-child(5) { transform: translate(-50%,-50%) rotateY(45deg)  rotateX(35deg) rotateZ(180deg) translateZ(26px); }
-  .s-oct > i:nth-child(6) { transform: translate(-50%,-50%) rotateY(135deg) rotateX(35deg) rotateZ(180deg) translateZ(26px); }
-  .s-oct > i:nth-child(7) { transform: translate(-50%,-50%) rotateY(225deg) rotateX(35deg) rotateZ(180deg) translateZ(26px); }
-  .s-oct > i:nth-child(8) { transform: translate(-50%,-50%) rotateY(315deg) rotateX(35deg) rotateZ(180deg) translateZ(26px); }
+  /* Extruded rectangle: one parameterised box. Each flyer sets its own --w / --h / --d
+     (width / height / thickness) inline, so the swarm is rects of varying thickness. */
+  .s-box > i:nth-child(1) { width: var(--w); height: var(--h); transform: translate(-50%,-50%) translateZ(calc(var(--d) / 2)); }
+  .s-box > i:nth-child(2) { width: var(--w); height: var(--h); transform: translate(-50%,-50%) rotateY(180deg) translateZ(calc(var(--d) / 2)); }
+  .s-box > i:nth-child(3) { width: var(--d); height: var(--h); transform: translate(-50%,-50%) rotateY(90deg)  translateZ(calc(var(--w) / 2)); }
+  .s-box > i:nth-child(4) { width: var(--d); height: var(--h); transform: translate(-50%,-50%) rotateY(-90deg) translateZ(calc(var(--w) / 2)); }
+  .s-box > i:nth-child(5) { width: var(--w); height: var(--d); transform: translate(-50%,-50%) rotateX(90deg)  translateZ(calc(var(--h) / 2)); }
+  .s-box > i:nth-child(6) { width: var(--w); height: var(--d); transform: translate(-50%,-50%) rotateX(-90deg) translateZ(calc(var(--h) / 2)); }
   .nsf-spinA { animation: nsf-tumbleA 11s linear infinite; }
   .nsf-spinB { animation: nsf-tumbleB 8s linear infinite; }
   .nsf-spinC { animation: nsf-tumbleC 15s linear infinite; }
@@ -156,26 +136,26 @@ retro =
 </style>
 
 <div class="nsf-space">
-  <div class="nsf-fly" style="--sx:-62vw;--sy:-30vh;animation-duration:8.5s;animation-delay:0s"><div class="nsf-shape s-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:60vw;--sy:-26vh;animation-duration:9.2s;animation-delay:-0.5s"><div class="nsf-shape s-slab nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:-55vw;--sy:34vh;animation-duration:7.8s;animation-delay:-1.0s"><div class="nsf-shape s-oct nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:58vw;--sy:40vh;animation-duration:10.0s;animation-delay:-1.4s"><div class="nsf-shape s-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:4vw;--sy:-58vh;animation-duration:8.0s;animation-delay:-1.9s"><div class="nsf-shape s-slab nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:-8vw;--sy:56vh;animation-duration:9.5s;animation-delay:-2.3s"><div class="nsf-shape s-oct nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:-70vw;--sy:6vh;animation-duration:7.6s;animation-delay:-2.8s"><div class="nsf-shape s-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:68vw;--sy:-8vh;animation-duration:8.8s;animation-delay:-3.2s"><div class="nsf-shape s-slab nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:40vw;--sy:-46vh;animation-duration:9.0s;animation-delay:-3.7s"><div class="nsf-shape s-oct nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:-44vw;--sy:-42vh;animation-duration:7.9s;animation-delay:-4.1s"><div class="nsf-shape s-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:52vw;--sy:28vh;animation-duration:10.2s;animation-delay:-4.6s"><div class="nsf-shape s-slab nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:-50vw;--sy:18vh;animation-duration:8.3s;animation-delay:-5.0s"><div class="nsf-shape s-oct nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:18vw;--sy:54vh;animation-duration:9.1s;animation-delay:-5.5s"><div class="nsf-shape s-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:-22vw;--sy:-54vh;animation-duration:7.7s;animation-delay:-5.9s"><div class="nsf-shape s-slab nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:64vw;--sy:14vh;animation-duration:8.6s;animation-delay:-6.4s"><div class="nsf-shape s-oct nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:-64vw;--sy:-12vh;animation-duration:9.8s;animation-delay:-6.8s"><div class="nsf-shape s-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:30vw;--sy:46vh;animation-duration:8.1s;animation-delay:-7.3s"><div class="nsf-shape s-slab nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:-34vw;--sy:48vh;animation-duration:9.3s;animation-delay:-7.7s"><div class="nsf-shape s-oct nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:46vw;--sy:-34vh;animation-duration:7.8s;animation-delay:-8.2s"><div class="nsf-shape s-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="nsf-fly" style="--sx:-16vw;--sy:-60vh;animation-duration:8.9s;animation-delay:-8.6s"><div class="nsf-shape s-slab nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-62vw;--sy:-30vh;animation-duration:8.5s;animation-delay:0s"><div class="nsf-shape s-box nsf-spinA" style="--w:100px;--h:60px;--d:16px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:60vw;--sy:-26vh;animation-duration:9.2s;animation-delay:-0.5s"><div class="nsf-shape s-box nsf-spinB" style="--w:84px;--h:72px;--d:30px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-55vw;--sy:34vh;animation-duration:7.8s;animation-delay:-1.0s"><div class="nsf-shape s-box nsf-spinC" style="--w:114px;--h:46px;--d:10px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:58vw;--sy:40vh;animation-duration:10.0s;animation-delay:-1.4s"><div class="nsf-shape s-box nsf-spinA" style="--w:72px;--h:72px;--d:50px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:4vw;--sy:-58vh;animation-duration:8.0s;animation-delay:-1.9s"><div class="nsf-shape s-box nsf-spinB" style="--w:96px;--h:62px;--d:22px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-8vw;--sy:56vh;animation-duration:9.5s;animation-delay:-2.3s"><div class="nsf-shape s-box nsf-spinC" style="--w:120px;--h:40px;--d:14px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-70vw;--sy:6vh;animation-duration:7.6s;animation-delay:-2.8s"><div class="nsf-shape s-box nsf-spinA" style="--w:78px;--h:78px;--d:38px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:68vw;--sy:-8vh;animation-duration:8.8s;animation-delay:-3.2s"><div class="nsf-shape s-box nsf-spinB" style="--w:104px;--h:54px;--d:18px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:40vw;--sy:-46vh;animation-duration:9.0s;animation-delay:-3.7s"><div class="nsf-shape s-box nsf-spinC" style="--w:100px;--h:60px;--d:16px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-44vw;--sy:-42vh;animation-duration:7.9s;animation-delay:-4.1s"><div class="nsf-shape s-box nsf-spinA" style="--w:84px;--h:72px;--d:30px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:52vw;--sy:28vh;animation-duration:10.2s;animation-delay:-4.6s"><div class="nsf-shape s-box nsf-spinB" style="--w:114px;--h:46px;--d:10px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-50vw;--sy:18vh;animation-duration:8.3s;animation-delay:-5.0s"><div class="nsf-shape s-box nsf-spinC" style="--w:72px;--h:72px;--d:50px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:18vw;--sy:54vh;animation-duration:9.1s;animation-delay:-5.5s"><div class="nsf-shape s-box nsf-spinA" style="--w:96px;--h:62px;--d:22px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-22vw;--sy:-54vh;animation-duration:7.7s;animation-delay:-5.9s"><div class="nsf-shape s-box nsf-spinB" style="--w:120px;--h:40px;--d:14px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:64vw;--sy:14vh;animation-duration:8.6s;animation-delay:-6.4s"><div class="nsf-shape s-box nsf-spinC" style="--w:78px;--h:78px;--d:38px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-64vw;--sy:-12vh;animation-duration:9.8s;animation-delay:-6.8s"><div class="nsf-shape s-box nsf-spinA" style="--w:104px;--h:54px;--d:18px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:30vw;--sy:46vh;animation-duration:8.1s;animation-delay:-7.3s"><div class="nsf-shape s-box nsf-spinB" style="--w:100px;--h:60px;--d:16px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-34vw;--sy:48vh;animation-duration:9.3s;animation-delay:-7.7s"><div class="nsf-shape s-box nsf-spinC" style="--w:84px;--h:72px;--d:30px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:46vw;--sy:-34vh;animation-duration:7.8s;animation-delay:-8.2s"><div class="nsf-shape s-box nsf-spinA" style="--w:114px;--h:46px;--d:10px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="nsf-fly" style="--sx:-16vw;--sy:-60vh;animation-duration:8.9s;animation-delay:-8.6s"><div class="nsf-shape s-box nsf-spinB" style="--w:72px;--h:72px;--d:50px"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
 </div>
 <div class="nsf-scan"></div>
 
