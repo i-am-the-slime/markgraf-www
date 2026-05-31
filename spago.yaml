@@ -87,6 +87,7 @@ package:
     - integers
     - intersection-observer
     - js-promise
+    - js-promise-aff
     - js-timers
     - lists
     - literals

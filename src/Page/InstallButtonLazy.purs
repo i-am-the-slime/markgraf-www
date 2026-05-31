@@ -2,7 +2,8 @@ module Page.InstallButtonLazy (installButtonLazy) where
 
 import Prelude
 
-import Control.Promise (Promise, toAffE)
+import Promise (Promise)
+import Promise.Aff (toAffE)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (launchAff)
