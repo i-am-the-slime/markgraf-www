@@ -162,8 +162,8 @@ retro = """
 }</pre>
     </td>
     <td>
-      <video width="420" autoplay loop muted playsinline preload="auto"
-             style="border:1px solid #2a3142; display:block">
+      <video width="420" autoplay loop muted playsinline preload="auto" disablepictureinpicture disableremoteplayback
+             style="border:1px solid #2a3142; display:block; pointer-events:none">
         <source src="/markgraf-www/markgraf-demo.mp4" type="video/mp4">
         <img src="/markgraf-www/markgraf-demo.webp" alt="markgraf animated graph diagram" width="420"
              style="border:1px solid #2a3142">
