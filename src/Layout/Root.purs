@@ -63,8 +63,6 @@ retro = """
   a { color: #ff8a5c; text-decoration: none; }
   a:hover { color: #f5f1e8; }
   a:visited { color: #ff3b1a; }
-  .nsf-counter { font-family: "Commit Mono", ui-monospace, monospace; background: #000; color: #ff7a1a;
-    border: 1px solid #2a3142; padding: 3px 8px; letter-spacing: 5px; font-weight: bold; }
   .nsf-new { color: #ff3b1a; font-weight: bold; }
   .nsf-title { font-family: "Sinistre", "Sinistre Fallback", serif; font-size: 52px;
     font-weight: bold; letter-spacing: -1px; }
@@ -84,25 +82,29 @@ retro = """
   @keyframes nsf-star { 0%,42% { opacity: 0; } 50%,92% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes nsf-core { 0%,42% { box-shadow: none; } 50%,92% { box-shadow: 0 0 12px #ff3b1a; } 100% { box-shadow: none; } }
 
-  /* Fake terminal that holds the real install command. */
-  .nsf-term { text-align: left; background: #0a0a0a; border: 1px solid #2a3142; border-radius: 7px;
-    max-width: 520px; margin: 12px auto; overflow: hidden; }
-  .nsf-term-bar { background: #1a1f2e; color: #8a94a8; font-size: 11px; padding: 6px 11px; letter-spacing: 1px; }
+  /* Windows 3.11 window chrome — raised grey bevel, navy title bar, system-menu box on
+     the left, minimize/maximize triangle buttons on the right. Used for both the code
+     editor and the install "MS-DOS Prompt". */
+  .nsf-win { background: #c0c0c0; border: 2px outset #c0c0c0; padding: 3px; text-align: left; }
+  .nsf-titlebar { display: flex; align-items: center; gap: 2px; height: 19px; padding: 1px 2px; background: #000080; }
+  .nsf-sysbtn { flex: 0 0 auto; width: 17px; height: 15px; background: #c0c0c0; border: 1px outset #c0c0c0;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .nsf-sysbar { display: block; width: 10px; height: 3px; background: #000; border-top: 1px solid #fff; }
+  .nsf-titletext { flex: 1; text-align: center; color: #fff; white-space: nowrap; overflow: hidden;
+    font: bold 12px "MS Sans Serif", Tahoma, Geneva, sans-serif; letter-spacing: 0.3px; }
+  .nsf-winbtns { flex: 0 0 auto; display: flex; }
+  .nsf-winbtn { width: 17px; height: 15px; background: #c0c0c0; border: 1px outset #c0c0c0; color: #000;
+    display: inline-flex; align-items: center; justify-content: center; font: 8px sans-serif; line-height: 1; }
+  .nsf-client { margin-top: 3px; background: #0a0a0a; border: 2px solid; border-color: #808080 #ffffff #ffffff #808080; }
+
+  /* Contents that live inside those windows. */
   .nsf-term-body { margin: 0; padding: 13px 15px; color: #f5f1e8; font-size: 14px; white-space: pre-wrap;
     font-family: "Commit Mono", ui-monospace, monospace; }
   .nsf-prompt { color: #ff3b1a; font-weight: bold; }
   .nsf-inline { background: #0a0a0a; border: 1px solid #2a3142; color: #ff8a5c; padding: 2px 7px; }
-
-  /* The .markgraf source shown beside the demo, framed like a little editor window. */
   .nsf-demo { max-width: 900px; }
   .nsf-sbs { margin: 14px auto; border-collapse: collapse; }
   .nsf-sbs td { vertical-align: middle; padding: 0 9px; }
-  .nsf-editor { background: #0c0c0c; border: 1px solid #2a3142; border-radius: 8px; overflow: hidden;
-    text-align: left; box-shadow: 0 0 22px rgba(0,0,0,0.5); }
-  .nsf-editor-bar { display: flex; align-items: center; gap: 7px; background: #161b27; padding: 8px 12px;
-    border-bottom: 1px solid #2a3142; }
-  .nsf-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
-  .nsf-editor-name { margin-left: 6px; color: #8a94a8; font: 11px "Commit Mono", ui-monospace, monospace; letter-spacing: 0.5px; }
   .nsf-src { margin: 0; padding: 14px 16px; font: 13px/1.6 "Commit Mono", ui-monospace, monospace;
     color: #c8cdd9; white-space: pre; }
   .nsf-src .k { color: #ff8a5c; }
@@ -169,7 +171,7 @@ retro = """
 <center>
 
 <marquee behavior="alternate" scrollamount="14" bgcolor="#151515">
-  <font size="5" color="#ff8a5c" face="Commit Mono">&#9733;&#9733;&#9733; WELCOME TO MARKGRAF.DEV &#9733;&#9733;&#9733; you are visitor number 0000042 &#9733;&#9733;&#9733;</font>
+  <font size="5" color="#ff8a5c" face="Commit Mono">&#9733;&#9733;&#9733; WELCOME TO MARKGRAF.DEV &#9733;&#9733;&#9733; ANIMATED GRAPH DIAGRAMS FROM A TINY SOURCE LANGUAGE &#9733;&#9733;&#9733;</font>
 </marquee>
 
 <table border="0" cellpadding="14" cellspacing="0" bgcolor="#0a0a0a" align="center" style="border:1px solid #2a3142">
@@ -190,13 +192,13 @@ retro = """
   <font color="#ff8a5c" face="Commit Mono" size="2"><b>&#9658; LIVE DEMO</b> &mdash; this source compiles to this animation</font>
   <table class="nsf-sbs"><tr>
     <td>
-      <div class="nsf-editor">
-        <div class="nsf-editor-bar">
-          <span class="nsf-dot" style="background:#ff3b1a"></span>
-          <span class="nsf-dot" style="background:#ff8a5c"></span>
-          <span class="nsf-dot" style="background:#2a3142"></span>
-          <span class="nsf-editor-name">example.markgraf</span>
+      <div class="nsf-win">
+        <div class="nsf-titlebar">
+          <span class="nsf-sysbtn"><span class="nsf-sysbar"></span></span>
+          <span class="nsf-titletext">EXAMPLE.MARKGRAF</span>
+          <span class="nsf-winbtns"><span class="nsf-winbtn">&#9660;</span><span class="nsf-winbtn">&#9650;</span></span>
         </div>
+        <div class="nsf-client">
 <pre class="nsf-src"><span class="k">frame</span> <span class="s">"a simple read"</span> {
   <span class="d">+node</span> client <span class="s">"Client"</span>
   <span class="d">+node</span> api    <span class="s">"API"</span>
@@ -206,6 +208,7 @@ retro = """
                  asks the API
                  for one user record|</span>
 }</pre>
+        </div>
       </div>
     </td>
     <td>
@@ -270,9 +273,15 @@ retro = """
 
 <div class="nsf-card">
   <font color="#ff8a5c" face="Commit Mono" size="4"><b>&#9658; INSTALL IT</b></font>
-  <div class="nsf-term">
-    <div class="nsf-term-bar">&#9679; &#9679; &#9679;&nbsp;&nbsp;bash</div>
-    <pre class="nsf-term-body"><span class="nsf-prompt">$</span> brew install markgrafhq/tap/markgraf</pre>
+  <div class="nsf-win" style="max-width:520px; margin:12px auto">
+    <div class="nsf-titlebar">
+      <span class="nsf-sysbtn"><span class="nsf-sysbar"></span></span>
+      <span class="nsf-titletext">MS-DOS PROMPT</span>
+      <span class="nsf-winbtns"><span class="nsf-winbtn">&#9660;</span><span class="nsf-winbtn">&#9650;</span></span>
+    </div>
+    <div class="nsf-client">
+      <pre class="nsf-term-body"><span class="nsf-prompt">C:\&gt;</span> brew install markgrafhq/tap/markgraf</pre>
+    </div>
   </div>
   <font color="#8a94a8" face="Commit Mono" size="2">
     &hellip; or, inside Claude Code: <span class="nsf-inline">/plugin install markgraf@i-am-the-slime</span>
@@ -288,27 +297,6 @@ retro = """
     [ <a href="https://discord.gg/tKfGrPYx">discord</a> ]
   </font>
 </div>
-
-<marquee behavior="scroll" direction="left" scrollamount="6">
-  <font color="#ff8a5c" face="Commit Mono">
-    &#9658; please turn on your speakers for the MIDI &#9658; this page is Y2K compliant &#9658; best experienced with the lights off &#9658; the compiler does the work &#9658;
-  </font>
-</marquee>
-
-<hr class="nsf-rule">
-
-<table cellpadding="6" align="center"><tr>
-  <td><font color="#8a94a8" face="Commit Mono" size="2">visitors since 1996:</font></td>
-  <td><span class="nsf-counter">0&nbsp;0&nbsp;0&nbsp;0&nbsp;0&nbsp;4&nbsp;2</span></td>
-</tr></table>
-
-<p>
-  <font face="Commit Mono" color="#5a6478" size="2">
-    [ <a href="#">&#9758; sign my guestbook</a> ]
-    &nbsp;&middot;&nbsp;
-    [ <a href="#">join the WEBRING</a> &#9756; ]
-  </font>
-</p>
 
 <hr class="nsf-rule">
 
