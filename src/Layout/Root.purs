@@ -199,7 +199,7 @@ retro =
   <div class="nsf-win" style="max-width:520px; margin:12px auto">
     <div class="nsf-titlebar">
       <span class="nsf-sysbtn"><span class="nsf-sysbar"></span></span>
-      <span class="nsf-titletext">MS-DOS PROMPT</span>
+      <span class="nsf-titletext">CMD</span>
       <span class="nsf-winbtns"><span class="nsf-winbtn">&#9660;</span><span class="nsf-winbtn">&#9650;</span></span>
     </div>
     <div class="nsf-client">
