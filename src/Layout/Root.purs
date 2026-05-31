@@ -83,7 +83,7 @@ retro =
   /* Contents that live inside those windows. */
   .nsf-term-body { margin: 0; padding: 13px 15px; color: #f5f1e8; font-size: 14px; white-space: pre-wrap;
     font-family: "Commit Mono", ui-monospace, monospace; }
-  .nsf-prompt { color: #ff3b1a; font-weight: bold; }
+  .nsf-prompt { color: #ff3b1a; font-weight: bold; -webkit-user-select: none; user-select: none; }
   .nsf-inline { background: #0a0a0a; border: 1px solid #2a3142; color: #ff8a5c; padding: 2px 7px; }
   .nsf-demo { max-width: 900px; }
   .nsf-sbs { margin: 14px auto; border-collapse: collapse; }
