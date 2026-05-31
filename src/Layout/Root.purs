@@ -102,7 +102,7 @@ retro =
   /* Each cube starts off-screen (per-cube --sx/--sy) and flies toward the centre while
      receding deep in Z — so it shrinks to nothing at a single vanishing point, fades
      out, and loops back to its edge. ~20 of them give a continuous inward stream. */
-  .nsf-fly { position: absolute; top: 50%; left: 50%; width: 90px; height: 90px; margin: -45px 0 0 -45px;
+  .nsf-fly { position: absolute; top: 50%; left: 50%; width: 120px; height: 76px; margin: -38px 0 0 -60px;
     transform-style: preserve-3d; opacity: 0;
     animation-name: nsf-vanish; animation-timing-function: ease-in; animation-iteration-count: infinite; }
   @keyframes nsf-vanish {
@@ -111,15 +111,17 @@ retro =
     78%  { opacity: 0.5; }
     100% { transform: translate3d(0px, 0px, -1500px); opacity: 0; }
   }
-  .nsf-cube { position: relative; width: 90px; height: 90px; transform-style: preserve-3d; }
-  .nsf-cube > i { position: absolute; left: 0; top: 0; width: 90px; height: 90px; box-sizing: border-box;
+  /* Flat extruded rectangle: a 120x76 slab, only 20 deep — like the diagram node shapes.
+     Faces are centred with translate(-50%,-50%) so the differing sizes line up. */
+  .nsf-cube { position: relative; width: 120px; height: 76px; transform-style: preserve-3d; }
+  .nsf-cube > i { position: absolute; left: 50%; top: 50%; box-sizing: border-box;
     border: 1px solid rgba(150,160,180,0.32); background: rgba(42,49,66,0.30); }
-  .nsf-cube > i:nth-child(1) { transform: rotateY(0deg)   translateZ(45px); }
-  .nsf-cube > i:nth-child(2) { transform: rotateY(90deg)  translateZ(45px); }
-  .nsf-cube > i:nth-child(3) { transform: rotateY(180deg) translateZ(45px); }
-  .nsf-cube > i:nth-child(4) { transform: rotateY(270deg) translateZ(45px); }
-  .nsf-cube > i:nth-child(5) { transform: rotateX(90deg)  translateZ(45px); }
-  .nsf-cube > i:nth-child(6) { transform: rotateX(-90deg) translateZ(45px); }
+  .nsf-cube > i:nth-child(1) { width: 120px; height: 76px; transform: translate(-50%,-50%) translateZ(10px); }
+  .nsf-cube > i:nth-child(2) { width: 120px; height: 76px; transform: translate(-50%,-50%) rotateY(180deg) translateZ(10px); }
+  .nsf-cube > i:nth-child(3) { width: 20px;  height: 76px; transform: translate(-50%,-50%) rotateY(90deg)  translateZ(60px); }
+  .nsf-cube > i:nth-child(4) { width: 20px;  height: 76px; transform: translate(-50%,-50%) rotateY(-90deg) translateZ(60px); }
+  .nsf-cube > i:nth-child(5) { width: 120px; height: 20px; transform: translate(-50%,-50%) rotateX(90deg)  translateZ(38px); }
+  .nsf-cube > i:nth-child(6) { width: 120px; height: 20px; transform: translate(-50%,-50%) rotateX(-90deg) translateZ(38px); }
   .nsf-spinA { animation: nsf-tumbleA 11s linear infinite; }
   .nsf-spinB { animation: nsf-tumbleB 8s linear infinite; }
   .nsf-spinC { animation: nsf-tumbleC 15s linear infinite; }
