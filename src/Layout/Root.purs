@@ -66,33 +66,16 @@ retro =
   .nsf-title { font-family: "Sinistre", "Sinistre Fallback", serif; font-size: 52px;
     font-weight: bold; letter-spacing: -1px; }
 
-  /* Classic Mac OS (System 6/7) window chrome — thin black outline, pinstriped title bar
-     with a close box on the left, a zoom box on the right, and the title sitting in a
-     white gap in the stripes. Used for both the code editor and the install window. */
-  .nsf-win { background: #fff; border: 1px solid #000; box-shadow: 1px 1px 0 #000; text-align: left; }
-  .nsf-titlebar { position: relative; height: 20px; border-bottom: 1px solid #000;
-    background: repeating-linear-gradient(to bottom, #000 0 2px, #fff 2px 5px); }
-  .nsf-sysbtn { position: absolute; left: 7px; top: 50%; transform: translateY(-50%);
-    width: 12px; height: 12px; background: #fff; border: 1px solid #000;
-    box-shadow: inset 0 0 0 1px #fff, inset 0 0 0 2px #000; }
-  .nsf-winbtns { position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
-    width: 12px; height: 12px; background: #fff; border: 1px solid #000;
-    box-shadow: inset 0 0 0 1px #fff, inset 0 0 0 2px #000; }
-  .nsf-titletext { position: absolute; left: 50%; top: 0; transform: translateX(-50%);
-    height: 20px; line-height: 20px; background: #fff; padding: 0 10px; color: #000;
-    font: bold 12px Geneva, Tahoma, Verdana, sans-serif; white-space: nowrap; }
-  .nsf-client { background: #0a0a0a; }
-
-  /* Contents that live inside those windows. */
-  .nsf-term-body { margin: 0; padding: 13px 15px; color: #f5f1e8; font-size: 14px; white-space: pre-wrap;
+  /* Code + command blocks: plain dark panels, no window chrome. */
+  .nsf-term-body { margin: 12px auto; padding: 14px 18px; max-width: 480px; background: #0a0a0a;
+    color: #f5f1e8; font-size: 15px; white-space: pre-wrap; border-radius: 6px;
     font-family: "Commit Mono", ui-monospace, monospace; }
-  .nsf-prompt { color: #ff3b1a; font-weight: bold; -webkit-user-select: none; user-select: none; }
   .nsf-inline { background: #0a0a0a; color: #ff8a5c; padding: 2px 7px; }
   .nsf-demo { max-width: 900px; }
   .nsf-sbs { margin: 14px auto; border-collapse: collapse; }
   .nsf-sbs td { vertical-align: middle; padding: 0 9px; }
   .nsf-src { margin: 0; padding: 20px 24px; font: 16px/1.7 "Commit Mono", ui-monospace, monospace;
-    color: #c8cdd9; white-space: pre; }
+    color: #c8cdd9; white-space: pre; background: #0a0a0a; border-radius: 6px; }
   .nsf-src .k { color: #ff8a5c; }
   .nsf-src .d { color: #ff3b1a; }
   .nsf-src .a { color: #ff3b1a; }
@@ -223,13 +206,6 @@ retro =
   <font color="#ff8a5c" face="Commit Mono" size="2"><b>Demo</b> &mdash; this source compiles to this animation.</font>
   <table class="nsf-sbs"><tr>
     <td>
-      <div class="nsf-win">
-        <div class="nsf-titlebar">
-          <span class="nsf-sysbtn"></span>
-          <span class="nsf-titletext">EXAMPLE.MARKGRAF</span>
-          <span class="nsf-winbtns"></span>
-        </div>
-        <div class="nsf-client">
 <pre class="nsf-src"><span class="k">frame</span> <span class="s">"a simple read"</span> {
   <span class="d">+node</span> client <span class="s">"Client"</span>
   <span class="d">+node</span> api    <span class="s">"API"</span>
@@ -242,8 +218,6 @@ retro =
   api    <span class="a">&lt;-</span> db  <span class="l">|one row|</span>
   client <span class="a">&lt;-</span> api <span class="l">|200 OK|</span>
 }</pre>
-        </div>
-      </div>
     </td>
     <td>
       <video width="300" autoplay loop muted playsinline preload="auto" disablepictureinpicture disableremoteplayback
@@ -258,16 +232,7 @@ retro =
 
 <div class="nsf-card">
   <font color="#ff8a5c" face="Commit Mono" size="4"><b>Install</b></font>
-  <div class="nsf-win" style="max-width:520px; margin:12px auto">
-    <div class="nsf-titlebar">
-      <span class="nsf-sysbtn"><span class="nsf-sysbar"></span></span>
-      <span class="nsf-titletext">CMD</span>
-      <span class="nsf-winbtns"></span>
-    </div>
-    <div class="nsf-client">
-      <pre class="nsf-term-body"><span class="nsf-prompt">C:\&gt;</span> brew install markgrafhq/tap/markgraf</pre>
-    </div>
-  </div>
+  <pre class="nsf-term-body">brew install markgrafhq/tap/markgraf</pre>
   <font color="#8a94a8" face="Commit Mono" size="2">
     &hellip; or, inside Claude Code: <span class="nsf-inline">/plugin install markgraf@i-am-the-slime</span>
   </font>
