@@ -162,7 +162,7 @@ retro = """
 }</pre>
     </td>
     <td>
-      <img src="/markgraf-www/markgraf-demo.gif" alt="markgraf animated graph diagram" width="420"
+      <img src="/markgraf-www/markgraf-demo.webp" alt="markgraf animated graph diagram" width="420"
            style="border:1px solid #2a3142; image-rendering:auto">
     </td>
   </tr></table>
