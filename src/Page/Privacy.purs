@@ -1,9 +1,14 @@
-module Page.Privacy (mkPrivacyPage) where
+-- @client
+module Page.Privacy (page, mkPrivacyPage) where
 
 import Prelude
 
-import React.Basic (JSX)
+import Effect.Unsafe (unsafePerformEffect)
+import Next (Page, nextPage)
+import React.Basic (JSX, ReactComponent, element)
 import React.Basic.Hooks (Component, component)
+import Unsafe.Coerce (unsafeCoerce)
+import Yoga.React.Om as Om
 import Yoga.React.DOM.HTML.A (a)
 import Yoga.React.DOM.HTML.Code (code) as H
 import Yoga.React.DOM.HTML.Div (div)
@@ -13,6 +18,13 @@ import Yoga.React.DOM.HTML.P (p)
 import Yoga.React.DOM.HTML.Section (section) as H
 import Yoga.React.DOM.HTML.Strong (strong)
 import Yoga.React.DOM.Internal (text)
+
+-- The /privacy route.
+page :: Page "privacy"
+page = nextPage {} $ pure \_ -> Om.pure (element privacyComponent {})
+  where
+  privacyComponent :: ReactComponent {}
+  privacyComponent = unsafeCoerce (unsafePerformEffect mkPrivacyPage)
 
 mkPrivacyPage :: Component {}
 mkPrivacyPage =
