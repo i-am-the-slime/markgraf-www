@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "spago build && bun run scripts/dev.mjs",
-    "build": "spago build && bun run worker && next build",
+    "dev": "spago build && bun run gen-routes && bun run scripts/dev.mjs",
+    "build": "spago build && bun run gen-routes && bun run worker && next build",
     "start": "next start",
-    "worker": "bun run scripts/build-diagram-shapes-worker.mjs"
+    "worker": "bun run scripts/build-diagram-shapes-worker.mjs",
+    "gen-routes": "PURESCRIPT_RSC_ROOT=\"$PWD\" purs-rsc-routes"
   },
   "dependencies": {
     "@codemirror/theme-one-dark": "^6.1.3",
