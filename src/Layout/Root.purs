@@ -59,7 +59,7 @@ retro =
   }
   .nsf-rule { height: 1px; border: 0; margin: 16px auto; width: 86%;
     background: linear-gradient(90deg, transparent, #ff3b1a 30%, #ff8a5c 50%, #ff3b1a 70%, transparent); }
-  .nsf-card { margin: 16px auto; padding: 14px 18px; max-width: 1040px; }
+  .nsf-card { margin: 16px auto; padding: 14px 18px; max-width: min(1240px, 94vw); }
   a { color: #ff8a5c; text-decoration: none; }
   a:hover { color: #f5f1e8; }
   a:visited { color: #ff3b1a; }
@@ -71,10 +71,10 @@ retro =
     color: #f5f1e8; font-size: 15px; white-space: pre-wrap;
     font-family: "Commit Mono", ui-monospace, monospace; }
   .nsf-inline { color: #ff8a5c; }
-  .nsf-demo { max-width: 1240px; }
+  .nsf-demo { max-width: min(1500px, 94vw); }
   .nsf-sbs { margin: 14px auto; border-collapse: collapse; }
   .nsf-sbs td { vertical-align: middle; padding: 0 9px; }
-  .nsf-src { margin: 0; padding: 20px 24px; font: 16px/1.7 "Commit Mono", ui-monospace, monospace;
+  .nsf-src { margin: 0; padding: 20px 24px; font: 14px/1.7 "Commit Mono", ui-monospace, monospace;
     color: #c8cdd9; white-space: pre; }
   .nsf-src .k { color: #ff8a5c; }
   .nsf-src .d { color: #ff3b1a; }
