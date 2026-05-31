@@ -4,7 +4,6 @@
 // black while numeric uniforms bind fine. So this file only does 2D drawing + reads.
 
 // Per-frame reads off the r3f root state, mirroring Scene.js's accessors.
-export const readClockElapsedImpl = (state) => state.clock.getElapsedTime()
 export const readPointerXImpl = (state) => state.pointer.x
 export const readPointerYImpl = (state) => state.pointer.y
 export const readAspectImpl = (state) => state.size.width / state.size.height

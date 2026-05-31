@@ -63,34 +63,38 @@ installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \{ hove
   matRef <- useRef null
   texRef <- useRef null
   createdRef <- useRef false
-  prevTickRef <- useRef 0.0
   phaseRef <- useRef 0.0
   targetRef <- useRef 0.0
   lastSwitchRef <- useRef 0.0
   yawRef <- useRef 0.0
   tiltRef <- useRef idleTilt
   fillRef <- useRef 0.0
+  timeRef <- useRef 0.0
   labelCanvas /\ setLabelCanvas <- useState' Nothing
 
-  useFrame \rs _ -> do
+  useFrame \rs delta -> do
     ensureLabelCanvas createdRef texRef setLabelCanvas
-    let t = readClockElapsed rs
-    prevTick <- readRef prevTickRef
-    writeRef prevTickRef t
-    let dt = if prevTick > 0.0 then t - prevTick else 0.0
+    -- r3f hands us the per-frame delta as the second arg. requestAnimationFrame
+    -- pauses while the tab is hidden, so the first delta on return is the whole
+    -- away-duration — clamp it so a background gap is one small step, never a
+    -- fast-forward, and accumulate our own `now` off the clamped delta.
+    prevNow <- readRef timeRef
+    let dt = min maxFrameGap delta
+        now = prevNow + dt
+    writeRef timeRef now
 
-    phase <- advancePhase phaseRef targetRef lastSwitchRef t dt
+    phase <- advancePhase phaseRef targetRef lastSwitchRef now dt
     hovering <- readRef hoveringRef
     let mx = readPointerX rs
         my = readPointerY rs
         aspect = readAspect rs
-    yaw <- easeYaw yawRef hovering mx t dt
-    tilt <- easeTilt tiltRef hovering my t dt
+    yaw <- easeYaw yawRef hovering mx now dt
+    tilt <- easeTilt tiltRef hovering my now dt
     fill <- easeFill fillRef hovering dt
 
     readRefMaybe matRef # withJust \m ->
       applyProps m
-        { "uniforms-uTime-value": t
+        { "uniforms-uTime-value": now
         , "uniforms-uPhase-value": phase
         , "uniforms-uRot-value": yaw
         , "uniforms-uTilt-value": tilt
@@ -179,6 +183,11 @@ orientEase dt = 1.0 - exp (-6.0 * dt)
 
 idleTilt :: Number
 idleTilt = 0.12
+
+-- Largest per-frame delta we trust (~3 frames at 60fps). A bigger gap means the
+-- tab was hidden; clamping here keeps a return-to-tab from fast-forwarding.
+maxFrameGap :: Number
+maxFrameGap = 0.05
 
 shapeCount :: Number
 shapeCount = 6.0
@@ -373,9 +382,6 @@ sdfFrag =
 -- FFI: per-frame reads off the r3f root state, and the text-canvas texture.
 -- ---------------------------------------------------------------------------
 
-readClockElapsed :: { | RootState } -> Number
-readClockElapsed = readClockElapsedImpl
-
 readPointerX :: { | RootState } -> Number
 readPointerX = readPointerXImpl
 
@@ -391,7 +397,6 @@ readBufferWidth = readBufferWidthImpl
 readBufferHeight :: { | RootState } -> Number
 readBufferHeight = readBufferHeightImpl
 
-foreign import readClockElapsedImpl :: { | RootState } -> Number
 foreign import readPointerXImpl :: { | RootState } -> Number
 foreign import readPointerYImpl :: { | RootState } -> Number
 foreign import readAspectImpl :: { | RootState } -> Number
