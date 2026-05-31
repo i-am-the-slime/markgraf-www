@@ -1,4 +1,4 @@
-module DiagramShapes.Offscreen (diagramShapesOffscreen) where
+module DiagramShapes.Offscreen (diagramShapesOffscreen, WorkerPost) where
 
 import Prelude
 
@@ -12,8 +12,8 @@ import Effect (Effect)
 import Effect.Console (log)
 import Effect.Unsafe (unsafePerformEffect)
 import Foreign (Foreign, unsafeToForeign)
-import React.Basic (ReactComponent)
-import React.Basic.Hooks (Component, component, readRefMaybe, useEffectOnce, useRef)
+import React.Basic (ReactComponent, Ref)
+import React.Basic.Hooks (Component, component, readRefMaybe, useEffectOnce, useRef, writeRef)
 import React.Basic.Hooks as Hooks
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM.Element (clientHeight, clientWidth)
@@ -36,21 +36,25 @@ import Yoga.WebProletarian.Types (Worker)
 -- protocol, so both message params are opaque `Foreign`.
 type DiagramShapesWorker = Worker Foreign Foreign
 
+-- Posts a `{ type, payload }` message to the worker. The parent (HeroPreview) holds
+-- a `Ref (Maybe WorkerPost)` that this component fills once the worker is live, so
+-- per-section morph/camera/formation messages reach the worker without a window
+-- global — a Ref passed down, populated by this child, read by the parent.
+type WorkerPost = String -> Foreign -> Effect Unit
+
 foreign import newDiagramShapesWorker :: Effect DiagramShapesWorker
 foreign import transferGuard :: HTMLCanvasElement -> Effect Boolean
-foreign import setDiagramShapesPostGlobal :: (String -> Foreign -> Effect Unit) -> Effect Unit
-foreign import clearDiagramShapesPostGlobal :: Effect Unit
 
-diagramShapesOffscreen :: ReactComponent {}
+diagramShapesOffscreen :: ReactComponent { postRef :: Ref (Maybe WorkerPost) }
 diagramShapesOffscreen = unsafeCoerce (unsafePerformEffect diagramShapesOffscreenComponent)
 
-diagramShapesOffscreenComponent :: Component {}
-diagramShapesOffscreenComponent = component "DiagramShapesOffscreen" \_ -> Hooks.do
+diagramShapesOffscreenComponent :: Component { postRef :: Ref (Maybe WorkerPost) }
+diagramShapesOffscreenComponent = component "DiagramShapesOffscreen" \{ postRef } -> Hooks.do
   canvasRef <- useRef (null :: Nullable HTMLCanvasElement)
 
   useEffectOnce do
     readRefMaybe canvasRef >>= case _ of
-      Just c -> setupDiagramShapes c
+      Just c -> setupDiagramShapes postRef c
       Nothing -> pure (pure unit)
 
   pure $ canvas
@@ -69,8 +73,8 @@ diagramShapesOffscreenComponent = component "DiagramShapesOffscreen" \_ -> Hooks
 
 -- Hand the canvas's drawing surface to the worker, then keep it in sync: dpr and
 -- geometry on window resize, frameloop on visibility. Returns a teardown.
-setupDiagramShapes :: HTMLCanvasElement -> Effect (Effect Unit)
-setupDiagramShapes canvasEl = do
+setupDiagramShapes :: Ref (Maybe WorkerPost) -> HTMLCanvasElement -> Effect (Effect Unit)
+setupDiagramShapes postRef canvasEl = do
   alreadyRan <- transferGuard canvasEl
   if alreadyRan then pure (pure unit) else setup
   where
@@ -84,12 +88,12 @@ setupDiagramShapes canvasEl = do
     stopResize <- onWindowResize (syncSize worker)
     stopVisibility <- onVisibilityChange canvasEl \visible ->
       post worker "props" { frameloop: if visible then "always" else "never" }
-    setDiagramShapesPostGlobal (post worker)
+    writeRef postRef (Just (post worker))
 
     pure do
       stopResize
       stopVisibility
-      clearDiagramShapesPostGlobal
+      writeRef postRef Nothing
       terminate worker
 
   initWorker worker offscreen = do

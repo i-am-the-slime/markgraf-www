@@ -22,6 +22,7 @@ import Effect.Unsafe (unsafePerformEffect)
 import Data.Nullable (Nullable, null)
 import Data.String.Common (joinWith, toUpper)
 import DiagramShapes.Offscreen as DiagramShapes
+import Foreign (unsafeToForeign)
 import Page.InstallButtonLazy (installButtonLazy)
 import Page.PlayerLazy (markgrafPlayerLazy)
 import Framer.Motion.MotionComponent as Motion
@@ -80,6 +81,7 @@ mkHeroPreview :: Component {}
 mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
   ratiosRef <- useRef ([] :: Array { id :: String, ratio :: Number })
   activeRef <- useRef ""
+  postRef <- useRef (Nothing :: Maybe DiagramShapes.WorkerPost)
   activeSection /\ setActiveSection <- useState' "page-hero"
   sceneLit /\ setSceneLit <- useState' false
   useEffectOnce $ installVhsBurst "vhs-text-wrap"
@@ -92,13 +94,13 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       case mostVisible ratios' of
         Just best -> setActiveSection best.id
         Nothing -> pure unit
-      dispatchActive activeRef ratios'
+      dispatchActive postRef activeRef ratios'
   pure $
     main
       { id: "magazine"
       , className: "relative bg-[#0f0f0f] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
       }
-      [ diagramShapesBackground sceneLit
+      [ diagramShapesBackground postRef sceneLit
       , scrim (activeSection == "playground")
       , sideNav { active: activeSection }
       , heroPage
@@ -126,14 +128,14 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
 -- strikes on against black and the world powers up behind it. The worker is
 -- mounted from the start (its per-section poses still land); only the reveal
 -- waits on `lit`.
-diagramShapesBackground :: Boolean -> JSX
-diagramShapesBackground lit =
+diagramShapesBackground :: Ref (Maybe DiagramShapes.WorkerPost) -> Boolean -> JSX
+diagramShapesBackground postRef lit =
   div
     { className:
         "fixed inset-0 z-0 pointer-events-none transition-opacity duration-[1200ms] ease-out "
           <> if lit then "opacity-100" else "opacity-0"
     }
-    [ element diagramShapesComponent {} ]
+    [ element diagramShapesComponent { postRef } ]
 
 -- ---------------------------------------------------------------------------
 -- Per-section declarative state: each section declares both a ball morph
@@ -1595,7 +1597,7 @@ scrambleStartDelay = 770.0
 ruleDrawDuration :: Number
 ruleDrawDuration = 0.4
 
-diagramShapesComponent :: ReactComponent {}
+diagramShapesComponent :: ReactComponent { postRef :: Ref (Maybe DiagramShapes.WorkerPost) }
 diagramShapesComponent = DiagramShapes.diagramShapesOffscreen
 
 onElementResize
@@ -1726,10 +1728,11 @@ navArrows props =
 -- Picks the most-visible section from the ratios so far and, when it changes,
 -- posts its declared morph + camera arm to the worker.
 dispatchActive
-  :: Hooks.Ref String
+  :: Ref (Maybe DiagramShapes.WorkerPost)
+  -> Hooks.Ref String
   -> Array { id :: String, ratio :: Number }
   -> Effect Unit
-dispatchActive activeRef ratios = case mostVisible ratios of
+dispatchActive postRef activeRef ratios = case mostVisible ratios of
   Nothing -> pure unit
   Just best -> case Array.find (\s -> s.id == best.id) sectionStates of
     Nothing -> pure unit
@@ -1737,9 +1740,9 @@ dispatchActive activeRef ratios = case mostVisible ratios of
       last <- readRef activeRef
       when (sect.id /= last) do
         writeRef activeRef sect.id
-        postWorkerMessage "morph" sect.morph
-        postWorkerMessage "camera" sect.camera
-        postWorkerMessage "formation" sect.formation
+        postWorkerMessage postRef "morph" sect.morph
+        postWorkerMessage postRef "camera" sect.camera
+        postWorkerMessage postRef "formation" sect.formation
 
 mostVisible
   :: Array { id :: String, ratio :: Number }
@@ -1767,10 +1770,11 @@ observeRatios rootId ids cb = do
   for_ els (IO.observe obs)
   pure $ for_ els (IO.unobserve obs)
 
-postWorkerMessage :: forall a. String -> a -> Effect Unit
-postWorkerMessage = postWorkerMessageImpl
-
-foreign import postWorkerMessageImpl :: forall a. String -> a -> Effect Unit
+-- Push a worker message through the Ref the offscreen component fills once its
+-- worker is live; a no-op until then (the next section change retries naturally).
+postWorkerMessage :: forall a. Ref (Maybe DiagramShapes.WorkerPost) -> String -> a -> Effect Unit
+postWorkerMessage postRef ty payload =
+  readRef postRef >>= traverse_ \post -> post ty (unsafeToForeign payload)
 
 onMagazineScroll
   :: ({ x :: Number, y :: Number, progress :: Number } -> Effect Unit)
