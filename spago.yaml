@@ -1,4 +1,7 @@
 workspace:
+  backend:
+    cmd: "purs-backend-es"
+    args: [ "build", "--output-dir", "output" ]
   packageSet:
     registry: 77.3.1
   extraPackages:
