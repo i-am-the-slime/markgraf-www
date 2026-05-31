@@ -20,6 +20,8 @@ const ROOT = "src/Layout/Root.purs"
 const PORT = 8091
 const MIME = {
   ".gif": "image/gif", ".png": "image/png", ".svg": "image/svg+xml",
+  ".webp": "image/webp", ".avif": "image/avif", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+  ".webm": "video/webm", ".mp4": "video/mp4",
   ".woff2": "font/woff2", ".woff": "font/woff", ".otf": "font/otf",
   ".css": "text/css", ".js": "text/javascript", ".html": "text/html",
 }
