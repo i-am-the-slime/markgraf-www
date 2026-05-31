@@ -84,6 +84,18 @@ workspace:
         - typelevel-prelude
         - unsafe-coerce
         - unsafe-reference
+    yoga-om:
+      path: /Users/mark/code/purescript-yoga-om
+    yoga-react-om:
+      path: /Users/mark/code/purescript-yoga-react-om
+    ref-lifted:
+      path: /Users/mark/code/purescript-ref-lifted
+    yoga-http-api:
+      path: /Users/mark/code/purescript-yoga-http-api
+    golden-test:
+      path: /Users/mark/code/purescript-golden-test
+    next-purs-rsc:
+      path: /Users/mark/code/next-purs-rsc
 package:
   name: markgraf-www
   dependencies:
@@ -105,6 +117,7 @@ package:
     - literals
     - maybe
     - newtype
+    - next-purs-rsc
     - nullable
     - numbers
     - prelude
