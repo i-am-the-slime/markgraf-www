@@ -72,10 +72,8 @@ retro =
     font-family: "Commit Mono", ui-monospace, monospace; }
   .nsf-inline { color: #ff8a5c; }
   .nsf-demo { max-width: min(1500px, 94vw); }
-  .nsf-sbs { margin: 14px auto; border-collapse: collapse; width: 100%; }
-  .nsf-sbs td { vertical-align: middle; padding: 0 24px; }
-  .nsf-sbs td:first-child { text-align: left; }
-  .nsf-sbs td:last-child { text-align: right; }
+  .nsf-sbs { margin: 14px auto; border-collapse: collapse; }
+  .nsf-sbs td { vertical-align: middle; padding: 0 14px; }
   .nsf-src { display: inline-block; margin: 0; padding: 20px 24px; font: 14px/1.7 "Commit Mono", ui-monospace, monospace;
     color: #c8cdd9; white-space: pre; }
   .nsf-src .k { color: #ff8a5c; }
