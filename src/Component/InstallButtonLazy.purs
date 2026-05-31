@@ -1,4 +1,4 @@
-module Page.InstallButtonLazy (installButtonLazy) where
+module Component.InstallButtonLazy (installButtonLazy) where
 
 import Prelude
 

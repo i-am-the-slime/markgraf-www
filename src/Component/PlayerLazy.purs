@@ -1,4 +1,4 @@
-module Page.PlayerLazy (markgrafPlayerLazy, PlayerProps) where
+module Component.PlayerLazy (markgrafPlayerLazy, PlayerProps) where
 
 import Prelude
 

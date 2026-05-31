@@ -1,4 +1,4 @@
-module Page.HeroPreview (mkHeroPreview) where
+module Component.HeroPreview (mkHeroPreview) where
 
 import Prelude
 
@@ -23,8 +23,8 @@ import Data.Nullable (Nullable, null)
 import Data.String.Common (joinWith, toUpper)
 import DiagramShapes.Offscreen as DiagramShapes
 import Foreign (unsafeToForeign)
-import Page.InstallButtonLazy (installButtonLazy)
-import Page.PlayerLazy (markgrafPlayerLazy)
+import Component.InstallButtonLazy (installButtonLazy)
+import Component.PlayerLazy (markgrafPlayerLazy)
 import Framer.Motion.MotionComponent as Motion
 import Framer.Motion.Types as Motion
 import Framer.Motion.Types (VariantLabel(..))

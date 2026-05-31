@@ -2,4 +2,4 @@
 // the bundler split it (with three/r3f) into a separate async chunk; resolving to
 // the module's installButtonSDF JSX value. Effect (Promise JSX) => () => Promise.
 export const importInstallButtonImpl = () =>
-  import("../Page.InstallButtonSDF/index.js").then((m) => m.installButtonSDF)
+  import("../Component.InstallButtonSDF/index.js").then((m) => m.installButtonSDF)

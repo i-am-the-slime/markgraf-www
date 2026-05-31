@@ -1,7 +1,7 @@
 module Page.Boot (default) where
 
 import Effect.Unsafe (unsafePerformEffect)
-import Page.HeroPreview (mkHeroPreview)
+import Component.HeroPreview (mkHeroPreview)
 import React.Basic (JSX)
 
 default :: {} -> JSX

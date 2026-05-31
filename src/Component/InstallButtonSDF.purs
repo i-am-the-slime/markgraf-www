@@ -1,4 +1,4 @@
-module Page.InstallButtonSDF (installButtonSDF) where
+module Component.InstallButtonSDF (installButtonSDF) where
 
 import Prelude
 
