@@ -232,20 +232,23 @@ retro =
 <pre class="nsf-src"><span class="k">frame</span> <span class="s">"a simple read"</span> {
   <span class="d">+node</span> client <span class="s">"Client"</span>
   <span class="d">+node</span> api    <span class="s">"API"</span>
+  <span class="d">+node</span> db     <span class="s">"Database"</span>
   <span class="d">+edge</span> client api
+  <span class="d">+edge</span> api db
 
-  client <span class="a">-&gt;</span> api <span class="l">|GET /user/42
-                 asks the API
-                 for one user record|</span>
+  client <span class="a">-&gt;</span> api <span class="l">|GET /user/42|</span>
+  api    <span class="a">-&gt;</span> db  <span class="l">|SELECT|</span>
+  api    <span class="a">&lt;-</span> db  <span class="l">|one row|</span>
+  client <span class="a">&lt;-</span> api <span class="l">|200 OK|</span>
 }</pre>
         </div>
       </div>
     </td>
     <td>
-      <video width="420" autoplay loop muted playsinline preload="auto" disablepictureinpicture disableremoteplayback
+      <video width="300" autoplay loop muted playsinline preload="auto" disablepictureinpicture disableremoteplayback
              style="display:block; pointer-events:none">
         <source src="/markgraf-www/markgraf-demo.mp4" type="video/mp4">
-        <img src="/markgraf-www/markgraf-demo.webp" alt="markgraf animated graph diagram" width="420">
+        <img src="/markgraf-www/markgraf-demo.webp" alt="markgraf animated graph diagram" width="300">
       </video>
     </td>
   </tr></table>
