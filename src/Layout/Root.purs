@@ -51,8 +51,6 @@ retro =
     background: repeating-linear-gradient(0deg, rgba(0,0,0,0.20) 0 1px, transparent 1px 3px); }
   .nsf-content { position: relative; z-index: 1; padding: 8px 0 28px; }
 
-  .nsf-blink { animation: nsf-blink 1.1s steps(1, end) infinite; }
-  @keyframes nsf-blink { 50% { visibility: hidden; } }
   .nsf-amber {
     background: linear-gradient(90deg, #ff3b1a, #ff8a5c, #ffb38a, #ff8a5c, #ff3b1a);
     -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: bold;
@@ -64,24 +62,8 @@ retro =
   a { color: #ff8a5c; text-decoration: none; }
   a:hover { color: #f5f1e8; }
   a:visited { color: #ff3b1a; }
-  .nsf-new { color: #ff3b1a; font-weight: bold; }
   .nsf-title { font-family: "Sinistre", "Sinistre Fallback", serif; font-size: 52px;
     font-weight: bold; letter-spacing: -1px; }
-
-  /* The graph diagram, rendered the 1996 way: a table whose edge cells morph between a
-     ring and a star by toggling opacity. No JavaScript, no SVG — just CSS keyframes. */
-  .nsf-graph { border-collapse: collapse; margin: 4px auto; background: #0a0a0a; border: 1px solid #2a3142; }
-  .nsf-graph td { width: 34px; height: 34px; padding: 0; text-align: center; vertical-align: middle;
-    font-family: "Commit Mono", ui-monospace, monospace; font-size: 22px; line-height: 34px; color: #ff8a5c; }
-  .nsf-node { display: inline-block; width: 24px; height: 24px; line-height: 21px;
-    border: 2px solid #ff3b1a; border-radius: 50%; background: #1a1f2e; color: #ff8a5c;
-    font-weight: bold; font-size: 14px; }
-  .nsf-core { animation: nsf-core 4s ease-in-out infinite; }
-  .nsf-ring-edge { animation: nsf-ring 4s ease-in-out infinite; color: #ff8a5c; }
-  .nsf-star-edge { animation: nsf-star 4s ease-in-out infinite; color: #ff3b1a; }
-  @keyframes nsf-ring { 0%,42% { opacity: 1; } 50%,92% { opacity: 0; } 100% { opacity: 1; } }
-  @keyframes nsf-star { 0%,42% { opacity: 0; } 50%,92% { opacity: 1; } 100% { opacity: 0; } }
-  @keyframes nsf-core { 0%,42% { box-shadow: none; } 50%,92% { box-shadow: 0 0 12px #ff3b1a; } 100% { box-shadow: none; } }
 
   /* Windows 3.11 window chrome — raised grey bevel, navy title bar, system-menu box on
      the left, minimize/maximize triangle buttons on the right. Used for both the code
@@ -181,14 +163,6 @@ retro =
   </td></tr>
 </table>
 
-<p>
-  <img src="/markgraf-www/under-construction.gif" alt="under construction" width="72" height="72" align="middle" border="0">
-  <span class="nsf-blink"><font color="#ff3b1a" face="Commit Mono" size="6">&nbsp;UNDER CONSTRUCTION&nbsp;</font></span>
-  <img src="/markgraf-www/under-construction.gif" alt="under construction" width="72" height="72" align="middle" border="0">
-</p>
-
-<hr class="nsf-rule">
-
 <div class="nsf-card nsf-demo">
   <font color="#ff8a5c" face="Commit Mono" size="2"><b>&#9658; LIVE DEMO</b> &mdash; this source compiles to this animation</font>
   <table class="nsf-sbs"><tr>
@@ -225,54 +199,6 @@ retro =
 </div>
 
 <div class="nsf-card">
-  <table class="nsf-graph">
-    <tr>
-      <td><span class="nsf-node">A</span></td>
-      <td><span class="nsf-ring-edge">&#9472;</span></td>
-      <td><span class="nsf-ring-edge">&#9472;</span></td>
-      <td><span class="nsf-ring-edge">&#9472;</span></td>
-      <td><span class="nsf-node">B</span></td>
-    </tr>
-    <tr>
-      <td><span class="nsf-ring-edge">&#9474;</span></td>
-      <td><span class="nsf-star-edge">&#9586;</span></td>
-      <td></td>
-      <td><span class="nsf-star-edge">&#9585;</span></td>
-      <td><span class="nsf-ring-edge">&#9474;</span></td>
-    </tr>
-    <tr>
-      <td><span class="nsf-ring-edge">&#9474;</span></td>
-      <td></td>
-      <td><span class="nsf-node nsf-core">E</span></td>
-      <td></td>
-      <td><span class="nsf-ring-edge">&#9474;</span></td>
-    </tr>
-    <tr>
-      <td><span class="nsf-ring-edge">&#9474;</span></td>
-      <td><span class="nsf-star-edge">&#9585;</span></td>
-      <td></td>
-      <td><span class="nsf-star-edge">&#9586;</span></td>
-      <td><span class="nsf-ring-edge">&#9474;</span></td>
-    </tr>
-    <tr>
-      <td><span class="nsf-node">C</span></td>
-      <td><span class="nsf-ring-edge">&#9472;</span></td>
-      <td><span class="nsf-ring-edge">&#9472;</span></td>
-      <td><span class="nsf-ring-edge">&#9472;</span></td>
-      <td><span class="nsf-node">D</span></td>
-    </tr>
-  </table>
-  <font color="#8a94a8" face="Commit Mono" size="2">fig. 1 &mdash; one (1) animated graph diagram, hand-cranked in HTML tables</font>
-  <hr class="nsf-rule">
-  <font color="#c8cdd9" face="Commit Mono" size="4">
-    The clip up top is a real markgraf render. This grid is the same graph &mdash; morphing
-    between a ring and a star &mdash; the closest 1996 could get to our live WebGL, in pure CSS.
-  </font>
-</div>
-
-<hr class="nsf-rule">
-
-<div class="nsf-card">
   <font color="#ff8a5c" face="Commit Mono" size="4"><b>&#9658; INSTALL IT</b></font>
   <div class="nsf-win" style="max-width:520px; margin:12px auto">
     <div class="nsf-titlebar">
@@ -298,12 +224,6 @@ retro =
     [ <a href="https://discord.gg/tKfGrPYx">discord</a> ]
   </font>
 </div>
-
-<hr class="nsf-rule">
-
-<p><font face="Commit Mono" color="#5a6478" size="2">
-  &copy; 1996&ndash;2026 markgraf &middot; hand-coded in Notepad
-</font></p>
 
 </center>
 </div>
