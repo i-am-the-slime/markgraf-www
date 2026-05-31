@@ -162,8 +162,12 @@ retro = """
 }</pre>
     </td>
     <td>
-      <img src="/markgraf-www/markgraf-demo.webp" alt="markgraf animated graph diagram" width="420"
-           style="border:1px solid #2a3142; image-rendering:auto">
+      <video width="420" autoplay loop muted playsinline preload="auto"
+             style="border:1px solid #2a3142; display:block">
+        <source src="/markgraf-www/markgraf-demo.mp4" type="video/mp4">
+        <img src="/markgraf-www/markgraf-demo.webp" alt="markgraf animated graph diagram" width="420"
+             style="border:1px solid #2a3142">
+      </video>
     </td>
   </tr></table>
   <font color="#8a94a8" face="Commit Mono" size="2">fig. 0 &mdash; markgraf renders the source (left) into the diagram (right): client &#8594; API &#8594; DB &#8594; cache</font>
