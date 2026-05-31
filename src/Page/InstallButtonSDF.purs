@@ -2,17 +2,17 @@ module Page.InstallButtonSDF (installButtonSDF) where
 
 import Prelude
 
-import Control.Promise (Promise, toAffE)
 import Data.Foldable (traverse_)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null)
 import Data.Number (exp, sin)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Effect.Uncurried (EffectFn1, runEffectFn1)
 import Effect.Unsafe (unsafePerformEffect)
+import Graphics.Canvas (CanvasElement, TextAlign(..), TextBaseline(..), clearRect, fillText, getContext2D, setCanvasHeight, setCanvasWidth, setFillStyle, setFont, setTextAlign, setTextBaseline)
+import Graphics.Canvas.Extra (LetterSpacing(..), createCanvasElement, kerningNormal, setFontKerning, setLetterSpacing)
 import React.Basic (JSX, ReactComponent, Ref, element)
 import React.Basic.Events (handler_)
 import React.Basic.Hooks (readRef, readRefMaybe, reactComponent, useRef, useState', writeRef)
@@ -21,6 +21,7 @@ import React.R3F.Hooks (RootState, applyProps, useFrame)
 import React.R3F.Three.Internal (threejs)
 import React.R3F.Three.Types (Object3D, placeholderTexture)
 import Unsafe.Coerce (unsafeCoerce)
+import Web.Font.Loading (FontShorthand(..), loadFont)
 import Yoga.React.DOM.HTML.A (a)
 import Yoga.React.DOM.Internal (css)
 import Yoga.React.R3F.Canvas (canvas)
@@ -120,7 +121,7 @@ withJust f m = m >>= traverse_ f
 -- sdfQuad's <canvasTexture>) so it shares r3f's THREE instance — a texture we mint
 -- from our own `import "three"` lands in a second THREE copy and never uploads.
 ensureLabelCanvas
-  :: Ref Boolean -> Ref (Nullable Object3D) -> (Maybe LabelCanvas -> Effect Unit)
+  :: Ref Boolean -> Ref (Nullable Object3D) -> (Maybe CanvasElement -> Effect Unit)
   -> Effect Unit
 ensureLabelCanvas createdRef texRef setLabelCanvas = readRef createdRef >>= case _ of
   true -> pure unit
@@ -129,12 +130,12 @@ ensureLabelCanvas createdRef texRef setLabelCanvas = readRef createdRef >>= case
     canvas <- makeLabelCanvas labelConfig
     setLabelCanvas (Just canvas)
     -- The first draw may use a fallback face; once the brand font loads, repaint and
-    -- flag the texture for re-upload. Sequenced here in PureScript, not in the FFI.
+    -- flag the texture for re-upload. Sequenced here in PureScript.
     launchAff_ do
-      awaitFont labelConfig.font
+      loadFont (FontShorthand labelConfig.font)
       liftEffect do
-        redrawLabel canvas labelConfig
-        readRefMaybe texRef >>= traverse_ markTextureDirty
+        drawLabel canvas labelConfig
+        readRefMaybe texRef >>= traverse_ \tex -> applyProps tex { needsUpdate: true }
 
 -- ---------------------------------------------------------------------------
 -- Animation state machine, ported from the prototype's frame() — all over Refs.
@@ -210,7 +211,7 @@ shapeCount = 6.0
 -- and is filled by the r3f-built <canvasTexture> once the label canvas is ready.
 -- ---------------------------------------------------------------------------
 
-sdfQuad :: Ref (Nullable Object3D) -> Ref (Nullable Object3D) -> Maybe LabelCanvas -> JSX
+sdfQuad :: Ref (Nullable Object3D) -> Ref (Nullable Object3D) -> Maybe CanvasElement -> JSX
 sdfQuad matRef texRef labelCanvas = element (threejs "Mesh")
   { frustumCulled: false
   , children:
@@ -239,7 +240,7 @@ sdfQuad matRef texRef labelCanvas = element (threejs "Mesh")
 -- binds it to the shader's uText sampler. The dashed attach path resolves to
 -- material.uniforms.uText.value, so r3f handles construction, upload and binding —
 -- no hand-mutated uniform, and no second THREE copy to mismatch the renderer.
-labelTexture :: Ref (Nullable Object3D) -> Maybe LabelCanvas -> JSX
+labelTexture :: Ref (Nullable Object3D) -> Maybe CanvasElement -> JSX
 labelTexture texRef = case _ of
   Nothing -> mempty
   Just canvas -> element (threejs "CanvasTexture")
@@ -424,29 +425,32 @@ labelConfig =
   , offsetX: 4.0
   }
 
--- A 2D <canvas> with the label painted on it. r3f turns it into a CanvasTexture
--- (its THREE), so our FFI never touches three — see labelTexture in sdfQuad.
-foreign import data LabelCanvas :: Type
+canvasW :: Number
+canvasW = 1024.0
 
-makeLabelCanvas :: LabelConfig -> Effect LabelCanvas
-makeLabelCanvas = runEffectFn1 makeLabelCanvasImpl
+canvasH :: Number
+canvasH = 256.0
 
-foreign import makeLabelCanvasImpl :: EffectFn1 LabelConfig LabelCanvas
+-- Build the offscreen label canvas in PureScript via Graphics.Canvas (+ Extra for
+-- the letterSpacing/fontKerning the canvas package lacks). r3f wraps the returned
+-- element in a CanvasTexture, so nothing here touches three — see labelTexture.
+makeLabelCanvas :: LabelConfig -> Effect CanvasElement
+makeLabelCanvas cfg = do
+  el <- createCanvasElement
+  setCanvasWidth el canvasW
+  setCanvasHeight el canvasH
+  drawLabel el cfg
+  pure el
 
--- Repaint the existing canvas (after the brand font has loaded).
-redrawLabel :: LabelCanvas -> LabelConfig -> Effect Unit
-redrawLabel = redrawLabelImpl
-
-foreign import redrawLabelImpl :: LabelCanvas -> LabelConfig -> Effect Unit
-
--- The brand font's load as an Aff, so PureScript sequences the redraw + re-upload.
-awaitFont :: String -> Aff Unit
-awaitFont = toAffE <<< awaitFontImpl
-
-foreign import awaitFontImpl :: String -> Effect (Promise Unit)
-
--- Mark the r3f-built CanvasTexture dirty so the renderer re-uploads the canvas.
-markTextureDirty :: Object3D -> Effect Unit
-markTextureDirty = markTextureDirtyImpl
-
-foreign import markTextureDirtyImpl :: Object3D -> Effect Unit
+-- Paint (or repaint) the label onto the canvas.
+drawLabel :: CanvasElement -> LabelConfig -> Effect Unit
+drawLabel el cfg = do
+  ctx <- getContext2D el
+  clearRect ctx { x: 0.0, y: 0.0, width: canvasW, height: canvasH }
+  setFillStyle ctx "#fff"
+  setFont ctx cfg.font
+  setTextAlign ctx AlignCenter
+  setTextBaseline ctx BaselineMiddle
+  setFontKerning ctx kerningNormal
+  setLetterSpacing ctx (LetterSpacing cfg.letterSpacing)
+  fillText ctx cfg.text (canvasW / 2.0 + cfg.offsetX) (canvasH / 2.0)

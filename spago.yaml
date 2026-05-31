@@ -44,6 +44,8 @@ workspace:
         - web-touchevents
     yoga-r3f:
       path: /Users/mark/code/yoga-r3f
+    web-font-loading:
+      path: /Users/mark/code/purescript-web-font-loading
     web-proletarian:
       git: https://github.com/rowtype-yoga/purescript-web-proletarian.git
       ref: 0ee3de080dcc538fe0db3e735ddb02a67de736a2
@@ -74,6 +76,7 @@ package:
   name: markgraf-www
   dependencies:
     - arrays
+    - canvas
     - effect
     - either
     - foldable-traversable
@@ -106,6 +109,7 @@ package:
     - untagged-union
     - web-clipboard
     - web-dom
+    - web-font-loading
     - web-events
     - web-html
     - web-proletarian

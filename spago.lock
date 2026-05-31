@@ -6,6 +6,7 @@
         "core": {
           "dependencies": [
             "arrays",
+            "canvas",
             "effect",
             "either",
             "foldable-traversable",
@@ -39,6 +40,7 @@
             "web-clipboard",
             "web-dom",
             "web-events",
+            "web-font-loading",
             "web-html",
             "web-proletarian",
             "web-resize-observer",
@@ -737,6 +739,9 @@
           "untagged-union"
         ]
       },
+      "web-font-loading": {
+        "path": "/Users/mark/code/purescript-web-font-loading"
+      },
       "web-proletarian": {
         "git": "https://github.com/rowtype-yoga/purescript-web-proletarian.git",
         "ref": "0ee3de080dcc538fe0db3e735ddb02a67de736a2",
@@ -848,6 +853,19 @@
         "newtype",
         "prelude",
         "tuples"
+      ]
+    },
+    "canvas": {
+      "type": "registry",
+      "version": "6.0.0",
+      "integrity": "sha256-AZZOi/ZOhFdN7Lhpng/GPEebJiSaEsMGXeen5F8SowE=",
+      "dependencies": [
+        "arraybuffer-types",
+        "effect",
+        "exceptions",
+        "functions",
+        "maybe",
+        "prelude"
       ]
     },
     "colors": {
@@ -1270,6 +1288,23 @@
         "maybe",
         "newtype",
         "prelude"
+      ]
+    },
+    "js-promise-aff": {
+      "type": "registry",
+      "version": "1.0.0",
+      "integrity": "sha256-gEKAdNnTWjXS+tTp/AhYl/ezloKfuoQFcBKrdOx2USo=",
+      "dependencies": [
+        "aff",
+        "control",
+        "effect",
+        "either",
+        "exceptions",
+        "foreign",
+        "js-promise",
+        "maybe",
+        "prelude",
+        "transformers"
       ]
     },
     "js-timers": {
@@ -1985,6 +2020,18 @@
         "unfoldable",
         "unsafe-coerce",
         "web-events"
+      ]
+    },
+    "web-font-loading": {
+      "type": "local",
+      "path": "/Users/mark/code/purescript-web-font-loading",
+      "dependencies": [
+        "canvas",
+        "effect",
+        "functions",
+        "js-promise",
+        "js-promise-aff",
+        "prelude"
       ]
     },
     "web-html": {
