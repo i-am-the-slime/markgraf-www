@@ -13,8 +13,7 @@
 // When you like it, nothing to port back — Root.purs already is the source.
 
 import { createServer } from "node:http"
-import { readFile, readFileSync } from "node:fs"
-import { watch } from "node:fs"
+import { readFile, readFileSync, statSync } from "node:fs"
 import { extname, join, normalize } from "node:path"
 
 const ROOT = "src/Layout/Root.purs"
@@ -44,10 +43,21 @@ const page = () => `<!doctype html>
 </style>
 </head><body>
 ${extractRetro()}
-<script>new EventSource("/events").onmessage = () => location.reload();</script>
+<script>
+  // Poll the source file's mtime; reload when it changes. Robust across every editor
+  // (atomic save, in-place write) — no fs.watch flakiness.
+  let last = null;
+  setInterval(async () => {
+    try {
+      const v = await (await fetch("/mtime", { cache: "no-store" })).text();
+      if (last !== null && v !== last) location.reload();
+      last = v;
+    } catch (e) {}
+  }, 400);
+</script>
 </body></html>`
 
-const clients = new Set()
+const mtime = () => { try { return String(statSync(ROOT).mtimeMs) } catch { return "0" } }
 
 createServer((req, res) => {
   const url = decodeURIComponent((req.url || "/").split("?")[0])
@@ -56,11 +66,9 @@ createServer((req, res) => {
     res.end(page())
     return
   }
-  if (url === "/events") {
-    res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" })
-    res.write("retry: 500\n\n")
-    clients.add(res)
-    req.on("close", () => clients.delete(res))
+  if (url === "/mtime") {
+    res.writeHead(200, { "content-type": "text/plain", "cache-control": "no-store" })
+    res.end(mtime())
     return
   }
   const file = join("public", normalize(url).replace(/^(\.\.[/\\])+/, ""))
@@ -69,13 +77,4 @@ createServer((req, res) => {
     res.writeHead(200, { "content-type": MIME[extname(file)] || "application/octet-stream" })
     res.end(buf)
   })
-}).listen(PORT, () => console.log(`[noscript-preview] http://localhost:${PORT}  (watching ${ROOT})`))
-
-let debounce
-watch(ROOT, () => {
-  clearTimeout(debounce)
-  debounce = setTimeout(() => {
-    console.log("[noscript-preview] reload")
-    for (const c of clients) c.write("data: reload\n\n")
-  }, 120)
-})
+}).listen(PORT, () => console.log(`[noscript-preview] http://localhost:${PORT}  (live-reloads on ${ROOT} save)`))
