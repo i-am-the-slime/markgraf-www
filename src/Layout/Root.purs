@@ -97,17 +97,47 @@ retro = """
   .nsf-prompt { color: #ff3b1a; font-weight: bold; }
   .nsf-inline { background: #0a0a0a; border: 1px solid #2a3142; color: #ff8a5c; padding: 2px 7px; }
 
-  /* The .markgraf source shown beside the demo gif. */
-  .nsf-demo { max-width: 880px; }
-  .nsf-sbs { margin: 12px auto; border-collapse: collapse; }
-  .nsf-sbs td { vertical-align: top; padding: 0 8px; }
-  .nsf-src { text-align: left; background: #0a0a0a; border: 1px solid #2a3142; border-radius: 6px;
-    padding: 12px 14px; margin: 0; font: 13px/1.5 "Commit Mono", ui-monospace, monospace; color: #c8cdd9; white-space: pre; }
-  .nsf-src .k { color: #ff3b1a; font-weight: bold; }
-  .nsf-src .d { color: #ff8a5c; }
-  .nsf-src .a { color: #ff3b1a; font-weight: bold; }
+  /* The .markgraf source shown beside the demo, framed like a little editor window. */
+  .nsf-demo { max-width: 900px; }
+  .nsf-sbs { margin: 14px auto; border-collapse: collapse; }
+  .nsf-sbs td { vertical-align: middle; padding: 0 9px; }
+  .nsf-editor { background: #0c0c0c; border: 1px solid #2a3142; border-radius: 8px; overflow: hidden;
+    text-align: left; box-shadow: 0 0 22px rgba(0,0,0,0.5); }
+  .nsf-editor-bar { display: flex; align-items: center; gap: 7px; background: #161b27; padding: 8px 12px;
+    border-bottom: 1px solid #2a3142; }
+  .nsf-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .nsf-editor-name { margin-left: 6px; color: #8a94a8; font: 11px "Commit Mono", ui-monospace, monospace; letter-spacing: 0.5px; }
+  .nsf-src { margin: 0; padding: 14px 16px; font: 13px/1.6 "Commit Mono", ui-monospace, monospace;
+    color: #c8cdd9; white-space: pre; }
+  .nsf-src .k { color: #ff8a5c; }
+  .nsf-src .d { color: #ff3b1a; }
+  .nsf-src .a { color: #ff3b1a; }
   .nsf-src .s { color: #f5f1e8; }
-  .nsf-src .l { color: #5a6478; }
+  .nsf-src .l { color: #5a6478; font-style: italic; }
+  .nsf-src .c { color: #4a5468; font-style: italic; }
+
+  /* "our 3D shapes in space", approximated in pure CSS: a perspective stage with
+     wireframe cubes built from real DOM face nodes, each tumbling on its own axis. */
+  .nsf-stage { position: relative; height: 230px; margin: 14px auto 6px; perspective: 760px;
+    perspective-origin: 50% 44%; }
+  .nsf-obj { position: absolute; top: 50%; left: 50%; width: 90px; height: 90px; margin: -45px 0 0 -45px;
+    transform-style: preserve-3d; }
+  .nsf-cube { position: relative; width: 90px; height: 90px; transform-style: preserve-3d; }
+  .nsf-cube > i { position: absolute; left: 0; top: 0; width: 90px; height: 90px; box-sizing: border-box;
+    border: 1px solid rgba(255,138,92,0.7); background: rgba(255,59,26,0.05);
+    box-shadow: inset 0 0 16px rgba(255,59,26,0.12); }
+  .nsf-cube > i:nth-child(1) { transform: rotateY(0deg)   translateZ(45px); }
+  .nsf-cube > i:nth-child(2) { transform: rotateY(90deg)  translateZ(45px); }
+  .nsf-cube > i:nth-child(3) { transform: rotateY(180deg) translateZ(45px); }
+  .nsf-cube > i:nth-child(4) { transform: rotateY(270deg) translateZ(45px); }
+  .nsf-cube > i:nth-child(5) { transform: rotateX(90deg)  translateZ(45px); }
+  .nsf-cube > i:nth-child(6) { transform: rotateX(-90deg) translateZ(45px); }
+  .nsf-spinA { animation: nsf-tumbleA 11s linear infinite; }
+  .nsf-spinB { animation: nsf-tumbleB 8s linear infinite; }
+  .nsf-spinC { animation: nsf-tumbleC 15s linear infinite; }
+  @keyframes nsf-tumbleA { from { transform: rotateX(-18deg) rotateY(0deg); }   to { transform: rotateX(-18deg) rotateY(360deg); } }
+  @keyframes nsf-tumbleB { from { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); } to { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); } }
+  @keyframes nsf-tumbleC { from { transform: rotateY(0deg) rotateZ(12deg); } to { transform: rotateY(-360deg) rotateZ(12deg); } }
 </style>
 
 <div class="nsf-rain">
@@ -151,6 +181,13 @@ retro = """
   <font color="#ff8a5c" face="Commit Mono" size="2"><b>&#9658; LIVE DEMO</b> &mdash; this source compiles to this animation</font>
   <table class="nsf-sbs"><tr>
     <td>
+      <div class="nsf-editor">
+        <div class="nsf-editor-bar">
+          <span class="nsf-dot" style="background:#ff3b1a"></span>
+          <span class="nsf-dot" style="background:#ff8a5c"></span>
+          <span class="nsf-dot" style="background:#2a3142"></span>
+          <span class="nsf-editor-name">example.markgraf</span>
+        </div>
 <pre class="nsf-src"><span class="k">frame</span> <span class="s">"a simple read"</span> {
   <span class="d">+node</span> client <span class="s">"Client"</span>
   <span class="d">+node</span> api    <span class="s">"API"</span>
@@ -160,6 +197,7 @@ retro = """
                  asks the API
                  for one user record|</span>
 }</pre>
+      </div>
     </td>
     <td>
       <video width="420" autoplay loop muted playsinline preload="auto" disablepictureinpicture disableremoteplayback
@@ -214,11 +252,25 @@ retro = """
   <font color="#8a94a8" face="Commit Mono" size="2">fig. 1 &mdash; one (1) animated graph diagram, hand-cranked in HTML tables</font>
   <hr class="nsf-rule">
   <font color="#c8cdd9" face="Commit Mono" size="4">
-    JavaScript is switched off, so the real diagrams &mdash; <i>short animated graphs
-    from a tiny declarative source language</i>, live in WebGL &mdash; can't run.
-    What you see above is the closest 1996 could get.<br><br>
-    <span class="nsf-blink nsf-new">&lt;TURN JAVASCRIPT ON&gt;</span> for the real thing.
+    The clip up top is a real markgraf render. This grid is the same graph &mdash; morphing
+    between a ring and a star &mdash; the closest 1996 could get to our live WebGL, in pure CSS.
   </font>
+</div>
+
+<div class="nsf-card">
+  <font color="#ff8a5c" face="Commit Mono" size="2"><b>&#9658; 3D SHAPES</b> &mdash; in space, no WebGL required</font>
+  <div class="nsf-stage">
+    <div class="nsf-obj" style="transform: translate3d(-150px, 8px, -130px) scale(0.7)">
+      <div class="nsf-cube nsf-spinA"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="nsf-obj" style="transform: translate3d(150px, -22px, -40px) scale(0.95)">
+      <div class="nsf-cube nsf-spinB"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="nsf-obj" style="transform: translate3d(0, 26px, 40px) scale(1.18)">
+      <div class="nsf-cube nsf-spinC"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+  </div>
+  <font color="#8a94a8" face="Commit Mono" size="2">fig. 2 &mdash; our 3D shapes, approximated in pure CSS (perspective + DOM nodes, hand-rotated by your CPU)</font>
 </div>
 
 <hr class="nsf-rule">
