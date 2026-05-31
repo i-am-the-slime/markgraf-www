@@ -86,11 +86,10 @@ retro = """
 </table>
 
 <p>
-  <img alt="UNDER CONSTRUCTION" width="270" height="50"
-       src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='270'%20height='50'%3E%3Cdefs%3E%3Cpattern%20id='h'%20width='28'%20height='50'%20patternUnits='userSpaceOnUse'%20patternTransform='skewX(-22)'%3E%3Crect%20width='14'%20height='50'%20fill='%23000'/%3E%3Crect%20x='14'%20width='14'%20height='50'%20fill='%23ffcc00'/%3E%3C/pattern%3E%3C/defs%3E%3Crect%20width='270'%20height='50'%20fill='url(%23h)'/%3E%3Crect%20x='34'%20y='12'%20width='202'%20height='26'%20fill='%23000'/%3E%3Ctext%20x='135'%20y='31'%20font-family='monospace'%20font-size='15'%20fill='%23ffcc00'%20text-anchor='middle'%3EUNDER%20CONSTRUCTION%3C/text%3E%3Ccircle%20cx='15'%20cy='25'%20r='7'%20fill='%23f00'%3E%3Canimate%20attributeName='opacity'%20values='1;0;1'%20dur='0.7s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='255'%20cy='25'%20r='7'%20fill='%23f00'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='0.7s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E">
+  <img src="/markgraf-www/under-construction.gif" alt="under construction" width="72" height="72" align="middle" border="0">
+  <span class="nsf-blink"><font color="#ff2200" face="Comic Sans MS" size="6">&nbsp;THIS SITE IS UNDER CONSTRUCTION&nbsp;</font></span>
+  <img src="/markgraf-www/under-construction.gif" alt="under construction" width="72" height="72" align="middle" border="0">
 </p>
-
-<h1 class="nsf-blink"><font color="#ff2200" face="Comic Sans MS">&#128679; THIS SITE IS UNDER CONSTRUCTION &#128679;</font></h1>
 
 <hr class="nsf-rule">
 
