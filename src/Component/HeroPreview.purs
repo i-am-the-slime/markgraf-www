@@ -104,7 +104,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
       , sideNav { active: activeSection }
       , heroPage
       , playground { section: activeSection }
-      , playerSection
+      , integrationsSection
       , renderSection
       , aiSection
       , embedSection
@@ -220,7 +220,7 @@ sectionStates =
     , camera: home { py = 0.0, pz = 24.0, fov = 55.0 }
     , formation: code { radius: 11.0, speed: 0.15 }
     }
-  , { id: "player"
+  , { id: "integrations"
     , morph: gathered
     , camera: home { px = -4.0, lx = -1.8, fov = 80.0 }
     , formation: helix { radius: 4.0, length: 12.0, speed: 0.6 }
@@ -341,7 +341,7 @@ sideNav { active } =
   where
   sections =
     [ "playground" /\ "playground"
-    , "player" /\ "player"
+    , "integrations" /\ "integrations"
     , "render" /\ "render"
     , "ai" /\ "ai"
     , "embed" /\ "integrations"
@@ -561,7 +561,7 @@ playgroundView pp =
                     { className: "display-glow text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] max-w-[20ch]"
                     , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
                     }
-                    "Try it out"
+                    "Try markgraf"
                 ]
             ]
         , exampleStrip pp.src pp.setSrc
@@ -969,36 +969,37 @@ installPill =
         [ text "copy" ]
     ]
 
-playerSection :: JSX
-playerSection =
+integrationsSection :: JSX
+integrationsSection =
   H.section
-    { id: "player"
+    { id: "integrations"
     , className: "relative snap-start snap-always h-screen overflow-hidden flex flex-col justify-center z-10 px-6 sm:px-12 py-16"
     }
     [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
-        [ sectionLabel "02 / player"
+        [ sectionLabel "02 / integrations"
         , h2
             { className: "display-glow text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] mb-6 max-w-[min(56rem,90vw)]"
             , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
             }
-            "Native macOS player."
+            "Runs everywhere."
         , p { className: "text-base text-[#aeb7c8] max-w-2xl leading-relaxed mb-10" }
-            "Swift, Metal, AppKit. Opens .markgraf files, plays them, hot-reloads on save."
-        , div { className: "grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6" }
-            [ featureRow "Drag-and-drop reload" "Drop a .markgraf file on the window. Edit in your editor of choice; the player picks up saves instantly."
-            , featureRow "Scrub bar" "Drag along the timeline to step through frames. Pause, rewind, hold on any moment."
-            , featureRow "Glass backdrop" "Vibrant blur over your desktop so the diagram floats. Looks at home next to your editor."
-            , featureRow "Pipe straight in" "pbpaste | markgraf --play opens a window without touching the filesystem."
+            [ text "One "
+            , inlineCode "```markgraf"
+            , text " block, every surface you work on — docs, code review, your editor, the command line."
+            ]
+        , div { className: "grid grid-cols-2 md:grid-cols-3 gap-4" }
+            [ embedCard "GitHub" "Chrome extension renders markgraf blocks inline on github.com."
+            , embedCard "MkDocs" "Python plugin — ```markgraf fences become live players."
+            , embedCard "Starlight" "Astro Starlight docs."
+            , embedCard "Astro" "Astro integration."
+            , embedCard "React" "@markgrafhq/markgraf-react — drop-in component."
+            , embedCard "macOS" "Native Metal player + CLI."
+            , embedCard "Linux" "CLI, statically linked."
+            , embedCard "Windows" "CLI."
+            , embedCard "mp4" "Render to video — ffmpeg embedded, no deps."
             ]
         ]
-    , spreadFolio "02" "player"
-    ]
-
-featureRow :: String -> String -> JSX
-featureRow heading body =
-  div { className: "flex flex-col gap-1.5" }
-    [ div { className: "font-mono text-xs uppercase tracking-[0.2em] text-[#ff3b1a]" } heading
-    , p { className: "text-sm text-[#c8cdd9] leading-relaxed" } body
+    , spreadFolio "02" "integrations"
     ]
 
 renderSection :: JSX
