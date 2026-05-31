@@ -67,7 +67,7 @@ retro =
 
   /* Windows 3.11 window chrome — raised grey bevel, navy title bar, system-menu box on
      the left, minimize/maximize triangle buttons on the right. Used for both the code
-     editor and the install "MS-DOS Prompt". */
+     editor and the install command window. */
   .nsf-win { background: #c0c0c0; border: 2px outset #c0c0c0; padding: 3px; text-align: left; }
   .nsf-titlebar { display: flex; align-items: center; gap: 2px; height: 19px; padding: 1px 2px; background: #000080; }
   .nsf-sysbtn { flex: 0 0 auto; width: 17px; height: 15px; background: #c0c0c0; border: 1px outset #c0c0c0;
