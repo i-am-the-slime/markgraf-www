@@ -60,59 +60,66 @@ var Smooth = /* #__PURE__ */ (function () {
     Smooth.value = new Smooth();
     return Smooth;
 })();
-var showScrollLogicalPosition = {
-    show: function (v) {
-        if (v instanceof Start) {
-            return "start";
+var eqScrollLogicalPosition = {
+    eq: function (x) {
+        return function (y) {
+            if (x instanceof Start && y instanceof Start) {
+                return true;
+            };
+            if (x instanceof Center && y instanceof Center) {
+                return true;
+            };
+            if (x instanceof End && y instanceof End) {
+                return true;
+            };
+            if (x instanceof Nearest && y instanceof Nearest) {
+                return true;
+            };
+            return false;
         };
-        if (v instanceof Center) {
-            return "center";
-        };
-        if (v instanceof End) {
-            return "end";
-        };
-        if (v instanceof Nearest) {
-            return "nearest";
-        };
-        throw new Error("Failed pattern match at Web.DOM.Element (line 212, column 1 - line 216, column 27): " + [ v.constructor.name ]);
     }
 };
-var show1 = /* #__PURE__ */ Data_Show.show(showScrollLogicalPosition);
-var showScrollBehavior = {
-    show: function (v) {
-        if (v instanceof Auto) {
-            return "auto";
+var eqScrollBehavior = {
+    eq: function (x) {
+        return function (y) {
+            if (x instanceof Auto && y instanceof Auto) {
+                return true;
+            };
+            if (x instanceof Instant && y instanceof Instant) {
+                return true;
+            };
+            if (x instanceof Smooth && y instanceof Smooth) {
+                return true;
+            };
+            return false;
         };
-        if (v instanceof Instant) {
-            return "instant";
-        };
-        if (v instanceof Smooth) {
-            return "smooth";
-        };
-        throw new Error("Failed pattern match at Web.DOM.Element (line 204, column 1 - line 207, column 25): " + [ v.constructor.name ]);
     }
 };
-var show2 = /* #__PURE__ */ Data_Show.show(showScrollBehavior);
 var toParentNode = Unsafe_Coerce.unsafeCoerce;
 var toNonDocumentTypeChildNode = Unsafe_Coerce.unsafeCoerce;
 var toNode = Unsafe_Coerce.unsafeCoerce;
 var toEventTarget = Unsafe_Coerce.unsafeCoerce;
 var toChildNode = Unsafe_Coerce.unsafeCoerce;
-var prefix = function ($11) {
-    return Data_Nullable.toMaybe($foreign["_prefix"]($11));
+var prefix = function ($17) {
+    return Data_Nullable.toMaybe($foreign["_prefix"]($17));
 };
-var optionsToProps = function (options) {
-    return {
-        behavior: show2(options.behavior),
-        block: show1(options.block),
-        inline: show1(options.inline)
+var namespaceURI = function ($18) {
+    return Data_Nullable.toMaybe($foreign["_namespaceURI"]($18));
+};
+var logicalPositionToString = function (v) {
+    if (v instanceof Start) {
+        return "start";
     };
-};
-var scrollIntoViewWithOptions = function ($12) {
-    return $foreign["_scrollIntoViewWithOptions"](optionsToProps($12));
-};
-var namespaceURI = function ($13) {
-    return Data_Nullable.toMaybe($foreign["_namespaceURI"]($13));
+    if (v instanceof Center) {
+        return "center";
+    };
+    if (v instanceof End) {
+        return "end";
+    };
+    if (v instanceof Nearest) {
+        return "nearest";
+    };
+    throw new Error("Failed pattern match at Web.DOM.Element (line 242, column 27 - line 246, column 23): " + [ v.constructor.name ]);
 };
 var initToProps = function (init) {
     return {
@@ -120,14 +127,14 @@ var initToProps = function (init) {
         delegatesFocus: init.delegatesFocus
     };
 };
-var getElementsByTagNameNS = function ($14) {
-    return $foreign["_getElementsByTagNameNS"](Data_Nullable.toNullable($14));
+var getElementsByTagNameNS = function ($19) {
+    return $foreign["_getElementsByTagNameNS"](Data_Nullable.toNullable($19));
 };
 var getAttribute = function (attr) {
-    var $15 = map(Data_Nullable.toMaybe);
-    var $16 = $foreign["_getAttribute"](attr);
-    return function ($17) {
-        return $15($16($17));
+    var $20 = map(Data_Nullable.toMaybe);
+    var $21 = $foreign["_getAttribute"](attr);
+    return function ($22) {
+        return $20($21($22));
     };
 };
 var fromParentNode = /* #__PURE__ */ Web_Internal_FFI.unsafeReadProtoTagged("Element");
@@ -136,14 +143,36 @@ var fromNode = /* #__PURE__ */ Web_Internal_FFI.unsafeReadProtoTagged("Element")
 var fromEventTarget = /* #__PURE__ */ Web_Internal_FFI.unsafeReadProtoTagged("Element");
 var fromChildNode = /* #__PURE__ */ Web_Internal_FFI.unsafeReadProtoTagged("Element");
 var closest = function (qs) {
-    var $18 = map(Data_Nullable.toMaybe);
-    var $19 = $foreign["_closest"](qs);
-    return function ($20) {
-        return $18($19($20));
+    var $23 = map(Data_Nullable.toMaybe);
+    var $24 = $foreign["_closest"](qs);
+    return function ($25) {
+        return $23($24($25));
     };
 };
-var attachShadow = function ($21) {
-    return $foreign["_attachShadow"](initToProps($21));
+var behaviorToString = function (v) {
+    if (v instanceof Auto) {
+        return "auto";
+    };
+    if (v instanceof Instant) {
+        return "instant";
+    };
+    if (v instanceof Smooth) {
+        return "smooth";
+    };
+    throw new Error("Failed pattern match at Web.DOM.Element (line 236, column 20 - line 239, column 21): " + [ v.constructor.name ]);
+};
+var optionsToProps = function (options) {
+    return {
+        behavior: behaviorToString(options.behavior),
+        block: logicalPositionToString(options.block),
+        inline: logicalPositionToString(options.inline)
+    };
+};
+var scrollIntoViewWithOptions = function ($26) {
+    return $foreign["_scrollIntoViewWithOptions"](optionsToProps($26));
+};
+var attachShadow = function ($27) {
+    return $foreign["_attachShadow"](initToProps($27));
 };
 export {
     localName,
@@ -198,7 +227,7 @@ export {
     Center,
     End,
     Nearest,
-    showScrollBehavior,
-    showScrollLogicalPosition
+    eqScrollBehavior,
+    eqScrollLogicalPosition
 };
 //# sourceMappingURL=index.js.map

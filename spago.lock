@@ -742,7 +742,7 @@
       },
       "web-dom": {
         "git": "https://github.com/i-am-the-slime/purescript-web-dom.git",
-        "ref": "49f0f025bf4a21ca42759ec7fef1e0f65470ecac",
+        "ref": "ba59175f4884666ebf563b97eca7b9c9c0beedbd",
         "dependencies": [
           "effect",
           "enums",
@@ -1986,7 +1986,7 @@
     "web-dom": {
       "type": "git",
       "url": "https://github.com/i-am-the-slime/purescript-web-dom.git",
-      "rev": "49f0f025bf4a21ca42759ec7fef1e0f65470ecac",
+      "rev": "ba59175f4884666ebf563b97eca7b9c9c0beedbd",
       "dependencies": [
         "effect",
         "enums",
