@@ -1,7 +1,7 @@
 // Static export for GitHub Pages.
 const config = {
   output: "export",
-  basePath: "/markgraf-www",
+  basePath: "",
   images: { unoptimized: true },
   trailingSlash: true,
 };
