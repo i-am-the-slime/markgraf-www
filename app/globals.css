@@ -1,5 +1,63 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Sinistre";
+  src: url("/markgraf-www/fonts/sinistre/SinistreVF.woff2") format("woff2-variations"),
+       url("/markgraf-www/fonts/sinistre/SinistreVF.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Ilisarniq";
+  src: url("/markgraf-www/fonts/Ilisarniq-Demi.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Commit Mono";
+  src: url("/markgraf-www/fonts/CommitMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* markgraf-embed's published CSS still references "Ioskeley Mono" — alias it
+   to Commit Mono so labels inside the player pick up the right typeface. */
+@font-face {
+  font-family: "Ioskeley Mono";
+  src: url("/markgraf-www/fonts/CommitMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Metric-matched fallbacks. Before the web fonts load, text renders in a local
+   system font scaled (via size-adjust + ascent/descent/line-gap overrides) to
+   occupy the exact same box as the real font — so the swap reflows nothing.
+   Overrides computed by capsize from the actual font files: Sinistre over Times
+   New Roman, Ilisarniq over Arial. Slot these between the real family and the
+   generic keyword in every stack below. */
+@font-face {
+  font-family: "Sinistre Fallback";
+  src: local('Times New Roman'), local('TimesNewRomanPSMT');
+  ascent-override: 76.0563%;
+  descent-override: 24.9015%;
+  line-gap-override: 5.6918%;
+  size-adjust: 140.5538%;
+}
+@font-face {
+  font-family: "Ilisarniq Fallback";
+  src: local('Arial'), local('ArialMT');
+  ascent-override: 72.2362%;
+  descent-override: 10.3195%;
+  line-gap-override: 0%;
+  size-adjust: 145.3564%;
+}
+
 @theme {
   --color-background: hsl(40 25% 96%);
   --color-foreground: hsl(0 0% 7%);
@@ -9,12 +67,234 @@
   --color-accent: hsl(0 0% 7%);
   --color-accent-foreground: hsl(40 25% 96%);
 
-  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* HDR / wide-gamut accent. sRGB browsers will clamp; on P3 displays the
+     :root override below punches noticeably hotter than #ff3b1a can reach. */
+  --color-brand: #ff3b1a;
+
+  --font-sans: "Ilisarniq", "Ilisarniq Fallback", ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: "Commit Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-display: "Sinistre", "Sinistre Fallback", ui-serif, Georgia, serif;
 
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
+}
+
+@supports (color: color(display-p3 1 0 0)) {
+  :root {
+    --color-brand: color(display-p3 1 0.2 0.05);
+  }
+}
+
+/* True HDR path: P3 values above 1.0 paint into the display's HDR headroom,
+   but only when the element opts in via dynamic-range-limit. Safari 17.2+
+   honours this on HDR displays; SDR browsers ignore the property and clamp
+   the colour to the [0,1] cube, so the previous block remains the fallback. */
+@supports (dynamic-range-limit: no-limit) {
+  :root {
+    --color-brand: color(display-p3 1.6 0.35 0.12);
+  }
+  body {
+    dynamic-range-limit: no-limit;
+  }
+}
+
+/* VHS chromatic-aberration title effect — adapted from
+   https://codepen.io/shorinamaria/pen/egJmeY
+   Eases in/out on hover of .vhs-text-wrap. */
+.vhs-text-wrap {
+  position: relative;
+  display: inline-block;
+}
+.vhs-text {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  color: inherit;
+  filter: blur(0);
+  animation: vhs-skew 2s infinite, vhs-flash 0.04s infinite;
+  animation-play-state: paused;
+  transition: color 500ms ease, filter 500ms ease;
+}
+.vhs-text::before,
+.vhs-text::after {
+  content: var(--vhs-text, "");
+  position: absolute;
+  top: 0;
+  left: 0;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+.vhs-text::before {
+  display: none;
+}
+.vhs-text::after {
+  color: #8a94a8;
+  transform: translate(0.02em, 0);
+  animation: vhs-move 1.5s infinite;
+  animation-play-state: paused;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 500ms ease;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(138, 148, 168, 0.08) 0,
+    rgba(138, 148, 168, 0.08) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  mix-blend-mode: screen;
+  filter: blur(0.6px);
+  animation: vhs-lines 2.5s infinite;
+  animation-play-state: paused;
+}
+.vhs-text-wrap.vhs-on .vhs-text {
+  mix-blend-mode: screen;
+  filter: blur(0.3px);
+  animation-play-state: running;
+}
+.vhs-text-wrap.vhs-on .vhs-text::after {
+  opacity: 0.35;
+}
+.vhs-text-wrap.vhs-on .vhs-text::after {
+  animation-play-state: running;
+}
+body:has(.vhs-text-wrap.vhs-on)::after {
+  opacity: 1;
+  animation-play-state: running;
+}
+@keyframes vhs-skew {
+  0%, 30%, 31%, 100% { transform: none; }
+  30.2% { transform: skewX(8deg); }
+  30.4% { transform: skewX(-8deg); }
+}
+@keyframes vhs-move {
+  0%, 30%, 33%, 98% { transform: translate(0.02em, 0); }
+  31% { transform: translate(-0.01em, 0); }
+  100% { transform: translate(0.04em, 0); }
+}
+@keyframes vhs-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.9; }
+}
+@keyframes vhs-lines {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.55; }
+}
+
+/* CRT scanlines as a top-level DOM overlay (split out of the canvas grain
+   shader). Bold 1px black line every 2px, looping slowly top-to-bottom.
+
+   The pattern lives on a ::before layer that's rasterised once and moved with
+   a GPU transform — animating background-position instead would re-sample the
+   hard 1px lines against the device-pixel grid every frame, making some lines
+   render thicker than others (a moiré beat). The layer is oversized and shifts
+   by exactly one 2px period, so the loop is seamless. Tune speed via duration. */
+.crt-overlay {
+  overflow: hidden;
+}
+.crt-overlay::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -8px;
+  height: calc(100% + 16px);
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.2) 0px,
+    rgba(0, 0, 0, 0.2) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  will-change: transform;
+  animation: crt-scroll 10s linear infinite;
+}
+@keyframes crt-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 2px, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .crt-overlay::before {
+    animation: none;
+  }
+}
+
+/* Phosphor glow on the large display type — a soft warm halo cast straight off
+   the Sinistre headings so they read as lit, not just painted. Two blurred
+   shadow rings (tight + wide) plus the existing dark contrast shadow keep them
+   legible over the busy scene. */
+.display-glow {
+  /* Warm amber tint so the large type reads as lit phosphor rather than flat
+     white — pulled toward the same hue as the glow rings below. */
+  color: #f3ead2;
+  text-shadow:
+    0 0 12px rgba(255, 238, 214, 0.35),
+    0 0 42px rgba(255, 238, 214, 0.18),
+    0 1px 2px rgba(10, 14, 26, 0.9);
+}
+
+/* Lockup assembly: the tagline and install pill hold back until the wordmark
+   has caught (~2.5s), then arrive in sequence so the hero builds rather than
+   landing whole. Per-word delays are set inline (base 2.7s + index * step) so
+   the line types itself in; the pill follows once the last word lands. Both
+   collapse to a plain appearance under reduced motion. */
+.hero-tagline-word {
+  display: inline-block;
+  opacity: 0;
+  animation: hero-tagline-word 0.5s ease-out both;
+}
+@keyframes hero-tagline-word {
+  from { opacity: 0; transform: translateY(0.4em); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.hero-pill-in {
+  animation: hero-pill-in 0.6s ease-out 4s both;
+}
+@keyframes hero-pill-in {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-tagline-word,
+  .hero-pill-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* The graph holds back until the wordmark has struck on and settled, then fades
+   in cleanly — no flicker, no veil, just a late reveal once the title owns the
+   screen. */
+.player-reveal {
+  opacity: 0;
+  animation: player-reveal 1s ease-out 2.5s both;
+}
+@keyframes player-reveal {
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-reveal {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* markgraf-react paints a <svg class="markgraf-player"> with intrinsic width
+   and height attributes from the layout viewport.  Force it to scale to its
+   container so it fits the playground pane instead of overflowing.  */
+.markgraf-player {
+  display: block;
 }
 
 @layer base {
@@ -28,11 +308,117 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
+  /* Dark by default so the first paint (before the client React tree mounts)
+     is the magazine's near-black, not a cream flash. The magazine sets its own
+     dark surface; the privacy page opts back into the light theme explicitly. */
   body {
-    background-color: var(--color-background);
+    background-color: #0f0f0f;
     color: var(--color-foreground);
+  }
+  /* Hold the wordmark hidden for a beat, then strike it on like an old neon
+     tube — a couple of stutters before the gas catches and it holds steady. By
+     the time it fires Sinistre has loaded, so its font swap is never seen. The
+     phosphor glow (.display-glow text-shadow) rides on opacity, so the halo
+     flickers with each stutter. `both` keeps it dark through the delay; with CSS
+     disabled the title just shows normally. */
+  .hero-wordmark-in {
+    /* Strike on like a neon tube, then never quite hold still: once the gas
+       catches (~2.5s) a faint hum takes over, sparse micro-flickers that read
+       as a live tube rather than a pulse. The hum is listed last so it wins the
+       opacity once its delay elapses; before that the ignition has the floor. */
+    animation:
+      hero-wordmark-in 1.8s linear 0.7s both,
+      hero-neon-hum 7s linear 2.5s infinite;
+  }
+  /* A real tube ignites in bursts — struck (lit) or dark, always snapping back
+     to 0 between flashes, never dimming. Realism is in the cadence: wide dark
+     gaps at first, then the strikes come faster and the peaks climb (0.5 -> 1)
+     until the gas holds and it stays on. The ~1% edges act as on/off snaps. */
+  @keyframes hero-wordmark-in {
+    0%, 5% { opacity: 0; }
+    6% { opacity: 0.4; }     /* first cluster — single faint blink */
+    7% { opacity: 0; }
+    9% { opacity: 0.7; }     /* brighter, close behind */
+    10% { opacity: 0; }
+    11% { opacity: 0.3; }    /* weak double-flick */
+    12% { opacity: 0; }
+    13% { opacity: 0.9; }    /* sudden bright stab... */
+    14% { opacity: 0; }      /* ...that dies */
+    31% { opacity: 0; }      /* THE BREAK — fully dark for a beat */
+    32% { opacity: 0.5; }    /* rapid burst resumes */
+    34% { opacity: 0.5; }
+    35% { opacity: 0; }
+    36% { opacity: 0.6; }
+    37% { opacity: 0; }
+    38% { opacity: 0.4; }
+    39% { opacity: 0; }
+    40% { opacity: 0.7; }
+    41% { opacity: 0; }
+    48% { opacity: 0; }      /* dead pause */
+    49% { opacity: 0.85; }   /* bright, almost holds */
+    51% { opacity: 0.85; }
+    52% { opacity: 0; }
+    53% { opacity: 0.3; }    /* machine-gun burst */
+    54% { opacity: 0; }
+    55% { opacity: 0.8; }
+    56% { opacity: 0; }
+    57% { opacity: 0.5; }
+    58% { opacity: 0; }
+    64% { opacity: 0; }      /* sudden dead air after it sped up */
+    65% { opacity: 0.9; }    /* stabs back bright */
+    66% { opacity: 0; }
+    67% { opacity: 0.6; }
+    68% { opacity: 0; }
+    69% { opacity: 0.8; }
+    70% { opacity: 0; }
+    74% { opacity: 0; }      /* one more dead beat */
+    75% { opacity: 0.8; }    /* fast stutter cluster */
+    76% { opacity: 0; }
+    77% { opacity: 0.8; }
+    78% { opacity: 0; }
+    79% { opacity: 0.8; }
+    80% { opacity: 0; }
+    84% { opacity: 0; }      /* last gasp of dark */
+    85% { opacity: 0.8; }
+    86% { opacity: 0; }
+    88% { opacity: 0.8; animation-timing-function: ease-out; }
+    100% { opacity: 1; }    /* the only full-brightness moment — the climax */
+  }
+  /* The settled tube: mostly full brightness with a handful of brief, shallow
+     dips per loop. Kept sparse and small (never below 0.93) so it reads as a
+     faint electrical hum, not a deliberate pulse. */
+  @keyframes hero-neon-hum {
+    0%, 100% { opacity: 1; }
+    16.8% { opacity: 0.97; }
+    17.3% { opacity: 1; }
+    40.6% { opacity: 0.93; }
+    41.3% { opacity: 1; }
+    61.7% { opacity: 0.98; }
+    62.2% { opacity: 1; }
+    82.8% { opacity: 0.94; }
+    83.4% { opacity: 1; }
+  }
+  /* Flashing is a photosensitivity risk — skip the strike-on and just fade. */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-wordmark-in {
+      animation: hero-wordmark-fade 0.5s ease-out 0.7s both;
+    }
+    @keyframes hero-wordmark-fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
   }
   pre, code {
     font-family: var(--font-mono);
+  }
+  /* Highlight in the house accent instead of the browser's blue. Near-black
+     text keeps selected copy legible against the hot orange. */
+  ::selection {
+    background-color: #ff3b1a;
+    color: #0f0f0f;
+  }
+  ::-moz-selection {
+    background-color: #ff3b1a;
+    color: #0f0f0f;
   }
 }

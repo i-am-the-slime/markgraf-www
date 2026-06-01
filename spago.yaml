@@ -1,13 +1,149 @@
 workspace:
+  backend:
+    cmd: "purs-backend-es"
+    args: [ "build", "--output-dir", "output" ]
   packageSet:
-    registry: 75.9.1
+    registry: 77.3.1
+  extraPackages:
+    react-r3f:
+      git: https://github.com/edwardw/purescript-react-r3f.git
+      ref: main
+      dependencies:
+        - arraybuffer-types
+        - console
+        - effect
+        - foreign
+        - foreign-object
+        - functions
+        - js-object
+        - prelude
+        - profunctor-lenses
+        - react-basic
+        - react-basic-dom
+        - react-basic-hooks
+        - record-extra
+        - typelevel-prelude
+        - typelevel-regex
+        - untagged-union
+    yoga-react-dom:
+      git: https://github.com/rowtype-yoga/purescript-yoga-react-dom.git
+      ref: v2.1.0
+      dependencies:
+        - datetime
+        - effect
+        - forgetmenot
+        - functions
+        - nullable
+        - prelude
+        - react-basic
+        - react-basic-hooks
+        - record
+        - type-equality
+        - typelevel-prelude
+        - unsafe-coerce
+        - web-dom
+        - web-events
+        - web-html
+        - web-touchevents
+    yoga-r3f:
+      path: /Users/mark/code/yoga-r3f
+    web-font-loading:
+      path: /Users/mark/code/purescript-web-font-loading
+    web-dom:
+      git: https://github.com/i-am-the-slime/purescript-web-dom.git
+      ref: ba59175f4884666ebf563b97eca7b9c9c0beedbd
+      dependencies:
+        - effect
+        - enums
+        - maybe
+        - newtype
+        - nullable
+        - prelude
+        - unsafe-coerce
+        - web-events
+    web-proletarian:
+      git: https://github.com/rowtype-yoga/purescript-web-proletarian.git
+      ref: 0ee3de080dcc538fe0db3e735ddb02a67de736a2
+      dependencies:
+        - effect
+        - prelude
+        - unsafe-coerce
+        - web-html
+    js-object:
+      git: https://github.com/purescript-codegen/purescript-js-object
+      ref: baba9598f114062dfaa4025b79eca0e06245a0c6
+      dependencies:
+        - aff
+        - contravariant
+        - effect
+        - foreign
+        - foreign-object
+        - heterogeneous
+        - newtype
+        - nullable
+        - partial
+        - prelude
+        - record
+        - typelevel-prelude
+        - unsafe-coerce
+        - unsafe-reference
+    yoga-om:
+      path: /Users/mark/code/purescript-yoga-om
+    yoga-react-om:
+      path: /Users/mark/code/purescript-yoga-react-om
+    ref-lifted:
+      path: /Users/mark/code/purescript-ref-lifted
+    yoga-http-api:
+      path: /Users/mark/code/purescript-yoga-http-api
+    golden-test:
+      path: /Users/mark/code/purescript-golden-test
+    next-purs-rsc:
+      path: /Users/mark/code/next-purs-rsc
 package:
   name: markgraf-www
   dependencies:
-    - prelude
+    - arrays
+    - canvas
     - effect
+    - either
+    - foldable-traversable
+    - foreign
+    - foreign-object
+    - framer-motion
+    - functions
+    - integers
+    - intersection-observer
+    - js-promise
+    - js-promise-aff
+    - js-timers
+    - lists
+    - literals
+    - maybe
+    - newtype
+    - next-purs-rsc
+    - nullable
+    - numbers
+    - prelude
+    - random
     - react-basic
     - react-basic-hooks
-    - react-basic-dom
+    - react-r3f
+    - refs
+    - st
+    - transformers
+    - tuples
+    - two-or-more
+    - typelevel-prelude
+    - unsafe-coerce
+    - untagged-union
+    - web-clipboard
+    - web-dom
+    - web-font-loading
+    - web-events
+    - web-html
+    - web-proletarian
+    - web-resize-observer
+    - yoga-r3f
+    - yoga-react-dom
   build:
     censorProjectWarnings: all
