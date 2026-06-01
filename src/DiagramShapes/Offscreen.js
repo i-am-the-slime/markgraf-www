@@ -9,7 +9,7 @@
 // /public so the Next-bundler never sees it — hence a static string path, not
 // the `new URL(..., import.meta.url)` form.
 export const newDiagramShapesWorker = () =>
-  new Worker("/markgraf-www/diagram-shapes-worker.js", { type: "module" })
+  new Worker("/diagram-shapes-worker.js", { type: "module" })
 
 // transferControlToOffscreen() throws if called twice on the same canvas, and
 // React StrictMode double-invokes effects in dev. The on-screen <canvas> node is

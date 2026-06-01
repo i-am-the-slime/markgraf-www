@@ -5,8 +5,7 @@
 // plain static page instead: it extracts the `retro = """ ... """` string from
 // Root.purs (the single source of truth — no copy to drift), renders it OUTSIDE
 // <noscript> so it always shows, and live-reloads the browser over SSE whenever
-// Root.purs is saved. The gif/fonts are served from public/, with the /markgraf-www
-// basePath rewritten away.
+// Root.purs is saved. The gif/fonts are served from public/.
 //
 //   bun run scripts/noscript-preview.mjs   ->   http://localhost:8091
 //
@@ -35,7 +34,8 @@ const extractRetro = () => {
   if (open < 0) return "<pre>could not find retro string in " + ROOT + "</pre>"
   const from = open + 3
   const end = src.indexOf('"""', from)
-  return src.slice(from, end).replaceAll("/markgraf-www/", "/")
+  // basePath is empty (org-level Pages repo), no prefix to strip
+  return src.slice(from, end)
 }
 
 const page = () => `<!doctype html>

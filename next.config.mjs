@@ -10,7 +10,7 @@ const rscLoader = path.resolve(here, "node_modules/next-purs-rsc/purescript-rsc-
 
 const config = {
   output: "export",
-  basePath: "/markgraf-www",
+  basePath: "",
   images: { unoptimized: true },
   trailingSlash: true,
   // The generated app/*.tsx import the untyped PureScript `output` (with a
