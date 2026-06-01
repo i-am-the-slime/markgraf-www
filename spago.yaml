@@ -46,9 +46,11 @@ workspace:
         - web-html
         - web-touchevents
     yoga-r3f:
-      path: /Users/mark/code/yoga-r3f
+      git: https://github.com/rowtype-yoga/yoga-r3f.git
+      ref: main
     web-font-loading:
-      path: /Users/mark/code/purescript-web-font-loading
+      git: https://github.com/rowtype-yoga/purescript-web-font-loading.git
+      ref: main
     web-dom:
       git: https://github.com/i-am-the-slime/purescript-web-dom.git
       ref: ba59175f4884666ebf563b97eca7b9c9c0beedbd
@@ -88,17 +90,23 @@ workspace:
         - unsafe-coerce
         - unsafe-reference
     yoga-om:
-      path: /Users/mark/code/purescript-yoga-om
+      git: https://github.com/rowtype-yoga/purescript-yoga-om.git
+      ref: main
     yoga-react-om:
-      path: /Users/mark/code/purescript-yoga-react-om
+      git: https://github.com/rowtype-yoga/purescript-yoga-react-om.git
+      ref: main
     ref-lifted:
-      path: /Users/mark/code/purescript-ref-lifted
+      git: https://github.com/rowtype-yoga/purescript-ref-lifted.git
+      ref: main
     yoga-http-api:
-      path: /Users/mark/code/purescript-yoga-http-api
+      git: https://github.com/rowtype-yoga/purescript-yoga-http-api.git
+      ref: main
     golden-test:
-      path: /Users/mark/code/purescript-golden-test
+      git: https://github.com/rowtype-yoga/purescript-golden-test.git
+      ref: main
     next-purs-rsc:
-      path: /Users/mark/code/next-purs-rsc
+      git: https://github.com/rowtype-yoga/next-purs-rsc.git
+      ref: proxy-and-search-helpers
 package:
   name: markgraf-www
   dependencies:
