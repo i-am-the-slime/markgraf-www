@@ -28,13 +28,13 @@ jobs:
       - name: Install npm deps (incl. purs + spago)
         run: bun install --frozen-lockfile
       - name: Build PureScript
-        run: npx spago build
+        run: bunx spago build
       - name: Generate routes
-        run: npx purs-rsc-routes
+        run: bunx purs-rsc-routes
       - name: Build worker
         run: bun run worker
       - name: Build Next
-        run: npx next build
+        run: bunx next build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
