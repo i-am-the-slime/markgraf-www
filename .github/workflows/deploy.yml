@@ -34,7 +34,7 @@ jobs:
       - name: Build worker
         run: bun run worker
       - name: Build Next
-        run: bun next build
+        run: node node_modules/next/dist/bin/next build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
