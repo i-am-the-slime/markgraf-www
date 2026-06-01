@@ -29,6 +29,10 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Build PureScript
         run: npx spago build
+      - name: Generate routes
+        run: npx purs-rsc-routes
+      - name: Build worker
+        run: bun run worker
       - name: Build Next
         run: npx next build
       - uses: actions/configure-pages@v5
