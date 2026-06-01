@@ -34,7 +34,7 @@ jobs:
       - name: Build worker
         run: bun run worker
       - name: Build Next
-        run: rm -rf .next && DEBUG=next:* node --max-old-space-size=8192 node_modules/next/dist/bin/next build
+        run: rm -rf .next && NEXT_DISABLE_TURBOPACK=1 node --max-old-space-size=8192 node_modules/next/dist/bin/next build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
