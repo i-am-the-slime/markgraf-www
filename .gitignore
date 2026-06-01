@@ -4,7 +4,6 @@ out/
 output/
 .spago/
 spago.lock
-bun.lock
 *.tsbuildinfo
 .DS_Store
 /public/diagram-shapes-worker.js
