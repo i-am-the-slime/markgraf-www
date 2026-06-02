@@ -700,7 +700,8 @@
     },
     "extra_packages": {
       "golden-test": {
-        "path": "/Users/mark/code/purescript-golden-test"
+        "git": "https://github.com/rowtype-yoga/purescript-golden-test.git",
+        "ref": "main"
       },
       "js-object": {
         "git": "https://github.com/purescript-codegen/purescript-js-object",
@@ -723,7 +724,8 @@
         ]
       },
       "next-purs-rsc": {
-        "path": "/Users/mark/code/next-purs-rsc"
+        "git": "https://github.com/rowtype-yoga/next-purs-rsc.git",
+        "ref": "proxy-and-search-helpers"
       },
       "react-r3f": {
         "git": "https://github.com/edwardw/purescript-react-r3f.git",
@@ -748,7 +750,8 @@
         ]
       },
       "ref-lifted": {
-        "path": "/Users/mark/code/purescript-ref-lifted"
+        "git": "https://github.com/rowtype-yoga/purescript-ref-lifted.git",
+        "ref": "main"
       },
       "web-dom": {
         "git": "https://github.com/i-am-the-slime/purescript-web-dom.git",
@@ -765,7 +768,8 @@
         ]
       },
       "web-font-loading": {
-        "path": "/Users/mark/code/purescript-web-font-loading"
+        "git": "https://github.com/rowtype-yoga/purescript-web-font-loading.git",
+        "ref": "main"
       },
       "web-proletarian": {
         "git": "https://github.com/rowtype-yoga/purescript-web-proletarian.git",
@@ -778,13 +782,16 @@
         ]
       },
       "yoga-http-api": {
-        "path": "/Users/mark/code/purescript-yoga-http-api"
+        "git": "https://github.com/rowtype-yoga/purescript-yoga-http-api.git",
+        "ref": "main"
       },
       "yoga-om": {
-        "path": "/Users/mark/code/purescript-yoga-om"
+        "git": "https://github.com/rowtype-yoga/purescript-yoga-om.git",
+        "ref": "main"
       },
       "yoga-r3f": {
-        "path": "/Users/mark/code/yoga-r3f"
+        "git": "https://github.com/rowtype-yoga/yoga-r3f.git",
+        "ref": "main"
       },
       "yoga-react-dom": {
         "git": "https://github.com/rowtype-yoga/purescript-yoga-react-dom.git",
@@ -809,7 +816,8 @@
         ]
       },
       "yoga-react-om": {
-        "path": "/Users/mark/code/purescript-yoga-react-om"
+        "git": "https://github.com/rowtype-yoga/purescript-yoga-react-om.git",
+        "ref": "main"
       }
     }
   },
@@ -1552,8 +1560,9 @@
       ]
     },
     "next-purs-rsc": {
-      "type": "local",
-      "path": "/Users/mark/code/next-purs-rsc",
+      "type": "git",
+      "url": "https://github.com/rowtype-yoga/next-purs-rsc.git",
+      "rev": "82c125035ee21b1344e846ee829ace99a93b960c",
       "dependencies": [
         "aff-promise",
         "arraybuffer-types",
@@ -2245,8 +2254,9 @@
       ]
     },
     "web-font-loading": {
-      "type": "local",
-      "path": "/Users/mark/code/purescript-web-font-loading",
+      "type": "git",
+      "url": "https://github.com/rowtype-yoga/purescript-web-font-loading.git",
+      "rev": "74f493ae650f8046b53c885c6b1ebcb594ec4474",
       "dependencies": [
         "canvas",
         "effect",
@@ -2364,8 +2374,9 @@
       ]
     },
     "yoga-http-api": {
-      "type": "local",
-      "path": "/Users/mark/code/purescript-yoga-http-api",
+      "type": "git",
+      "url": "https://github.com/rowtype-yoga/purescript-yoga-http-api.git",
+      "rev": "cf2962b7f3ca1ac6cacd9ca19c07e43f44cb008f",
       "dependencies": [
         "aff",
         "arrays",
@@ -2428,8 +2439,9 @@
       ]
     },
     "yoga-om": {
-      "type": "local",
-      "path": "/Users/mark/code/purescript-yoga-om",
+      "type": "git",
+      "url": "https://github.com/rowtype-yoga/purescript-yoga-om.git",
+      "rev": "35377eed318d1f262dab87cbf0a22395ba82a241",
       "dependencies": [
         "aff",
         "aff-retry",
@@ -2470,8 +2482,9 @@
       ]
     },
     "yoga-r3f": {
-      "type": "local",
-      "path": "/Users/mark/code/yoga-r3f",
+      "type": "git",
+      "url": "https://github.com/rowtype-yoga/yoga-r3f.git",
+      "rev": "248d70c3ac651aee2591ade9099eac7db69794bd",
       "dependencies": [
         "arraybuffer-types",
         "effect",
@@ -2524,8 +2537,9 @@
       ]
     },
     "yoga-react-om": {
-      "type": "local",
-      "path": "/Users/mark/code/purescript-yoga-react-om",
+      "type": "git",
+      "url": "https://github.com/rowtype-yoga/purescript-yoga-react-om.git",
+      "rev": "65e83dc46e0c1b57e38e8376414d39a4e4ba8395",
       "dependencies": [
         "effect",
         "indexed-monad",
