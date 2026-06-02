@@ -29,7 +29,7 @@ retro :: String
 retro =
   """
 <style>
-  @font-face { font-family: "Commit Mono"; src: url("/markgraf-www/fonts/CommitMono-Regular.woff2") format("woff2"); font-display: swap; }
+  @font-face { font-family: "Commit Mono"; src: url("/fonts/CommitMono-Regular.woff2") format("woff2"); font-display: swap; }
   #mg-app { display: none !important; }
   html, body { margin: 0; padding: 0; background: #0f0f0f; }
   body {
@@ -221,8 +221,8 @@ retro =
     <td>
       <video width="440" autoplay loop muted playsinline preload="auto" disablepictureinpicture disableremoteplayback
              style="display:inline-block; pointer-events:none">
-        <source src="/markgraf-www/markgraf-demo.mp4" type="video/mp4">
-        <img src="/markgraf-www/markgraf-demo.webp" alt="markgraf animated graph diagram" width="440">
+        <source src="/markgraf-demo.mp4" type="video/mp4">
+        <img src="/markgraf-demo.webp" alt="markgraf animated graph diagram" width="440">
       </video>
     </td>
   </tr></table>
