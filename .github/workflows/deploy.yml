@@ -34,7 +34,7 @@ jobs:
       - name: Build worker
         run: bun run worker
       - name: Add swap space
-        run: sudo fallocate -l 8G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+        run: sudo dd if=/dev/zero of=/swapfile bs=1M count=8192 && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
       - name: Build Next
         run: rm -rf .next && node --max-old-space-size=4096 node_modules/next/dist/bin/next build 2>&1
       - uses: actions/configure-pages@v5
