@@ -730,7 +730,8 @@
         ]
       },
       "motion": {
-        "path": "../../code/purescript-framer-motion"
+        "git": "https://github.com/i-am-the-slime/purescript-framer-motion.git",
+        "ref": "82ab159cc092d5b12792e5ce5a53316094284e84"
       },
       "next-purs-rsc": {
         "git": "https://github.com/rowtype-yoga/next-purs-rsc.git",
@@ -1563,8 +1564,9 @@
       ]
     },
     "motion": {
-      "type": "local",
-      "path": "../../code/purescript-framer-motion",
+      "type": "git",
+      "url": "https://github.com/i-am-the-slime/purescript-framer-motion.git",
+      "rev": "82ab159cc092d5b12792e5ce5a53316094284e84",
       "dependencies": [
         "aff",
         "aff-promise",

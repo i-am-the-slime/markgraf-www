@@ -108,7 +108,8 @@ workspace:
       git: https://github.com/rowtype-yoga/next-purs-rsc.git
       ref: proxy-and-search-helpers
     motion:
-      path: ../../code/purescript-framer-motion
+      git: https://github.com/i-am-the-slime/purescript-framer-motion.git
+      ref: 82ab159cc092d5b12792e5ce5a53316094284e84
 package:
   name: markgraf-www
   dependencies:
