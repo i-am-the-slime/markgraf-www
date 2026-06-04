@@ -124,6 +124,7 @@ package:
     - js-promise
     - js-promise-aff
     - js-timers
+    - language-cst-parser
     - lists
     - literals
     - maybe
@@ -138,6 +139,7 @@ package:
     - react-r3f
     - refs
     - st
+    - strings
     - transformers
     - tuples
     - two-or-more

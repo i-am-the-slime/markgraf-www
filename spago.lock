@@ -19,6 +19,7 @@
             "js-promise",
             "js-promise-aff",
             "js-timers",
+            "language-cst-parser",
             "lists",
             "literals",
             "maybe",
@@ -33,6 +34,7 @@
             "react-r3f",
             "refs",
             "st",
+            "strings",
             "transformers",
             "tuples",
             "two-or-more",
@@ -1470,6 +1472,39 @@
       "dependencies": [
         "effect",
         "prelude"
+      ]
+    },
+    "language-cst-parser": {
+      "type": "registry",
+      "version": "0.14.1",
+      "integrity": "sha256-tnue0oM2/EmyNJmLoJDnmUDfinKLJHi2fcSGt7d6ewU=",
+      "dependencies": [
+        "arrays",
+        "const",
+        "control",
+        "either",
+        "enums",
+        "foldable-traversable",
+        "free",
+        "functions",
+        "functors",
+        "identity",
+        "integers",
+        "lazy",
+        "lists",
+        "maybe",
+        "newtype",
+        "numbers",
+        "ordered-collections",
+        "partial",
+        "prelude",
+        "st",
+        "strings",
+        "transformers",
+        "tuples",
+        "typelevel-prelude",
+        "unfoldable",
+        "unsafe-coerce"
       ]
     },
     "lazy": {
