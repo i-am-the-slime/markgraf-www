@@ -26,10 +26,11 @@ import Foreign (unsafeToForeign)
 import Component.InstallButtonLazy (installButtonLazy)
 import Component.LabSectionsLazy (labSectionsLazy)
 import Component.PlayerLazy (markgrafPlayerLazy)
-import Framer.Motion.MotionComponent as Motion
-import Framer.Motion.Types as Motion
-import MotionValue (MotionValue)
-import MotionValue as MV
+import Motion.Lazy (domAnimation, lazyMotion)
+import Motion.Element as Motion
+import Motion.Types as Motion
+import Motion.Value (MotionValue)
+import Motion.Value as MV
 import React.Basic (JSX, ReactComponent, element, keyed)
 import React.Basic.Events (EventHandler, handler_)
 import Unsafe.Coerce (unsafeCoerce)
@@ -94,26 +95,27 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
         Just best -> setActiveSection best.id
         Nothing -> pure unit
       dispatchActive postRef activeRef ratios'
-  pure $
-    main
-      { id: "magazine"
-      , className: "relative bg-[#0f0f0f] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
-      }
-      [ diagramShapesBackground postRef sceneLit
-      , scrim (activeSection == "playground")
-      , sideNav { active: activeSection }
-      , heroPage
-      , playground { section: activeSection }
-      , integrationsSection
-      , renderSection
-      , aiSection
-      , embedSection
-      , playSection
-      , footerSection
-      , labSectionsLazy { sectionLabel, spreadFolio }
-      , navArrows { active: activeSection }
-      , crtOverlay
-      ]
+  pure $ lazyMotion { features: domAnimation }
+    [ main
+        { id: "magazine"
+        , className: "relative bg-[#0f0f0f] text-[#f5f1e8] h-screen overflow-y-scroll snap-y snap-mandatory"
+        }
+        [ diagramShapesBackground postRef sceneLit
+        , scrim (activeSection == "playground")
+        , sideNav { active: activeSection }
+        , heroPage
+        , playground { section: activeSection }
+        , integrationsSection
+        , renderSection
+        , aiSection
+        , embedSection
+        , playSection
+        , footerSection
+        , labSectionsLazy { sectionLabel, spreadFolio }
+        , navArrows { active: activeSection }
+        , crtOverlay
+        ]
+    ]
 
 -- Fixed full-viewport layer that the offscreen WebGL canvas paints into. Sits
 -- behind every section so per-section camera arms + ball morphs are visible

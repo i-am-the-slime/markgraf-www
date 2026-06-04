@@ -107,6 +107,8 @@ workspace:
     next-purs-rsc:
       git: https://github.com/rowtype-yoga/next-purs-rsc.git
       ref: proxy-and-search-helpers
+    motion:
+      path: ../../code/purescript-framer-motion
 package:
   name: markgraf-www
   dependencies:
@@ -118,7 +120,6 @@ package:
     - foldable-traversable
     - foreign
     - foreign-object
-    - framer-motion
     - functions
     - integers
     - intersection-observer
@@ -129,6 +130,7 @@ package:
     - lists
     - literals
     - maybe
+    - motion
     - newtype
     - next-purs-rsc
     - node-buffer

@@ -13,7 +13,6 @@
             "foldable-traversable",
             "foreign",
             "foreign-object",
-            "framer-motion",
             "functions",
             "integers",
             "intersection-observer",
@@ -24,6 +23,7 @@
             "lists",
             "literals",
             "maybe",
+            "motion",
             "newtype",
             "next-purs-rsc",
             "node-buffer",
@@ -729,6 +729,9 @@
           "unsafe-reference"
         ]
       },
+      "motion": {
+        "path": "../../code/purescript-framer-motion"
+      },
       "next-purs-rsc": {
         "git": "https://github.com/rowtype-yoga/next-purs-rsc.git",
         "ref": "proxy-and-search-helpers"
@@ -1194,36 +1197,6 @@
       "integrity": "sha256-YYLWpHQwJ1zKmPxLo7sZOk+kYuKOpOpRhdz9vwI/p7Q=",
       "dependencies": []
     },
-    "framer-motion": {
-      "type": "registry",
-      "version": "3.1.0",
-      "integrity": "sha256-qxCYRngntp1qI20w34qW5YTdN474SxQy9djjJu6NAH8=",
-      "dependencies": [
-        "aff",
-        "aff-promise",
-        "arrays",
-        "effect",
-        "foreign",
-        "foreign-object",
-        "heterogeneous",
-        "literals",
-        "maybe",
-        "nullable",
-        "prelude",
-        "react-basic",
-        "react-basic-hooks",
-        "record",
-        "tuples",
-        "two-or-more",
-        "typelevel-prelude",
-        "unsafe-coerce",
-        "untagged-union",
-        "web-dom",
-        "web-events",
-        "web-uievents",
-        "yoga-react-dom"
-      ]
-    },
     "free": {
       "type": "registry",
       "version": "7.1.0",
@@ -1587,6 +1560,35 @@
       "dependencies": [
         "newtype",
         "prelude"
+      ]
+    },
+    "motion": {
+      "type": "local",
+      "path": "../../code/purescript-framer-motion",
+      "dependencies": [
+        "aff",
+        "aff-promise",
+        "arrays",
+        "effect",
+        "foreign",
+        "foreign-object",
+        "heterogeneous",
+        "literals",
+        "maybe",
+        "nullable",
+        "prelude",
+        "react-basic",
+        "react-basic-hooks",
+        "record",
+        "tuples",
+        "two-or-more",
+        "typelevel-prelude",
+        "unsafe-coerce",
+        "untagged-union",
+        "web-dom",
+        "web-events",
+        "web-uievents",
+        "yoga-react-dom"
       ]
     },
     "newtype": {

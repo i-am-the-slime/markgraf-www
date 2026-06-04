@@ -14,9 +14,9 @@ module Component.LabSections (LabDeps, labSpreads) where
 -- when the section enters the viewport. The page is snap-mandatory, so the
 -- animation replays on every re-entry, which is the desired behaviour.
 
-import Framer.Motion.MotionComponent as Motion
-import Framer.Motion.Types (VariantLabel(..))
-import Framer.Motion.Types as Motion
+import Motion.Element as Motion
+import Motion.Types (VariantLabel(..))
+import Motion.Types as Motion
 import React.Basic (JSX)
 import Yoga.React.DOM.HTML.Div (div)
 import Yoga.React.DOM.HTML.H (h2)
