@@ -7,7 +7,7 @@
     "build": "spago build && bun run gen-routes && bun run worker && bun run fonts && next build",
     "start": "next start",
     "worker": "bun run scripts/build-diagram-shapes-worker.mjs",
-    "fonts": "bun run scripts/subset-fonts.mjs",
+    "fonts": "bun -e 'import(\"./output/Build.SubsetFonts/index.js\").then((m) => m.main())'",
     "preview:noscript": "bun run scripts/noscript-preview.mjs",
     "gen-routes": "PURESCRIPT_RSC_ROOT=\"$PWD\" purs-rsc-routes",
     "postinstall": "node scripts/patch-next-purs-rsc.mjs"

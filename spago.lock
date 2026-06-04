@@ -7,6 +7,7 @@
           "dependencies": [
             "arrays",
             "canvas",
+            "console",
             "effect",
             "either",
             "foldable-traversable",
