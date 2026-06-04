@@ -1145,6 +1145,15 @@ footerSection =
             , footerLink "https://github.com/i-am-the-slime/claude-plugins" "claude plugin"
             , footerLink "https://discord.gg/tKfGrPYx" "discord"
             ]
+        , div { className: "flex flex-wrap items-baseline gap-x-8 gap-y-3 text-sm text-[#8a94a8] font-mono" }
+            [ span { className: "text-[#5a6478] uppercase tracking-wider text-xs" } [ text "live demos" ]
+            , footerLink "https://markgrafhq.github.io/markgraf-embed/" "embed"
+            , footerLink "https://markgrafhq.github.io/markgraf-react/" "react · storybook"
+            , footerLink "https://markgrafhq.github.io/mkdocs-markgraf/" "mkdocs"
+            , footerLink "https://markgrafhq.github.io/docusaurus-plugin-markgraf/" "docusaurus"
+            , footerLink "https://markgrafhq.github.io/starlight-markgraf/" "starlight"
+            , footerLink "https://markgrafhq.github.io/markgraf-browser-extension/" "browser extension"
+            ]
         ]
     , spreadFolio "07" "install"
     ]
