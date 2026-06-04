@@ -2,8 +2,7 @@
 
 @font-face {
   font-family: "Sinistre";
-  src: url("/fonts/sinistre/SinistreVF.woff2") format("woff2-variations"),
-       url("/fonts/sinistre/SinistreVF.woff2") format("woff2");
+  src: url("/fonts/sinistre/SinistreVF.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -11,7 +10,7 @@
 
 @font-face {
   font-family: "Ilisarniq";
-  src: url("/fonts/Ilisarniq-Demi.otf") format("opentype");
+  src: url("/fonts/Ilisarniq-Demi.woff2") format("woff2");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
