@@ -167,7 +167,7 @@ type FormationPose =
   }
 
 stream :: FormationPose
-stream = { kind: 0.0, radius: 0.0, length: 0.0, speed: 0.0, order: 0.0 }
+stream = zero
 
 ring :: { radius :: Number, speed :: Number } -> FormationPose
 ring fp = { kind: 1.0, radius: fp.radius, length: 0.0, speed: fp.speed, order: 1.0 }
@@ -1605,7 +1605,7 @@ installVhsBurst className = do
       for_ els \el -> do
         cl <- Element.classList el
         if on then DOMTokenList.add cl "vhs-on"
-              else DOMTokenList.remove cl "vhs-on"
+        else DOMTokenList.remove cl "vhs-on"
     burst = do
       setVhs true
       tid <- setTimeout 1600 do
@@ -1720,9 +1720,10 @@ observeRatios rootId ids cb = do
   rootEl <- findElementById rootId
   els <- Array.catMaybes <$> traverse findElementById ids
   obs <- IO.newIntersectionObserver
-    (\entries _ -> for_ entries \e -> do
+    ( \entries _ -> for_ entries \e -> do
         id <- Element.id e.target
-        cb (un ElementId id) e.intersectionRatio)
+        cb (un ElementId id) e.intersectionRatio
+    )
     ( IO.thresholds := [ 0.0, 0.25, 0.5, 0.75, 1.0 ]
         <> maybe mempty (\r -> IO.root := r) rootEl
     )
