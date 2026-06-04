@@ -16,11 +16,12 @@ type PlayerProps =
   , height :: Number
   }
 
--- markgraf-react's MarkgrafPlayer (~95KB-gz) is the largest single eager piece.
--- Load it through a dynamic import() behind a Suspense boundary so it lands in
--- its own async chunk. Eager rather than idle-gated because the caller already
--- holds it back until the preview is measured (size > 0) and the wordmark has
--- settled, so the import only fires when the player is genuinely about to show.
+-- markgraf-react's MarkgrafPlayer (~95KB-gz) is loaded through a dynamic import()
+-- behind a Suspense boundary so it lands in its own async chunk. Gated Eager, not
+-- idle: the player is hoisted into the hero, so it is the LCP subject — deferring
+-- its ~1.5s init trims TTI but pushes the hero paint (and LCP) later, a net loss
+-- (measured: LCP 2.4->2.9s, score 97->94 on Slow 4G). The fix for that 1.5s is to
+-- make markgraf-react's init cheaper, or prerender the first frame as static SVG.
 markgrafPlayerLazy :: PlayerProps -> JSX
 markgrafPlayerLazy props = renderLazy playerLazy \component -> element component props
 
