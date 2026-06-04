@@ -131,6 +131,9 @@ package:
     - maybe
     - newtype
     - next-purs-rsc
+    - node-buffer
+    - node-fs
+    - node-glob-basic
     - nullable
     - numbers
     - prelude
@@ -149,8 +152,8 @@ package:
     - untagged-union
     - web-clipboard
     - web-dom
-    - web-font-loading
     - web-events
+    - web-font-loading
     - web-html
     - web-proletarian
     - web-resize-observer

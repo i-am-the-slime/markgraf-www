@@ -3,6 +3,7 @@ module Build.SubsetFonts (main) where
 import Prelude
 
 import Build.FontGlyphs (charsetFromSources)
+import Data.Array as Array
 import Data.Foldable (for_)
 import Data.String.CodePoints as CodePoints
 import Data.Traversable (traverse)
@@ -10,7 +11,11 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
-import Effect.Uncurried (EffectFn1, EffectFn2, runEffectFn1, runEffectFn2)
+import Effect.Uncurried (EffectFn2, runEffectFn2)
+import Node.Buffer (Buffer, size)
+import Node.Encoding (Encoding(UTF8))
+import Node.FS.Aff (readFile, readTextFile, writeFile)
+import Node.Glob.Basic (expandGlobsCwd)
 import Promise (Promise)
 import Promise.Aff (toAffE)
 
@@ -19,11 +24,11 @@ import Promise.Aff (toAffE)
 -- | master is subsetted to exactly that set so the served fonts stay tiny.
 -- | Run after `spago build`, via `bun run fonts`.
 main :: Effect Unit
-main = do
-  sources <- traverse readText =<< glob "src/**/*.purs"
+main = launchAff_ do
+  sources <- traverse (readTextFile UTF8) =<< Array.fromFoldable <$> expandGlobsCwd [ "src/**/*.purs" ]
   let charset = charsetFromSources sources
   log ("charset: " <> show (CodePoints.length charset) <> " glyphs")
-  launchAff_ (for_ faces (subsetFace charset))
+  for_ faces (subsetFace charset)
 
 faces :: Array { master :: String, served :: String }
 faces =
@@ -34,38 +39,14 @@ faces =
 
 subsetFace :: String -> { master :: String, served :: String } -> Aff Unit
 subsetFace charset face = do
-  subset <- subsetWoff2 charset =<< (readBytes face.master # liftEffect)
-  writeBytes face.served subset # liftEffect
-  log (show (byteLength subset / 1024) <> " KB  " <> face.served)
+  subset <- subsetWoff2 charset =<< readFile face.master
+  writeFile face.served subset
+  kb <- size subset # liftEffect
+  log (show (kb / 1024) <> " KB  " <> face.served)
 
--- FFI edge: globbing, file I/O, and the harfbuzz-WASM subsetter are JS
--- libraries. Bytes is an opaque Node Buffer that only ever passes through.
+-- The harfbuzz-WASM subsetter is the one genuinely-external dependency, so it
+-- is the only FFI left; everything else is node-fs / node-glob-basic.
+subsetWoff2 :: String -> Buffer -> Aff Buffer
+subsetWoff2 charset buffer = toAffE (runEffectFn2 subsetFontImpl buffer charset)
 
-foreign import data Bytes :: Type
-
-glob :: String -> Effect (Array String)
-glob = runEffectFn1 globImpl
-
-foreign import globImpl :: EffectFn1 String (Array String)
-
-readText :: String -> Effect String
-readText = runEffectFn1 readTextImpl
-
-foreign import readTextImpl :: EffectFn1 String String
-
-readBytes :: String -> Effect Bytes
-readBytes = runEffectFn1 readBytesImpl
-
-foreign import readBytesImpl :: EffectFn1 String Bytes
-
-writeBytes :: String -> Bytes -> Effect Unit
-writeBytes = runEffectFn2 writeBytesImpl
-
-foreign import writeBytesImpl :: EffectFn2 String Bytes Unit
-
-subsetWoff2 :: String -> Bytes -> Aff Bytes
-subsetWoff2 charset bytes = toAffE (runEffectFn2 subsetFontImpl bytes charset)
-
-foreign import subsetFontImpl :: EffectFn2 Bytes String (Promise Bytes)
-
-foreign import byteLength :: Bytes -> Int
+foreign import subsetFontImpl :: EffectFn2 Buffer String (Promise Buffer)
