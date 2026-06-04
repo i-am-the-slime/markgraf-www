@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "spago build && bun run gen-routes && bun run scripts/dev.mjs",
-    "build": "spago build && bun run gen-routes && bun run worker && next build",
+    "dev": "spago build && bun run gen-routes && bun run fonts && bun run scripts/dev.mjs",
+    "build": "spago build && bun run gen-routes && bun run worker && bun run fonts && next build",
     "start": "next start",
     "worker": "bun run scripts/build-diagram-shapes-worker.mjs",
     "fonts": "bun run scripts/subset-fonts.mjs",
