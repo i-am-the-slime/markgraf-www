@@ -3,44 +3,109 @@ module Component.InstallButtonSDF (installButtonSDF) where
 import Prelude
 
 import Data.Foldable (traverse_)
+import Data.Int (round)
 import Data.Maybe (Maybe(..))
-import Data.Nullable (Nullable, null)
+import Data.Nullable (Nullable, null, toMaybe)
 import Data.Number (exp, sin)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Unsafe (unsafePerformEffect)
 import Graphics.Canvas (CanvasElement, TextAlign(..), TextBaseline(..), clearRect, fillText, getContext2D, setCanvasHeight, setCanvasWidth, setFillStyle, setFont, setTextAlign, setTextBaseline)
 import Graphics.Canvas.Extra (LetterSpacing(..), createCanvasElement, kerningNormal, setFontKerning, setLetterSpacing)
-import React.Basic (JSX, ReactComponent, Ref, element)
-import React.Basic.Events (handler_)
-import React.Basic.Hooks (readRef, readRefMaybe, reactComponent, useRef, useState', writeRef)
+import Graphics.WebGL as GL
+import React.Basic (JSX, ReactComponent, element)
+import React.Basic.Events (EventHandler, handler_)
+import React.Basic.Hooks (readRef, readRefMaybe, reactComponent, useRef, writeRef)
 import React.Basic.Hooks as Hooks
-import React.R3F.Hooks (RootState, applyProps, useFrame)
-import React.R3F.Three.Internal (threejs)
-import React.R3F.Three.Types (Object3D, placeholderTexture)
-import Unsafe.Coerce (unsafeCoerce)
 import Web.Font.Loading (FontShorthand(..), loadFont)
+import Web.HTML (window)
+import Web.HTML.Window (RequestAnimationFrameId, cancelAnimationFrame, requestAnimationFrame)
+import Yoga.React.DOM.Attributes (reactRef)
 import Yoga.React.DOM.HTML.A (a)
-import Yoga.React.DOM.Internal (css)
-import Yoga.React.R3F.Canvas (canvas)
+import Yoga.React.DOM.HTML.Canvas (canvas)
+import Yoga.React.DOM.Internal (css, noJSX)
 
 -- The "INSTALL" button is one fullscreen-quad raymarcher: a grey glassy shape
 -- morphs through markgraf's node silhouettes, fills with blue->red gas from the
 -- cursor on hover, and carries the black INSTALL letters with an orange comet
 -- shimmer wiping across them. The shape, with its baked-in text, IS the button.
+--
+-- It draws with bare WebGL — a single quad and a fragment shader is all a
+-- raymarcher needs, so three/r3f (and its ~230KB chunk) earns no place here.
 installButtonSDF :: JSX
 installButtonSDF = element installButton {}
 
--- Hover is tracked on the DOM anchor, not by raycasting the quad: the shader
--- bypasses the camera, so the 2x2 plane only covers a sliver of the frustum and
--- mesh pointer events would miss most of the visible shape. The anchor wraps the
--- whole button, so enter/leave there is reliable. hoveringRef is shared into the
--- scene, where useFrame reads it to drive the gas fill and the cursor tilt.
+-- Hover/cursor are tracked on the DOM anchor (it wraps the whole button, so
+-- enter/leave/move are reliable) and read by the render loop off shared refs.
 installButton :: ReactComponent {}
 installButton = unsafePerformEffect $ reactComponent "InstallButtonSDF" \_ -> Hooks.do
   hoveringRef <- useRef false
+  pointerRef <- useRef { x: 0.0, y: 0.0 }
+  canvasRef <- useRef (null :: Nullable CanvasElement)
+  phaseRef <- useRef 0.0
+  targetRef <- useRef 0.0
+  lastSwitchRef <- useRef 0.0
+  yawRef <- useRef 0.0
+  tiltRef <- useRef idleTilt
+  fillRef <- useRef 0.0
+  timeRef <- useRef 0.0
+  lastWallRef <- useRef 0.0
+  rafRef <- useRef (Nothing :: Maybe RequestAnimationFrameId)
+
+  Hooks.useEffectOnce $ readRefMaybe canvasRef >>= case _ of
+    Nothing -> pure (pure unit)
+    Just canvasEl -> GL.getContext canvasEl >>= toMaybe >>> case _ of
+      Nothing -> pure (pure unit)
+      Just gl -> do
+        program <- GL.buildProgram gl { vertex: sdfVert, fragment: sdfFrag }
+        GL.setupQuad gl program
+        uRes <- GL.uniformLocation gl program "uRes"
+        uPhase <- GL.uniformLocation gl program "uPhase"
+        uRot <- GL.uniformLocation gl program "uRot"
+        uTilt <- GL.uniformLocation gl program "uTilt"
+        uFill <- GL.uniformLocation gl program "uFill"
+        uTime <- GL.uniformLocation gl program "uTime"
+        uMouse <- GL.uniformLocation gl program "uMouse"
+        uText <- GL.uniformLocation gl program "uText"
+        GL.uniform1i gl uText 0
+
+        texture <- GL.createTexture gl
+        label <- ensureLabel gl texture
+        win <- window
+
+        let
+          renderFrame = do
+            dt <- tickClock lastWallRef timeRef
+            now <- readRef timeRef
+            phase <- advancePhase phaseRef targetRef lastSwitchRef now dt
+            hovering <- readRef hoveringRef
+            pointer <- readRef pointerRef
+            size <- GL.clientSize canvasEl
+            dpr <- clampDpr <$> GL.devicePixelRatio
+            let aspect = size.width / size.height
+            yaw <- easeYaw yawRef hovering pointer.x now dt
+            tilt <- easeTilt tiltRef hovering pointer.y now dt
+            fill <- easeFill fillRef hovering dt
+            when (size.width > 0.0) do
+              GL.resize gl canvasEl (round (size.width * dpr)) (round (size.height * dpr))
+              GL.clear gl
+              GL.uniform1f gl uTime now
+              GL.uniform1f gl uPhase phase
+              GL.uniform1f gl uRot yaw
+              GL.uniform1f gl uTilt tilt
+              GL.uniform1f gl uFill fill
+              GL.uniform2f gl uMouse (pointer.x * 0.5 * aspect) (negate pointer.y * 0.5)
+              GL.uniform2f gl uRes (size.width * dpr) (size.height * dpr)
+              GL.drawQuad gl
+            id <- requestAnimationFrame renderFrame win
+            writeRef rafRef (Just id)
+
+        writeRef lastWallRef =<< GL.now
+        id0 <- requestAnimationFrame renderFrame win
+        writeRef rafRef (Just id0)
+        pure (readRef rafRef >>= traverse_ \id -> cancelAnimationFrame id win)
+
   pure $
     a
       { href: "#install"
@@ -54,88 +119,54 @@ installButton = unsafePerformEffect $ reactComponent "InstallButtonSDF" \_ -> Ho
           }
       , onPointerEnter: handler_ (writeRef hoveringRef true)
       , onPointerLeave: handler_ (writeRef hoveringRef false)
+      , onPointerMove: pointerMoveHandler \p ->
+          writeRef pointerRef
+            { x: (p.cx - p.left) / p.width * 2.0 - 1.0
+            , y: negate ((p.cy - p.top) / p.height * 2.0 - 1.0)
+            }
       }
       [ canvas
-          { gl: { alpha: true }
-          , dpr: [ 1.0, 2.0 ]
-          , style: css { position: "absolute", inset: "0" }
-          , children: element installSDFScene { hoveringRef }
+          { ref: reactRef canvasRef
+          , style: css { position: "absolute", inset: "0", width: "100%", height: "100%", display: "block" }
           }
+          noJSX
       ]
 
-installSDFScene :: ReactComponent { hoveringRef :: Ref Boolean }
-installSDFScene = unsafePerformEffect $ reactComponent "InstallSDFScene" \{ hoveringRef } -> Hooks.do
-  matRef <- useRef null
-  texRef <- useRef null
-  createdRef <- useRef false
-  phaseRef <- useRef 0.0
-  targetRef <- useRef 0.0
-  lastSwitchRef <- useRef 0.0
-  yawRef <- useRef 0.0
-  tiltRef <- useRef idleTilt
-  fillRef <- useRef 0.0
-  timeRef <- useRef 0.0
-  labelCanvas /\ setLabelCanvas <- useState' Nothing
+-- Build the label texture from an offscreen canvas, then — once the brand font
+-- loads — repaint and re-upload so the first paint's fallback face is replaced.
+ensureLabel :: GL.GL -> GL.Texture -> Effect CanvasElement
+ensureLabel gl texture = do
+  label <- makeLabelCanvas labelConfig
+  GL.uploadCanvas gl texture label
+  launchAff_ do
+    loadFont (FontShorthand labelConfig.font)
+    liftEffect do
+      drawLabel label labelConfig
+      GL.uploadCanvas gl texture label
+  pure label
 
-  useFrame \rs delta -> do
-    ensureLabelCanvas createdRef texRef setLabelCanvas
-    -- r3f hands us the per-frame delta as the second arg. requestAnimationFrame
-    -- pauses while the tab is hidden, so the first delta on return is the whole
-    -- away-duration — clamp it so a background gap is one small step, never a
-    -- fast-forward, and accumulate our own `now` off the clamped delta.
-    prevNow <- readRef timeRef
-    let dt = min maxFrameGap delta
-        now = prevNow + dt
-    writeRef timeRef now
+-- Wall-clock tick. requestAnimationFrame pauses while the tab is hidden, so the
+-- first delta on return is the whole away-duration — clamp it so a background gap
+-- is one small step, never a fast-forward, and accumulate our own sim time off it.
+tickClock :: Hooks.Ref Number -> Hooks.Ref Number -> Effect Number
+tickClock lastWallRef timeRef = do
+  wall <- GL.now
+  prev <- readRef lastWallRef
+  writeRef lastWallRef wall
+  let dt = min maxFrameGap ((wall - prev) / 1000.0)
+  readRef timeRef >>= \t -> writeRef timeRef (t + dt)
+  pure dt
 
-    phase <- advancePhase phaseRef targetRef lastSwitchRef now dt
-    hovering <- readRef hoveringRef
-    let st = frameState rs
-        mx = st.pointer.x
-        my = st.pointer.y
-        aspect = st.size.width / st.size.height
-    yaw <- easeYaw yawRef hovering mx now dt
-    tilt <- easeTilt tiltRef hovering my now dt
-    fill <- easeFill fillRef hovering dt
+clampDpr :: Number -> Number
+clampDpr d = max 1.0 (min 2.0 d)
 
-    readRefMaybe matRef # withJust \m ->
-      applyProps m
-        { "uniforms-uTime-value": now
-        , "uniforms-uPhase-value": phase
-        , "uniforms-uRot-value": yaw
-        , "uniforms-uTilt-value": tilt
-        , "uniforms-uFill-value": fill
-        , "uniforms-uMouse-value": [ mx * 0.5 * aspect, -my * 0.5 ]
-        -- shader projects gl_FragCoord against uRes => the drawing-buffer size
-        -- (CSS size x dpr), computed here rather than in the FFI
-        , "uniforms-uRes-value": [ st.size.width * st.viewport.dpr, st.size.height * st.viewport.dpr ]
-        }
+type PointerBox =
+  { cx :: Number, cy :: Number, left :: Number, top :: Number, width :: Number, height :: Number }
 
-  pure (sdfQuad matRef texRef labelCanvas)
+pointerMoveHandler :: (PointerBox -> Effect Unit) -> EventHandler
+pointerMoveHandler = pointerMoveHandlerImpl
 
-withJust :: forall a. (a -> Effect Unit) -> Effect (Maybe a) -> Effect Unit
-withJust f m = m >>= traverse_ f
-
--- Draw the label canvas on the first frame (client-side, where document exists)
--- and stash it in state. The texture itself is built by r3f from this canvas (see
--- sdfQuad's <canvasTexture>) so it shares r3f's THREE instance — a texture we mint
--- from our own `import "three"` lands in a second THREE copy and never uploads.
-ensureLabelCanvas
-  :: Ref Boolean -> Ref (Nullable Object3D) -> (Maybe CanvasElement -> Effect Unit)
-  -> Effect Unit
-ensureLabelCanvas createdRef texRef setLabelCanvas = readRef createdRef >>= case _ of
-  true -> pure unit
-  false -> do
-    writeRef createdRef true
-    canvas <- makeLabelCanvas labelConfig
-    setLabelCanvas (Just canvas)
-    -- The first draw may use a fallback face; once the brand font loads, repaint and
-    -- flag the texture for re-upload. Sequenced here in PureScript.
-    launchAff_ do
-      loadFont (FontShorthand labelConfig.font)
-      liftEffect do
-        drawLabel canvas labelConfig
-        readRefMaybe texRef >>= traverse_ \tex -> applyProps tex { needsUpdate: true }
+foreign import pointerMoveHandlerImpl :: (PointerBox -> Effect Unit) -> EventHandler
 
 -- ---------------------------------------------------------------------------
 -- Animation state machine, ported from the prototype's frame() — all over Refs.
@@ -144,7 +175,7 @@ ensureLabelCanvas createdRef texRef setLabelCanvas = readRef createdRef >>= case
 -- The morph index eases toward an integer target that ticks up every STEP
 -- seconds (Freya exp-decay), wrapping back at L shapes so the loop is seamless.
 advancePhase
-  :: Ref Number -> Ref Number -> Ref Number
+  :: Hooks.Ref Number -> Hooks.Ref Number -> Hooks.Ref Number
   -> Number -> Number -> Effect Number
 advancePhase phaseRef targetRef lastSwitchRef t dt = do
   lastSwitch <- readRef lastSwitchRef
@@ -164,7 +195,7 @@ advancePhase phaseRef targetRef lastSwitchRef t dt = do
   decay = 4.0
 
 -- Yaw follows the cursor while hovering, else drifts in a gentle idle sway.
-easeYaw :: Ref Number -> Boolean -> Number -> Number -> Number -> Effect Number
+easeYaw :: Hooks.Ref Number -> Boolean -> Number -> Number -> Number -> Effect Number
 easeYaw yawRef hovering mx t dt = do
   yaw0 <- readRef yawRef
   let yaw1 = yaw0 + (targetYaw - yaw0) * orientEase dt
@@ -174,7 +205,7 @@ easeYaw yawRef hovering mx t dt = do
   targetYaw = if hovering then mx * 0.45 else sin (t * 0.45) * 0.22
 
 -- Tilt likewise tracks the cursor's vertical, settling to a slow idle bob.
-easeTilt :: Ref Number -> Boolean -> Number -> Number -> Number -> Effect Number
+easeTilt :: Hooks.Ref Number -> Boolean -> Number -> Number -> Number -> Effect Number
 easeTilt tiltRef hovering my t dt = do
   tilt0 <- readRef tiltRef
   let tilt1 = tilt0 + (targetTilt - tilt0) * orientEase dt
@@ -184,7 +215,7 @@ easeTilt tiltRef hovering my t dt = do
   targetTilt = if hovering then idleTilt + my * 0.5 else idleTilt + sin (t * 0.32) * 0.12
 
 -- The gas fills toward 1 on hover and empties toward 0 on leave.
-easeFill :: Ref Number -> Boolean -> Number -> Effect Number
+easeFill :: Hooks.Ref Number -> Boolean -> Number -> Effect Number
 easeFill fillRef hovering dt = do
   fill0 <- readRef fillRef
   let target = if hovering then 1.0 else 0.0
@@ -207,64 +238,13 @@ shapeCount :: Number
 shapeCount = 6.0
 
 -- ---------------------------------------------------------------------------
--- The fullscreen quad: a ShaderMaterial raymarcher. uText starts as a placeholder
--- and is filled by the r3f-built <canvasTexture> once the label canvas is ready.
--- ---------------------------------------------------------------------------
-
-sdfQuad :: Ref (Nullable Object3D) -> Ref (Nullable Object3D) -> Maybe CanvasElement -> JSX
-sdfQuad matRef texRef labelCanvas = element (threejs "Mesh")
-  { frustumCulled: false
-  , children:
-      [ element (threejs "PlaneGeometry") { args: [ 2.0, 2.0 ] }
-      , element (threejs "ShaderMaterial")
-          { ref: matRef
-          , vertexShader: sdfVert
-          , fragmentShader: sdfFrag
-          , transparent: true
-          , uniforms:
-              { uRes: { value: [ 1.0, 1.0 ] }
-              , uPhase: { value: 0.0 }
-              , uRot: { value: 0.0 }
-              , uTilt: { value: idleTilt }
-              , uFill: { value: 0.0 }
-              , uTime: { value: 0.0 }
-              , uMouse: { value: [ 0.0, 0.0 ] }
-              , uText: { value: placeholderTexture }
-              }
-          , children: labelTexture texRef labelCanvas
-          }
-      ]
-  }
-
--- r3f builds the CanvasTexture from our 2D canvas using ITS OWN THREE instance and
--- binds it to the shader's uText sampler. The dashed attach path resolves to
--- material.uniforms.uText.value, so r3f handles construction, upload and binding —
--- no hand-mutated uniform, and no second THREE copy to mismatch the renderer.
-labelTexture :: Ref (Nullable Object3D) -> Maybe CanvasElement -> JSX
-labelTexture texRef = case _ of
-  Nothing -> mempty
-  Just canvas -> element (threejs "CanvasTexture")
-    { ref: texRef
-    , args: [ canvas ]
-    , attach: "uniforms-uText-value"
-    , generateMipmaps: false
-    , minFilter: nearestFilter
-    , magFilter: nearestFilter
-    }
-
--- THREE.NearestFilter; unfiltered hard texels give the label crunchy, aliased
--- edges (no mipmaps, so a non-mipmap filter also avoids an incomplete-mip black).
-nearestFilter :: Number
-nearestFilter = 1003.0
-
--- ---------------------------------------------------------------------------
--- Shaders, ported verbatim from the prototype (dead uniforms/SDFs dropped:
--- uGlow, uDB, uGlowTex/makeGlowTexture, the arrow SDFs, sdHexPrism,
--- sdOctahedron, shapeHW, mapScaled — none are reachable from main()).
+-- Shaders, ported verbatim from the prototype. The vertex shader declares its
+-- own `position` attribute (no three to inject it); the fragment shader is
+-- unchanged WebGL1 GLSL.
 -- ---------------------------------------------------------------------------
 
 sdfVert :: String
-sdfVert = "void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }"
+sdfVert = "attribute vec2 position; void main(){ gl_Position = vec4(position, 0.0, 1.0); }"
 
 sdfFrag :: String
 sdfFrag =
@@ -393,23 +373,10 @@ sdfFrag =
   """
 
 -- ---------------------------------------------------------------------------
--- Per-frame state + the label canvas. All maths/config is here; the .js only
--- does the irreducible browser bits (2D drawing, the font-load promise).
+-- The label canvas. All maths/config is PureScript; Graphics.Canvas does the
+-- 2D drawing, GL.uploadCanvas turns it into the uText sampler.
 -- ---------------------------------------------------------------------------
 
--- `size`/`viewport` aren't in the typed RootState row, so coerce to the shape we
--- need and read it in PureScript — the aspect and buffer-size maths stay here.
-type FrameState =
-  { pointer :: { x :: Number, y :: Number }
-  , size :: { width :: Number, height :: Number }
-  , viewport :: { dpr :: Number }
-  }
-
-frameState :: { | RootState } -> FrameState
-frameState = unsafeCoerce
-
--- What to paint on the label canvas — the text, font and metrics all live here in
--- PureScript; the .js only applies them to a 2D context (no design choices in JS).
 type LabelConfig =
   { text :: String
   , font :: String
@@ -431,9 +398,6 @@ canvasW = 1024.0
 canvasH :: Number
 canvasH = 256.0
 
--- Build the offscreen label canvas in PureScript via Graphics.Canvas (+ Extra for
--- the letterSpacing/fontKerning the canvas package lacks). r3f wraps the returned
--- element in a CanvasTexture, so nothing here touches three — see labelTexture.
 makeLabelCanvas :: LabelConfig -> Effect CanvasElement
 makeLabelCanvas cfg = do
   el <- createCanvasElement
@@ -442,7 +406,6 @@ makeLabelCanvas cfg = do
   drawLabel el cfg
   pure el
 
--- Paint (or repaint) the label onto the canvas.
 drawLabel :: CanvasElement -> LabelConfig -> Effect Unit
 drawLabel el cfg = do
   ctx <- getContext2D el

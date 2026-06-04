@@ -1,0 +1,112 @@
+module Graphics.WebGL
+  ( GL
+  , Program
+  , Texture
+  , Uniform
+  , getContext
+  , buildProgram
+  , setupQuad
+  , uniformLocation
+  , uniform1f
+  , uniform2f
+  , uniform1i
+  , createTexture
+  , uploadCanvas
+  , resize
+  , clear
+  , drawQuad
+  , clientSize
+  , devicePixelRatio
+  , now
+  ) where
+
+import Prelude
+
+import Data.Nullable (Nullable)
+import Effect (Effect)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, EffectFn4, runEffectFn1, runEffectFn2, runEffectFn3, runEffectFn4)
+import Graphics.Canvas (CanvasElement)
+
+-- A thin WebGL1 binding: opaque GL handles, raw calls. The drawing surface is
+-- the CanvasElement type Graphics.Canvas already uses; all rendering logic stays
+-- in PureScript (see Component.InstallButtonSDF).
+
+foreign import data GL :: Type
+foreign import data Program :: Type
+foreign import data Texture :: Type
+foreign import data Uniform :: Type
+
+getContext :: CanvasElement -> Effect (Nullable GL)
+getContext = runEffectFn1 getContextImpl
+
+foreign import getContextImpl :: EffectFn1 CanvasElement (Nullable GL)
+
+buildProgram :: GL -> { vertex :: String, fragment :: String } -> Effect Program
+buildProgram gl shaders = runEffectFn3 buildProgramImpl gl shaders.vertex shaders.fragment
+
+foreign import buildProgramImpl :: EffectFn3 GL String String Program
+
+setupQuad :: GL -> Program -> Effect Unit
+setupQuad = runEffectFn2 setupQuadImpl
+
+foreign import setupQuadImpl :: EffectFn2 GL Program Unit
+
+uniformLocation :: GL -> Program -> String -> Effect Uniform
+uniformLocation = runEffectFn3 uniformLocationImpl
+
+foreign import uniformLocationImpl :: EffectFn3 GL Program String Uniform
+
+uniform1f :: GL -> Uniform -> Number -> Effect Unit
+uniform1f = runEffectFn3 uniform1fImpl
+
+foreign import uniform1fImpl :: EffectFn3 GL Uniform Number Unit
+
+uniform2f :: GL -> Uniform -> Number -> Number -> Effect Unit
+uniform2f = runEffectFn4 uniform2fImpl
+
+foreign import uniform2fImpl :: EffectFn4 GL Uniform Number Number Unit
+
+uniform1i :: GL -> Uniform -> Int -> Effect Unit
+uniform1i = runEffectFn3 uniform1iImpl
+
+foreign import uniform1iImpl :: EffectFn3 GL Uniform Int Unit
+
+createTexture :: GL -> Effect Texture
+createTexture = runEffectFn1 createTextureImpl
+
+foreign import createTextureImpl :: EffectFn1 GL Texture
+
+uploadCanvas :: GL -> Texture -> CanvasElement -> Effect Unit
+uploadCanvas = runEffectFn3 uploadCanvasImpl
+
+foreign import uploadCanvasImpl :: EffectFn3 GL Texture CanvasElement Unit
+
+resize :: GL -> CanvasElement -> Int -> Int -> Effect Unit
+resize = runEffectFn4 resizeImpl
+
+foreign import resizeImpl :: EffectFn4 GL CanvasElement Int Int Unit
+
+clear :: GL -> Effect Unit
+clear = runEffectFn1 clearImpl
+
+foreign import clearImpl :: EffectFn1 GL Unit
+
+drawQuad :: GL -> Effect Unit
+drawQuad = runEffectFn1 drawQuadImpl
+
+foreign import drawQuadImpl :: EffectFn1 GL Unit
+
+clientSize :: CanvasElement -> Effect { width :: Number, height :: Number }
+clientSize = runEffectFn1 clientSizeImpl
+
+foreign import clientSizeImpl :: EffectFn1 CanvasElement { width :: Number, height :: Number }
+
+devicePixelRatio :: Effect Number
+devicePixelRatio = devicePixelRatioImpl
+
+foreign import devicePixelRatioImpl :: Effect Number
+
+now :: Effect Number
+now = nowImpl
+
+foreign import nowImpl :: Effect Number
