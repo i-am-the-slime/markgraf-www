@@ -20,6 +20,7 @@ import Effect.Aff (launchAff)
 import Effect.Class (liftEffect)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
+import Effect.Timer (clearTimeout, setTimeout)
 import Effect.Unsafe (unsafePerformEffect)
 import Promise (Promise)
 import Promise.Aff (toAffE)
@@ -29,7 +30,7 @@ import React.Basic.Hooks as React
 import React.Basic.Hooks.Suspense (Suspended(..), SuspenseResult(..), suspend, suspense)
 import Web.DOM.Element (Element)
 import Web.HTML (window)
-import Web.HTML.Window (cancelIdleCallback, requestIdleCallback)
+import Web.HTML.Window (Window, cancelIdleCallback, requestIdleCallback)
 import Web.Intersection.Observer as IO
 import Web.Intersection.Observer.Options (RootMargin, rm)
 import Web.Intersection.Observer.Options as IOpt
@@ -104,11 +105,27 @@ idleGated
   -> React.Render Unit _ JSX
 idleGated loader fallback { render } = React.do
   armed /\ setArmed <- useState' false
-  useEffectOnce do
-    win <- window
-    id <- requestIdleCallback { timeout: 2000 } (setArmed true) win
-    pure (cancelIdleCallback id win)
+  useEffectOnce (armWhenIdle (setArmed true))
   pure (if armed then element loader { render } else fallback)
+
+-- Arm on the next idle period, deferring the chunk past the hero's first paint.
+-- WebKit only shipped requestIdleCallback in Safari 17.4, and calling an absent
+-- one throws — which here would blank the whole tree — so older engines fall
+-- back to a short timeout. Either branch returns its own canceller.
+armWhenIdle :: Effect Unit -> Effect (Effect Unit)
+armWhenIdle arm = do
+  win <- window
+  supported <- hasRequestIdleCallback win
+  if supported then idleArm win else timeoutArm
+  where
+  idleArm win = do
+    id <- requestIdleCallback { timeout: 2000 } arm win
+    pure (cancelIdleCallback id win)
+  timeoutArm = do
+    id <- setTimeout 200 arm
+    pure (clearTimeout id)
+
+foreign import hasRequestIdleCallback :: Window -> Effect Boolean
 
 -- A loader held back until a zero-height sentinel crosses into the viewport's
 -- expanded margin. The sentinel sits in the scroll flow where the content will

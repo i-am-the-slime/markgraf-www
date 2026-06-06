@@ -276,8 +276,7 @@ body:has(.vhs-text-wrap.vhs-on)::after {
    in cleanly — no flicker, no veil, just a late reveal once the title owns the
    screen. */
 .player-reveal {
-  opacity: 0;
-  animation: player-reveal 1s ease-out 2.5s both;
+  opacity: 1;
 }
 @keyframes player-reveal {
   to { opacity: 1; }
