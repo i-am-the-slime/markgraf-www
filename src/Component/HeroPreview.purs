@@ -513,6 +513,7 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
   -- amount on first paint (shoving the hero player off-screen until a scroll).
   xMv <- MV.useMotionValue 0.0
   yMv <- MV.useMotionValue 0.0
+  scaleMv <- MV.useMotionValue 1.0
   useEffect src do
     launchAff_ do
       delay (Milliseconds 250.0)
@@ -526,10 +527,11 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
     onMagazineScroll \p -> do
       MV.set p.x xMv
       MV.set p.y yMv
+      MV.set p.scale scaleMv
   useEffect debounced do
     setGen (gen + 1)
     pure (pure unit)
-  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, section, xMv, yMv })
+  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, section, xMv, yMv, scaleMv })
 
 type PlaygroundProps =
   { src :: String
@@ -543,6 +545,7 @@ type PlaygroundProps =
   , section :: String
   , xMv :: MotionValue Number
   , yMv :: MotionValue Number
+  , scaleMv :: MotionValue Number
   }
 
 playgroundView :: PlaygroundProps -> JSX
@@ -660,7 +663,7 @@ editorAndPreview pp =
     }
     [ editorPane pp.src pp.setSrc (pp.active == SourcePane)
     , Motion.div
-        { style: css { x: pp.xMv, y: pp.yMv }
+        { style: css { x: pp.xMv, y: pp.yMv, scale: pp.scaleMv }
         , className: "h-full"
         }
         $ previewPane pp.rendered pp.size pp.visible pp.gen (pp.active == RenderPane)
@@ -1480,7 +1483,7 @@ postWorkerMessage postRef ty payload =
   readRef postRef >>= traverse_ \post -> post ty (unsafeToForeign payload)
 
 onMagazineScroll
-  :: ({ x :: Number, y :: Number, progress :: Number } -> Effect Unit)
+  :: ({ x :: Number, y :: Number, progress :: Number, scale :: Number } -> Effect Unit)
   -> Effect (Effect Unit)
 onMagazineScroll cb = findElementById "magazine" >>= case _ of
   Nothing -> pure mempty
@@ -1504,8 +1507,10 @@ onMagazineScroll cb = findElementById "magazine" >>= case _ of
           offsetToCenter = vw / 2.0 - naturalCenter
           x = offsetToCenter * (1.0 - p)
           y = (-0.95 + 0.95 * p) * vh
+          scale = heroScale + (1.0 - heroScale) * p
+          heroScale = if vw < 640.0 then heroScaleNarrow else 1.0
         Ref.write x lastXRef
-        cb { x, y, progress: p }
+        cb { x, y, progress: p, scale }
     listener <- eventListener \_ -> fire
     let
       elTarget = Element.toEventTarget el
@@ -1518,3 +1523,11 @@ onMagazineScroll cb = findElementById "magazine" >>= case _ of
       removeEventListener (EventType "resize") listener false winTarget
   where
   clamp01 v = max 0.0 (min 1.0 v)
+
+-- How far the floating player shrinks while parked over the hero on a narrow
+-- (phone) viewport, easing back to full size as it scrolls into the playground.
+-- Shrinking about the element's centre lifts its bottom edge and pulls its left
+-- in, clearing the install CTA at the hero's bottom-left. Full size everywhere
+-- on wider viewports, where there is no overlap.
+heroScaleNarrow :: Number
+heroScaleNarrow = 0.62
