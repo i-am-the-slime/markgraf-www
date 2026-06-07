@@ -380,9 +380,7 @@ examples :: Array Example
 examples =
   [ { name: "request"
     , source:
-        """seed 1
-
-frame setup {
+        """frame setup {
   +node client "Client"
   +node api    "API"
   +node db     "Database"
@@ -400,9 +398,7 @@ frame "request" {
     }
   , { name: "cache hit"
     , source:
-        """seed 2
-
-frame setup {
+        """frame setup {
   +node client "Client"
   +node api    "API"
   +node cache  "Cache"
@@ -424,9 +420,7 @@ frame "hit" {
     }
   , { name: "pub/sub"
     , source:
-        """seed 3
-
-frame setup {
+        """frame setup {
   +node pub  "Publisher"
   +node bus  "Broker"
   +node a    "Worker A"
@@ -450,9 +444,7 @@ frame "fanout" {
     }
   , { name: "auth"
     , source:
-        """seed 4
-
-frame setup {
+        """frame setup {
   +node user "User"
   +node app  "App"
   +node idp  "IdP"
@@ -475,9 +467,7 @@ frame "sign in" {
     }
   , { name: "queue"
     , source:
-        """seed 5
-
-frame setup {
+        """frame setup {
   +node prod  "Producer"
   +node q     "Queue"
   +node w1    "Worker 1"
