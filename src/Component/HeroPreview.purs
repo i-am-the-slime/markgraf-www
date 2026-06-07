@@ -23,6 +23,7 @@ import Data.Nullable (Nullable, null)
 import Data.String.Common (joinWith, toUpper)
 import DiagramShapes.Offscreen as DiagramShapes
 import Foreign (unsafeToForeign)
+import Component.HeroPreview.Syntax (highlight)
 import Component.InstallButtonLazy (installButtonLazy)
 import Component.LabSectionsLazy (labSectionsLazy)
 import Component.PlayerLazy (markgrafPlayerLazy)
@@ -520,21 +521,21 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
   scaleMv <- MV.useMotionValue 1.0
   useEffect src do
     launchAff_ do
-      delay (Milliseconds 250.0)
+      delay (250.0 # Milliseconds)
       setDebounced src # liftEffect
-    pure (pure unit)
-  useEffect unit do
+    mempty
+  useEffectOnce do
     onElementResize "markgraf-preview" setSize
-  useEffect unit do
+  useEffectOnce do
     installScrollSync "mg-textarea" "mg-pre"
-  useEffect unit do
+  useEffectOnce do
     onMagazineScroll \p -> do
       MV.set p.x xMv
       MV.set p.y yMv
       MV.set p.scale scaleMv
   useEffect debounced do
     setGen (gen + 1)
-    pure (pure unit)
+    mempty
   pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, section, xMv, yMv, scaleMv })
 
 type PlaygroundProps =
@@ -560,7 +561,7 @@ playgroundView pp =
     }
     [ div { className: "max-w-[min(92rem,94vw)] mx-auto w-full" }
         [ div { className: "flex items-baseline justify-between mb-8 gap-6 flex-wrap" }
-            [ div {}
+            $ div {}
                 [ sectionLabel "01 / playground"
                 , h2
                     { className: "display-glow text-[clamp(2.25rem,5.5vw,6rem)] font-bold tracking-tight leading-[0.95] max-w-[20ch]"
@@ -568,7 +569,7 @@ playgroundView pp =
                     }
                     "Try markgraf"
                 ]
-            ]
+
         , exampleStrip pp.src pp.setSrc
         , paneTabs pp.active pp.setActive
         , editorAndPreview pp
@@ -627,18 +628,17 @@ codeIcon =
     , stroke: "currentColor"
     , strokeWidth: "1.5"
     }
-    [ path
+    $ path
         { strokeLinecap: "round"
         , strokeLinejoin: "round"
         , d: "M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"
         }
         noJSX
-    ]
 
 paneTabs :: Pane -> (Pane -> Effect Unit) -> JSX
 paneTabs active setActive =
   div { className: "sm:hidden flex justify-end mb-3" }
-    [ codeIcon # button
+    $ codeIcon # button
         { type: "button"
         , onClick: handler_ (setActive (if active == SourcePane then RenderPane else SourcePane))
         , className:
@@ -647,8 +647,6 @@ paneTabs active setActive =
                 if active == SourcePane then "bg-[#ff3b1a] border-[#ff3b1a] text-[#0f0f0f]"
                 else "bg-transparent border-[#2a3142] text-[#8a94a8] hover:border-[#ff3b1a] hover:text-[#f5f1e8]"
         }
-
-    ]
 
 -- The house spring. One feel everywhere the playground card morphs.
 markgrafSpringRecord
@@ -680,7 +678,7 @@ editorPane src setSrc activeOnMobile =
         (if activeOnMobile then "flex " else "hidden ")
           <> "sm:flex flex-col overflow-hidden"
     }
-    [ div
+    $ div
         { style: css
             { position: "relative"
             , flex: "1"
@@ -737,7 +735,6 @@ editorPane src setSrc activeOnMobile =
                 }
             }
         ]
-    ]
 
 previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> JSX
 previewPane src size visible gen activeOnMobile =
@@ -774,189 +771,7 @@ previewPane src size visible gen activeOnMobile =
       { className: "player-reveal pointer-events-none"
       , style: css { position: "absolute", inset: "0" }
       }
-      [ keyed (show gen) player ]
-
--- ---------------------------------------------------------------------------
--- Tokenizer: produces colored <span> children for the highlight overlay.
--- ---------------------------------------------------------------------------
-
-highlight :: String -> Array JSX
-highlight source = renderTok <$> tokenize source
-
-renderTok :: { kind :: TokKind, text :: String } -> JSX
-renderTok tok =
-  span { style: css { color: tokColor tok.kind } } tok.text
-
-data TokKind
-  = TKeyword
-  | TOperator
-  | TString
-  | TNumber
-  | TComment
-  | TBrace
-  | TIdent
-  | TPlain
-
-derive instance Eq TokKind
-
-tokColor :: TokKind -> String
-tokColor TKeyword = "#ff3b1a"
-tokColor TOperator = "#ff8a5c"
-tokColor TString = "#5b8fd6"
-tokColor TNumber = "#d9c97a"
-tokColor TComment = "#5a6478"
-tokColor TBrace = "#8a94a8"
-tokColor TIdent = "#c8cdd9"
-tokColor TPlain = "#c8cdd9"
-
--- | Walk the source one position at a time, emitting tokens. Keeps adjacent
--- | runs of plain text fused so the overlay has fewer spans.
-tokenize :: String -> Array { kind :: TokKind, text :: String }
-tokenize input = fuse (go 0 [])
-  where
-  n = CU.length input
-
-  go i acc
-    | i >= n = acc
-    | otherwise = case matchAt i of
-        { tok: Just t, next } -> go next (acc <> [ t ])
-        { next } -> do
-          let ch = fromMaybe "" (CU.singleton <$> CU.charAt i input)
-          go (i + 1) (acc <> [ { kind: TPlain, text: ch } ])
-
-  matchAt i =
-    case tryComment i of
-      Just t -> { tok: Just t, next: i + CU.length t.text }
-      Nothing -> case tryString i of
-        Just t -> { tok: Just t, next: i + CU.length t.text }
-        Nothing -> case tryOperator i of
-          Just t -> { tok: Just t, next: i + CU.length t.text }
-          Nothing -> case tryBrace i of
-            Just t -> { tok: Just t, next: i + CU.length t.text }
-            Nothing -> case tryPlusKw i of
-              Just t -> { tok: Just t, next: i + CU.length t.text }
-              Nothing -> case tryNumber i of
-                Just t -> { tok: Just t, next: i + CU.length t.text }
-                Nothing -> case tryIdent i of
-                  Just t -> { tok: Just t, next: i + CU.length t.text }
-                  Nothing -> { tok: Nothing, next: i + 1 }
-
-  -- Slices the suffix starting at i. Used by all matchers.
-  suffix i = CU.drop i input
-
-  tryComment i = do
-    let s = suffix i
-    pref <-
-      if startsWith "//" s then Just "//"
-      else if startsWith "#" s then Just "#"
-      else Nothing
-    let line = takeWhileStr (\c -> c /= '\n') (CU.drop (CU.length pref) s)
-    pure { kind: TComment, text: pref <> line }
-
-  tryString i = do
-    let s = suffix i
-    _ <- if startsWith "\"" s then Just unit else Nothing
-    let body = takeString (CU.drop 1 s)
-    pure { kind: TString, text: "\"" <> body }
-
-  -- Reads a string body up to and including the closing quote (or EOF).
-  takeString s = go' 0
-    where
-    len = CU.length s
-    go' k
-      | k >= len = CU.take k s
-      | otherwise = case CU.charAt k s of
-          Just '\\' -> go' (k + 2)
-          Just '"' -> CU.take (k + 1) s
-          _ -> go' (k + 1)
-
-  tryOperator i =
-    if startsWith "<-->" s then Just { kind: TOperator, text: "<-->" }
-    else if startsWith "<->" s then Just { kind: TOperator, text: "<->" }
-    else if startsWith "-->" s then Just { kind: TOperator, text: "-->" }
-    else if startsWith "->" s then Just { kind: TOperator, text: "->" }
-    else if startsWith "<-" s then Just { kind: TOperator, text: "<-" }
-    else Nothing
-    where
-    s = suffix i
-
-  tryBrace i = case CU.charAt i input of
-    Just '{' -> Just { kind: TBrace, text: "{" }
-    Just '}' -> Just { kind: TBrace, text: "}" }
-    _ -> Nothing
-
-  tryPlusKw i = do
-    let s = suffix i
-    _ <- if startsWith "+" s then Just unit else Nothing
-    let
-      rest = takeWhileStr isIdentChar (CU.drop 1 s)
-      full = "+" <> rest
-    if rest == "node" || rest == "edge" || rest == "group" then Just { kind: TKeyword, text: full }
-    else Nothing
-
-  tryNumber i = do
-    let s = suffix i
-    _ <- case CU.charAt 0 s of
-      Just c | isDigit c -> Just unit
-      _ -> Nothing
-    let
-      whole = takeWhileStr isDigit s
-      afterWhole = CU.drop (CU.length whole) s
-      frac =
-        if startsWith "." afterWhole then "." <> takeWhileStr isDigit (CU.drop 1 afterWhole)
-        else ""
-    pure { kind: TNumber, text: whole <> frac }
-
-  tryIdent i = do
-    let s = suffix i
-    _ <- case CU.charAt 0 s of
-      Just c | isIdentStart c -> Just unit
-      _ -> Nothing
-    let
-      word = takeWhileStr isIdentChar s
-      kind = if isKeyword word then TKeyword else TIdent
-    pure { kind, text: word }
-
-  isKeyword w =
-    w == "seed" || w == "frame" || w == "par"
-      || w == "chain"
-      || w == "group"
-      || w == "layout"
-
-  fuse arr = fuseGo arr []
-  fuseGo xs acc = case Array.uncons xs of
-    Nothing -> acc
-    Just { head: x, tail } -> case Array.unsnoc acc of
-      Just { init, last } | last.kind == TPlain && x.kind == TPlain ->
-        fuseGo tail (init <> [ { kind: TPlain, text: last.text <> x.text } ])
-      _ -> fuseGo tail (acc <> [ x ])
-
--- ---------------------------------------------------------------------------
--- Tiny char/string helpers used by the tokenizer.
--- ---------------------------------------------------------------------------
-
-startsWith :: String -> String -> Boolean
-startsWith pref s = CU.take (CU.length pref) s == pref
-
-takeWhileStr :: (Char -> Boolean) -> String -> String
-takeWhileStr pred s = CU.take (countMatching 0) s
-  where
-  n = CU.length s
-  countMatching k
-    | k >= n = k
-    | otherwise = case CU.charAt k s of
-        Just c | pred c -> countMatching (k + 1)
-        _ -> k
-
-isDigit :: Char -> Boolean
-isDigit c = c >= '0' && c <= '9'
-
-isIdentStart :: Char -> Boolean
-isIdentStart c =
-  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
-
-isIdentChar :: Char -> Boolean
-isIdentChar c = isIdentStart c || isDigit c || c == '-'
+      $ keyed (show gen) player
 
 -- ---------------------------------------------------------------------------
 -- Content spreads after the playground
