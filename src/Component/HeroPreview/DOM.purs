@@ -1,4 +1,4 @@
-module Component.HeroPreview.Dom
+module Component.HeroPreview.DOM
   ( onTargetValue
   , findElementById
   , onElementResize

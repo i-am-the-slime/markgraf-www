@@ -5,7 +5,7 @@ module Component.HeroPreview.SectionLabel
 
 import Prelude
 
-import Component.HeroPreview.Dom (findElementById)
+import Component.HeroPreview.DOM (findElementById)
 import Data.Array as Array
 import Data.Foldable (for_)
 import Data.Int as Int

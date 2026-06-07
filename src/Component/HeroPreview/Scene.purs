@@ -8,7 +8,7 @@ module Component.HeroPreview.Scene
 
 import Prelude
 
-import Component.HeroPreview.Dom (findElementById)
+import Component.HeroPreview.DOM (findElementById)
 import Data.Array as Array
 import Data.Foldable (for_, traverse_)
 import Data.Maybe (Maybe(..), maybe)

@@ -2,7 +2,7 @@ module Component.HeroPreview.Playground (playground) where
 
 import Prelude
 
-import Component.HeroPreview.Dom (installScrollSync, onElementResize, onMagazineScroll, onTargetValue)
+import Component.HeroPreview.DOM (installScrollSync, onElementResize, onMagazineScroll, onTargetValue)
 import Component.HeroPreview.SectionLabel (sectionLabel, spreadFolio)
 import Component.HeroPreview.Syntax (highlight)
 import Component.PlayerLazy (markgrafPlayerLazy)

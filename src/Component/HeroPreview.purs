@@ -2,7 +2,7 @@ module Component.HeroPreview (mkHeroPreview) where
 
 import Prelude
 
-import Component.HeroPreview.Dom (installVhsBurst, onWordmarkLit, scrollSectionIntoView)
+import Component.HeroPreview.DOM (installVhsBurst, onWordmarkLit, scrollSectionIntoView)
 import Component.HeroPreview.Playground (playground)
 import Component.HeroPreview.Scene (diagramShapesBackground, dispatchActive, mostVisible, observeRatios, sectionStates)
 import Component.HeroPreview.SectionLabel (sectionLabel, spreadFolio)
