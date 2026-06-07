@@ -161,9 +161,10 @@ onMagazineScroll cb = findElementById "magazine" >>= case _ of
         let
           offsetToCenter = vw / 2.0 - naturalCenter
           x = offsetToCenter * (1.0 - p)
-          y = (-0.95 + 0.95 * p) * vh
+          y = -heroLift * vh * (1.0 - p)
           scale = heroScale + (1.0 - heroScale) * p
           heroScale = if vw < 640.0 then heroScaleNarrow else 1.0
+          heroLift = if vw < 640.0 then heroLiftNarrow else heroLiftWide
         Ref.write x lastXRef
         cb { x, y, progress: p, scale }
     listener <- eventListener \_ -> fire
@@ -186,3 +187,13 @@ onMagazineScroll cb = findElementById "magazine" >>= case _ of
 -- on wider viewports, where there is no overlap.
 heroScaleNarrow :: Number
 heroScaleNarrow = 0.62
+
+-- How far the parked player floats above its playground resting place, as a
+-- fraction of the viewport height, easing to zero as it scrolls into place.
+-- Phones lift it further so it clears the install CTA at the hero's bottom-left;
+-- wider viewports keep the original offset.
+heroLiftNarrow :: Number
+heroLiftNarrow = 1.18
+
+heroLiftWide :: Number
+heroLiftWide = 0.95
