@@ -30,7 +30,7 @@ import Yoga.React.DOM.HTML.H (h2)
 import Yoga.React.DOM.HTML.Pre (pre)
 import Yoga.React.DOM.HTML.Section (section) as H
 import Yoga.React.DOM.HTML.Textarea (textarea)
-import Yoga.React.DOM.Internal (css, noJSX, text)
+import Yoga.React.DOM.Internal (css, text)
 import Yoga.React.DOM.SVG.Path (path)
 import Yoga.React.DOM.SVG.Svg (svg)
 
@@ -288,7 +288,7 @@ codeIcon =
         , strokeLinejoin: "round"
         , d: "M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"
         }
-        noJSX
+        []
 
 paneTabs :: Pane -> (Pane -> Effect Unit) -> JSX
 paneTabs active setActive =
@@ -394,9 +394,8 @@ editorPane src setSrc activeOnMobile =
 previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> JSX
 previewPane src size visible gen activeOnMobile =
   div
-    { className:
-        (if activeOnMobile then "flex " else "hidden ")
-          <> "sm:flex flex-col overflow-hidden h-full"
+    { className: (if activeOnMobile then "flex " else "hidden ")
+        <> "sm:flex flex-col overflow-hidden h-full"
     }
     $ div
         { id: "markgraf-preview"
@@ -407,7 +406,7 @@ previewPane src size visible gen activeOnMobile =
             , overflow: "hidden"
             }
         }
-        [ playerReveal ]
+        playerReveal
   where
   player =
     markgrafPlayerLazy
@@ -418,12 +417,12 @@ previewPane src size visible gen activeOnMobile =
       , width: size.w
       , height: size.h
       }
-      # Monoid.guard (visible && size.w > 0.0 && size.h > 0.0)
+      # Monoid.guard (visible && size.w > zero && size.h > zero)
   -- The graph holds back until the wordmark has settled, then fades in cleanly
   -- (.player-reveal). No flicker, no overlay — just a late reveal.
-  playerReveal =
-    div
-      { className: "player-reveal pointer-events-none"
-      , style: css { position: "absolute", inset: "0" }
-      }
-      $ keyed (show gen) player
+  playerReveal = div
+    { className: "player-reveal pointer-events-none"
+    , style: css { position: "absolute", inset: "0" }
+    , key: show gen
+    }
+    player

@@ -13,13 +13,16 @@ module Component.HeroPreview.DOM
 
 import Prelude
 
-import Data.Foldable (for_, traverse_)
+import Control.Monad.Rec.Class (forever)
+import Data.Foldable (for_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
+import Effect.Aff (Milliseconds(..), delay, killFiber, launchAff, launchAff_)
+import Effect.Class (liftEffect)
+import Effect.Exception (error)
 import Effect.Random (random)
 import Effect.Ref as Ref
-import Effect.Timer (clearTimeout, setTimeout)
 import Effect.Uncurried (mkEffectFn1)
 import React.Basic.Events (EventHandler)
 import Unsafe.Coerce (unsafeCoerce)
@@ -76,34 +79,31 @@ installScrollSync taId preId = do
 
 installVhsBurst :: String -> Effect (Effect Unit)
 installVhsBurst className = do
-  scheduleRef <- Ref.new Nothing
-  burstRef <- Ref.new Nothing
-  let
-    targets = do
-      d <- window >>= document
-      hc <- Document.getElementsByClassName (ClassName className) (HTMLDocument.toDocument d)
-      HTMLCollection.toArray hc
-    setVhs on = do
-      els <- targets
-      for_ els \el -> do
-        cl <- Element.classList el
-        if on then DOMTokenList.add cl "vhs-on"
-        else DOMTokenList.remove cl "vhs-on"
-    burst = do
-      setVhs true
-      tid <- setTimeout 1600 do
-        setVhs false
-        scheduleNext
-      Ref.write (Just tid) burstRef
-    scheduleNext = do
-      r <- random
-      tid <- setTimeout (Int.round ((40.0 + r * 30.0) * 1000.0)) burst
-      Ref.write (Just tid) scheduleRef
-  scheduleNext
+  fiber <- launchAff (forever cycle)
   pure do
-    Ref.read burstRef >>= traverse_ clearTimeout
-    Ref.read scheduleRef >>= traverse_ clearTimeout
+    launchAff_ (killFiber (error "vhs burst stopped") fiber)
     setVhs false
+  where
+  -- One beat: idle 40–70s, flick the glitch on, hold 1.6s, off. `forever` keeps
+  -- it looping; killing the fiber on teardown cancels mid-delay cleanly.
+  cycle = do
+    r <- random # liftEffect
+    delay (Milliseconds ((40.0 + r * 30.0) * 1000.0))
+    setVhs true # liftEffect
+    delay (Milliseconds 1600.0)
+    setVhs false # liftEffect
+
+  setVhs on = do
+    els <- targets
+    for_ els \el -> do
+      cl <- Element.classList el
+      if on then DOMTokenList.add cl "vhs-on"
+      else DOMTokenList.remove cl "vhs-on"
+
+  targets = do
+    d <- window >>= document
+    hc <- Document.getElementsByClassName (ClassName className) (HTMLDocument.toDocument d)
+    HTMLCollection.toArray hc
 
 -- Fire `done` the moment the title's neon-in animation finishes — the beat the
 -- wordmark holds steady, "the light is on". Listening for animationend on the
