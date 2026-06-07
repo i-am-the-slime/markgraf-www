@@ -14,6 +14,7 @@ import Effect.Unsafe (unsafePerformEffect)
 import Graphics.Canvas (CanvasElement, TextAlign(..), TextBaseline(..), clearRect, fillText, getContext2D, setCanvasHeight, setCanvasWidth, setFillStyle, setFont, setTextAlign, setTextBaseline)
 import Graphics.Canvas.Extra (LetterSpacing(..), createCanvasElement, kerningNormal, setFontKerning, setLetterSpacing)
 import Graphics.WebGL as GL
+import Page.Active (onActiveChange)
 import React.Basic (JSX, ReactComponent, element)
 import React.Basic.Events (EventHandler, handler_)
 import React.Basic.Hooks (readRef, readRefMaybe, reactComponent, useRef, writeRef)
@@ -101,10 +102,25 @@ installButton = unsafePerformEffect $ reactComponent "InstallButtonSDF" \_ -> Ho
             id <- requestAnimationFrame renderFrame win
             writeRef rafRef (Just id)
 
-        writeRef lastWallRef =<< GL.now
-        id0 <- requestAnimationFrame renderFrame win
-        writeRef rafRef (Just id0)
-        pure (readRef rafRef >>= traverse_ \id -> cancelAnimationFrame id win)
+          -- Kick a fresh frame, resetting the wall clock so the first delta is
+          -- one small step rather than the whole paused gap.
+          start = do
+            writeRef lastWallRef =<< GL.now
+            id <- requestAnimationFrame renderFrame win
+            writeRef rafRef (Just id)
+
+          stop = readRef rafRef >>= traverse_ \id -> do
+            cancelAnimationFrame id win
+            writeRef rafRef Nothing
+
+        start
+        -- Stop raymarching while the page isn't watched; resume on return. The
+        -- rafRef doubles as the running flag, so neither edge double-fires.
+        stopActive <- onActiveChange \active -> readRef rafRef >>= case active, _ of
+          true, Nothing -> start
+          false, Just _ -> stop
+          _, _ -> pure unit
+        pure (stop *> stopActive)
 
   pure $
     a

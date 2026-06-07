@@ -18,6 +18,7 @@ import Motion.Element as Motion
 import Motion.Types as Motion
 import Motion.Value (MotionValue)
 import Motion.Value as MV
+import Page.Active (onActiveChange)
 import React.Basic (JSX, keyed)
 import React.Basic.Events (handler_)
 import React.Basic.Hooks (Component, component, useEffect, useEffectOnce, useState')
@@ -44,7 +45,7 @@ examples :: Array Example
 examples =
   [ { name: "request"
     , source:
-        """frame setup {
+        """keyframe setup {
   +node client "Client"
   +node api    "API"
   +node db     "Database"
@@ -52,7 +53,7 @@ examples =
   +edge api db
 }
 
-frame "request" {
+keyframe "request" {
   client -> api "GET /user/42"
   api    -> db  "SELECT *"
   api    <- db  "row"
@@ -62,7 +63,7 @@ frame "request" {
     }
   , { name: "cache hit"
     , source:
-        """frame setup {
+        """keyframe setup {
   +node client "Client"
   +node api    "API"
   +node cache  "Cache"
@@ -72,7 +73,7 @@ frame "request" {
   +edge api logger
 }
 
-frame "hit" {
+keyframe "hit" {
   client -> api "GET"
   par {
     api -> cache  "HIT"
@@ -84,7 +85,7 @@ frame "hit" {
     }
   , { name: "pub/sub"
     , source:
-        """frame setup {
+        """keyframe setup {
   +node pub  "Publisher"
   +node bus  "Broker"
   +node a    "Worker A"
@@ -96,7 +97,7 @@ frame "hit" {
   +edge bus c
 }
 
-frame "fanout" {
+keyframe "fanout" {
   pub -> bus "event"
   par {
     bus -> a "event"
@@ -108,7 +109,7 @@ frame "fanout" {
     }
   , { name: "auth"
     , source:
-        """frame setup {
+        """keyframe setup {
   +node user "User"
   +node app  "App"
   +node idp  "IdP"
@@ -117,7 +118,7 @@ frame "fanout" {
   +edge user idp
 }
 
-frame "sign in" {
+keyframe "sign in" {
   user -> app "open"
   app  -> user "redirect"
   user -> idp "login"
@@ -131,7 +132,7 @@ frame "sign in" {
     }
   , { name: "queue"
     , source:
-        """frame setup {
+        """keyframe setup {
   +node prod  "Producer"
   +node q     "Queue"
   +node w1    "Worker 1"
@@ -141,12 +142,12 @@ frame "sign in" {
   +edge q w2
 }
 
-frame "enqueue" {
+keyframe "enqueue" {
   prod -> q "job 1"
   prod -> q "job 2"
 }
 
-frame "drain" {
+keyframe "drain" {
   par {
     q -> w1 "job 1"
     q -> w2 "job 2"
@@ -174,6 +175,7 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
   debounced /\ setDebounced <- useState' defaultSource
   size /\ setSize <- useState' { w: 0.0, h: 0.0 }
   active /\ setActive <- useState' RenderPane
+  pageActive /\ setPageActive <- useState' true
   gen /\ setGen <- useState' 0
   -- Must start at 0 to agree with onMagazineScroll's lastXRef (also 0): the
   -- first `fire` derives the pane's natural centre from `r.left - lastX`, so a
@@ -189,6 +191,7 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
     mempty
   useEffectOnce do
     onElementResize "markgraf-preview" setSize
+  useEffectOnce $ onActiveChange setPageActive
   useEffectOnce do
     installScrollSync "mg-textarea" "mg-pre"
   useEffectOnce do
@@ -199,7 +202,7 @@ mkPlayground = component "Playground" \{ section } -> Hooks.do
   useEffect debounced do
     setGen (gen + 1)
     mempty
-  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, section, xMv, yMv, scaleMv })
+  pure (playgroundView { src, setSrc, rendered: debounced, size, visible: true, active, setActive, gen, section, xMv, yMv, scaleMv, paused: not pageActive })
 
 type PlaygroundProps =
   { src :: String
@@ -214,6 +217,7 @@ type PlaygroundProps =
   , xMv :: MotionValue Number
   , yMv :: MotionValue Number
   , scaleMv :: MotionValue Number
+  , paused :: Boolean
   }
 
 playgroundView :: PlaygroundProps -> JSX
@@ -323,7 +327,7 @@ editorAndPreview pp =
         { style: css { x: pp.xMv, y: pp.yMv, scale: pp.scaleMv }
         , className: "h-full"
         }
-        $ previewPane pp.rendered pp.size pp.visible pp.gen (pp.active == RenderPane)
+        $ previewPane pp.rendered pp.size pp.visible pp.gen (pp.active == RenderPane) pp.paused
     ]
 
 editorPane :: String -> (String -> Effect Unit) -> Boolean -> JSX
@@ -391,8 +395,8 @@ editorPane src setSrc activeOnMobile =
             }
         ]
 
-previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> JSX
-previewPane src size visible gen activeOnMobile =
+previewPane :: String -> { w :: Number, h :: Number } -> Boolean -> Int -> Boolean -> Boolean -> JSX
+previewPane src size visible gen activeOnMobile paused =
   div
     { className: (if activeOnMobile then "flex " else "hidden ")
         <> "sm:flex flex-col overflow-hidden h-full"
@@ -414,6 +418,7 @@ previewPane src size visible gen activeOnMobile =
       , renderer: "svg"
       , theme: "dark"
       , transparent: true
+      , paused
       , width: size.w
       , height: size.h
       }

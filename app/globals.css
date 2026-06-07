@@ -24,6 +24,16 @@
   font-display: swap;
 }
 
+/* Bitmap arcade face for the PAUSE screen — its glyphs are pixels, so it reads
+   8-bit at any size. Only used there, so font-display can swap quietly. */
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("/fonts/PressStart2P.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* markgraf-embed's published CSS still references "Ioskeley Mono" — alias it
    to Commit Mono so labels inside the player pick up the right typeface. */
 @font-face {

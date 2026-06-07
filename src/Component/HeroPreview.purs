@@ -14,6 +14,7 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested (type (/\), (/\))
 import DiagramShapes.Offscreen as DiagramShapes
 import Motion.Lazy (domAnimation, lazyMotion)
+import Page.Active (onActiveChange)
 import React.Basic (JSX)
 import React.Basic.Events (handler_)
 import React.Basic.Hooks (Component, component, readRef, useEffectOnce, useRef, useState', writeRef)
@@ -36,8 +37,10 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
   postRef <- useRef (Nothing :: Maybe DiagramShapes.WorkerPost)
   activeSection /\ setActiveSection <- useState' "page-hero"
   sceneLit /\ setSceneLit <- useState' false
+  pageActive /\ setPageActive <- useState' true
   useEffectOnce $ installVhsBurst "vhs-text-wrap"
   useEffectOnce $ onWordmarkLit (setSceneLit true)
+  useEffectOnce $ onActiveChange setPageActive
   useEffectOnce $
     observeRatios "magazine" (_.id <$> sectionStates) \id ratio -> do
       ratios <- readRef ratiosRef
@@ -65,6 +68,7 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
         , footerSection
         , labSectionsLazy { sectionLabel, spreadFolio }
         , navArrows { active: activeSection }
+        , pauseOverlay (not pageActive)
         , crtOverlay
         ]
     ]
@@ -184,6 +188,34 @@ navLink active (sectionId /\ label) =
 crtOverlay :: JSX
 crtOverlay =
   div { className: "fixed inset-0 z-[60] pointer-events-none crt-overlay" } noJSX
+
+-- Shown when the page stops being watched — another tab or another program in
+-- the foreground — at which point every animation loop idles (see Page.Active).
+-- A dark veil with the wordmark's neon "paused" so the still frame reads as
+-- deliberate, not stalled. Stays pointer-events-none and under the CRT layer:
+-- the scanlines keep riding over it, and a click lands on the page beneath,
+-- refocusing the window and lifting the veil.
+pauseOverlay :: Boolean -> JSX
+pauseOverlay paused =
+  div
+    { className:
+        "fixed inset-0 z-[55] flex items-center justify-center pointer-events-none \
+        \bg-black/60 backdrop-blur-sm transition-opacity duration-500 ease-out "
+          <> (if paused then "opacity-100" else "opacity-0")
+    }
+    $ span
+        { className: "display-glow uppercase text-[clamp(1.5rem,6vw,4.5rem)] leading-none text-[#f5f1e8]"
+        -- Press Start 2P is a bitmap face, so the letters are literal pixels
+        -- — an old game's PAUSE screen. The wide track spaces them out
+        -- "P A U S E"-style; the matching left pad cancels the trailing
+        -- letter-spacing so the word stays centred rather than drifting left.
+        , style: css
+            { fontFamily: "'Press Start 2P', ui-monospace, monospace"
+            , letterSpacing: "0.35em"
+            , paddingLeft: "0.35em"
+            }
+        }
+        "pause"
 
 scrim :: Boolean -> JSX
 scrim isActive =

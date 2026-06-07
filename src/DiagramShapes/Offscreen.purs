@@ -10,6 +10,7 @@ import Effect (Effect)
 import Effect.Console (log)
 import Effect.Unsafe (unsafePerformEffect)
 import Foreign (Foreign, unsafeToForeign)
+import Page.Active (onActiveChange)
 import React.Basic (ReactComponent, Ref)
 import React.Basic.Hooks (Component, component, readRefMaybe, useEffectOnce, useRef, writeRef)
 import React.Basic.Hooks as Hooks
@@ -19,8 +20,6 @@ import Web.Event.Event (EventType(..))
 import Web.Event.EventTarget (addEventListener, eventListener, removeEventListener)
 import Web.HTML (window)
 import Web.HTML.HTMLCanvasElement (HTMLCanvasElement, toElement, toHTMLElement)
-import Web.HTML.HTMLDocument as HTMLDocument
-import Web.HTML.HTMLDocument.VisibilityState (VisibilityState(..))
 import Web.HTML.HTMLElement (offsetLeft, offsetTop)
 import Web.HTML.Window as Window
 import Yoga.React.DOM.HTML.Canvas (canvas)
@@ -70,7 +69,8 @@ diagramShapesOffscreenComponent = component "DiagramShapesOffscreen" \{ postRef 
     noJSX
 
 -- Hand the canvas's drawing surface to the worker, then keep it in sync: dpr and
--- geometry on window resize, frameloop on visibility. Returns a teardown.
+-- geometry on window resize, and the frameloop paused whenever the page isn't
+-- being watched (`Page.Active`). Returns a teardown.
 setupDiagramShapes :: Ref (Maybe WorkerPost) -> HTMLCanvasElement -> Effect (Effect Unit)
 setupDiagramShapes postRef canvasEl = do
   alreadyRan <- transferGuard canvasEl
@@ -84,13 +84,16 @@ setupDiagramShapes postRef canvasEl = do
     initWorker worker offscreen
 
     stopResize <- onWindowResize (syncSize worker)
-    stopVisibility <- onTabVisibilityChange \visible ->
-      post worker "props" { frameloop: if visible then "always" else "never" }
+    stopActive <- onActiveChange \active -> do
+      post worker "props" { frameloop: if active then "always" else "never" }
+      -- Configure alone doesn't reliably restart a parked loop in the worker, so
+      -- nudge it: this `resume` lands after the props above and invalidates.
+      when active (post worker "resume" {})
     writeRef postRef (Just (post worker))
 
     pure do
       stopResize
-      stopVisibility
+      stopActive
       writeRef postRef Nothing
       terminate worker
 
@@ -193,17 +196,3 @@ onWindowResize action = do
   addEventListener (EventType "resize") listener false target
   pure (removeEventListener (EventType "resize") listener false target)
 
--- Pause R3F's frameloop when the tab is hidden — switching to another tab or
--- another program. The worker re-`root.configure`s on a `{ type: "props" }`
--- message. Fires on `visibilitychange`, reading the document's visibility state.
-onTabVisibilityChange :: (Boolean -> Effect Unit) -> Effect (Effect Unit)
-onTabVisibilityChange onChange = do
-  doc <- window >>= Window.document
-  let target = HTMLDocument.toEventTarget doc
-  listener <- eventListener \_ -> onChange =<< visible doc
-  addEventListener (EventType "visibilitychange") listener false target
-  pure (removeEventListener (EventType "visibilitychange") listener false target)
-  where
-  visible doc = HTMLDocument.visibilityState doc <#> case _ of
-    Visible -> true
-    Hidden -> false

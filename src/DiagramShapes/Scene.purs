@@ -15,7 +15,7 @@ import DiagramShapes.Bindings (cylinderGeometry, instance_, instances, meshBasic
 import React.Basic (JSX, Ref, element)
 import React.Basic.Hooks (Component, component, readRef, readRefMaybe, useEffectOnce, useRef, useState, writeRef, (/\))
 import React.Basic.Hooks as Hooks
-import React.R3F.Hooks (applyProps, useFrame)
+import React.R3F.Hooks (RootState, applyProps, useFrame)
 import React.R3F.Three.Internal (threejs)
 import React.R3F.Three.Types (Object3D)
 import Unsafe.Coerce (unsafeCoerce)
@@ -231,6 +231,20 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
   intervalRef <- useRef frameInterval
   holdRef <- useRef (Nothing :: Maybe HoldState)
 
+  rootStateRef <- useRef (toNullable (Nothing :: Maybe { | RootState }))
+
+  -- The host parks the frameloop on `never` when the page isn't watched; on
+  -- return a `resume` message flips it back to `always` and invalidates. r3f's
+  -- setFrameloop zeroes the clock on every flip, so the paint cadence refs below
+  -- (which hold the pre-pause elapsed time) must reset too — otherwise the paint
+  -- gate `t - lastPaint >= interval` reads hugely negative and never fires again.
+  useEffectOnce $ installResumeListener do
+    writeRef prevTickRef (-1.0)
+    writeRef lastPaintRef (-1.0)
+    writeRef fpsAvgRef 60.0
+    writeRef intervalRef frameInterval
+    readRefMaybe rootStateRef >>= traverse_ resumeScene
+
   useEffectOnce $
     installStartChainListener (startChainFromRandom holdRef frameRef)
 
@@ -260,6 +274,7 @@ animatedFieldComponent = component "AnimatedField" \_ -> Hooks.do
     writeF32 cameraBuf 6 fov
 
   useFrame \rs _ -> do
+    writeRef rootStateRef (toNullable (Just rs))
     let t = readClockElapsed rs
     prevTick <- readRef prevTickRef
     writeRef prevTickRef t
@@ -1469,6 +1484,12 @@ parallelogramGeometry = parallelogramGeometryImpl
 roundedRectGeometry :: Number -> Number -> Number -> Number -> JSX
 roundedRectGeometry = roundedRectGeometryImpl
 
+installResumeListener :: Effect Unit -> Effect (Effect Unit)
+installResumeListener = installResumeListenerImpl
+
+resumeScene :: forall r. { | r } -> Effect Unit
+resumeScene = resumeSceneImpl
+
 installStartChainListener :: Effect Unit -> Effect (Effect Unit)
 installStartChainListener = installStartChainListenerImpl
 
@@ -1494,6 +1515,8 @@ applyCamera = applyCameraImpl
 foreign import readClockElapsed :: forall r. { | r } -> Number
 foreign import parallelogramGeometryImpl :: Number -> Number -> Number -> Number -> JSX
 foreign import roundedRectGeometryImpl :: Number -> Number -> Number -> Number -> JSX
+foreign import installResumeListenerImpl :: Effect Unit -> Effect (Effect Unit)
+foreign import resumeSceneImpl :: forall r. { | r } -> Effect Unit
 foreign import installStartChainListenerImpl :: Effect Unit -> Effect (Effect Unit)
 foreign import installMorphListenerImpl
   :: (Number -> Number -> Number -> Number -> Effect Unit) -> Effect (Effect Unit)

@@ -14,6 +14,7 @@ type PlayerProps =
   , transparent :: Boolean
   , width :: Number
   , height :: Number
+  , paused :: Boolean
   }
 
 -- markgraf-react's MarkgrafPlayer (~95KB-gz) is loaded through a dynamic import()

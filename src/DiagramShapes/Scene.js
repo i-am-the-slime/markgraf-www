@@ -92,6 +92,26 @@ export const installStartChainListenerImpl = (handler) => () => {
   return () => self.removeEventListener("message", onMsg)
 }
 
+// Listens for `{type:"resume"}` and runs `handler` — wired to r3f's `invalidate`
+// so the host can kick the frameloop back to life after parking it on `never`.
+// Posted right after the `frameloop:"always"` props message, so by the time this
+// fires the loop is allowed to run and the single invalidate restarts it.
+export const installResumeListenerImpl = (handler) => () => {
+  if (typeof self === "undefined" || typeof self.addEventListener !== "function") return () => {}
+  const onMsg = (e) => { if (e.data && e.data.type === "resume") handler() }
+  self.addEventListener("message", onMsg)
+  return () => self.removeEventListener("message", onMsg)
+}
+
+// Restart the r3f loop directly on the scene's own root state: flip frameloop
+// back to "always" and invalidate. Going through the state here (not the host's
+// offscreen `configure`) sidesteps `invalidate` bailing out early while the
+// store still reads `never`.
+export const resumeSceneImpl = (rs) => () => {
+  if (typeof rs.setFrameloop === "function") rs.setFrameloop("always")
+  if (typeof rs.invalidate === "function") rs.invalidate()
+}
+
 // Generic message listeners — host pages declare per-section morph and camera
 // state and post it via `window.__diagramShapesPost`. The worker lerps current
 // toward target each frame.
