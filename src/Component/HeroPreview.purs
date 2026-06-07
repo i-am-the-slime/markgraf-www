@@ -79,7 +79,7 @@ onTargetValue cb = mkEffectFn1 \e -> cb (unsafeCoerce e).target.value
 
 mkHeroPreview :: Component {}
 mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
-  ratiosRef <- useRef ([] :: Array { id :: String, ratio :: Number })
+  ratiosRef <- useRef ([] :: _ { id :: String, ratio :: Number })
   activeRef <- useRef ""
   postRef <- useRef (Nothing :: Maybe DiagramShapes.WorkerPost)
   activeSection /\ setActiveSection <- useState' "page-hero"
@@ -125,13 +125,12 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
 -- mounted from the start (its per-section poses still land); only the reveal
 -- waits on `lit`.
 diagramShapesBackground :: Ref (Maybe DiagramShapes.WorkerPost) -> Boolean -> JSX
-diagramShapesBackground postRef lit =
+diagramShapesBackground postRef lit = diagramShapes { postRef } #
   div
     { className:
         "fixed inset-0 z-0 pointer-events-none transition-opacity duration-[1200ms] ease-out "
           <> if lit then "opacity-100" else "opacity-0"
     }
-    [ element diagramShapesComponent { postRef } ]
 
 -- ---------------------------------------------------------------------------
 -- Per-section declarative state: each section declares both a ball morph
@@ -269,20 +268,19 @@ heroPage =
 heroLockup :: JSX
 heroLockup =
   div { className: "absolute inset-0 z-10 flex flex-col items-center justify-start pt-[12vh] pointer-events-none px-6" }
-    [ div { className: "flex flex-col items-center gap-[clamp(1.5rem,4vw,4rem)] max-w-[min(64rem,92vw)] text-center" }
+    $ div { className: "flex flex-col items-center gap-[clamp(1.5rem,4vw,4rem)] max-w-[min(64rem,92vw)] text-center" }
         [ h1
             { className: "display-glow hero-wordmark-in vhs-text-wrap text-[clamp(2.1875rem,10vw,8.75rem)] leading-[0.82] tracking-[-0.045em] font-bold"
             , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
             }
-            [ span
+            $ span
                 { className: "vhs-text"
-                , style: css { "--vhs-text": "\"markgraf\"" }
+                , style: css { "--vhs-text": show "markgraf" }
                 }
-                [ text "markgraf" ]
-            ]
+                "markgraf"
+
         , heroTagline
         ]
-    ]
 
 -- The hero's call to action is the raymarched SDF button: a grey glassy shape
 -- morphing through markgraf's node silhouettes with the INSTALL text baked in,
@@ -313,7 +311,7 @@ heroTagline =
         { className: "hero-tagline-word"
         , style: css { animationDelay: show (2700 + i * 120) <> "ms" }
         }
-        [ text w ]
+        w
     , text " "
     ]
 
@@ -357,7 +355,7 @@ navLink active (sectionId /\ label) =
         "transition-colors hover:text-[#f5f1e8] "
           <> if active == sectionId then "text-[#ff3b1a] font-bold" else "text-[#8a94a8]"
     }
-    [ text label ]
+    label
 
 -- CRT scanlines, lifted out of the offscreen canvas's grain shader into a
 -- top-level DOM layer so they ride above everything — the floating player and
@@ -370,7 +368,7 @@ crtOverlay =
 spreadFolio :: String -> String -> JSX
 spreadFolio num label =
   div { className: "absolute bottom-0 left-0 z-20 px-8 py-6 font-mono text-[10px] uppercase tracking-[0.3em] text-[#5a6478] pointer-events-none" }
-    [ text (num <> " / " <> label) ]
+    (num <> " / " <> label)
 
 -- ---------------------------------------------------------------------------
 -- Live playground: textarea + syntax-highlight overlay + markgraf preview.
@@ -382,109 +380,125 @@ examples :: Array Example
 examples =
   [ { name: "request"
     , source:
-        "seed 1\n\n"
-          <> "frame setup {\n"
-          <> "  +node client \"Client\"\n"
-          <> "  +node api    \"API\"\n"
-          <> "  +node db     \"Database\"\n"
-          <> "  +edge client api\n"
-          <> "  +edge api db\n"
-          <> "}\n\n"
-          <> "frame \"request\" {\n"
-          <> "  client -> api \"GET /user/42\"\n"
-          <> "  api    -> db  \"SELECT *\"\n"
-          <> "  api    <- db  \"row\"\n"
-          <> "  client <- api \"200 OK\"\n"
-          <> "}\n"
+        """seed 1
+
+frame setup {
+  +node client "Client"
+  +node api    "API"
+  +node db     "Database"
+  +edge client api
+  +edge api db
+}
+
+frame "request" {
+  client -> api "GET /user/42"
+  api    -> db  "SELECT *"
+  api    <- db  "row"
+  client <- api "200 OK"
+}
+"""
     }
   , { name: "cache hit"
     , source:
-        "seed 2\n\n"
-          <> "frame setup {\n"
-          <> "  +node client \"Client\"\n"
-          <> "  +node api    \"API\"\n"
-          <> "  +node cache  \"Cache\"\n"
-          <> "  +node logger \"Logger\"\n"
-          <> "  +edge client api\n"
-          <> "  +edge api cache\n"
-          <> "  +edge api logger\n"
-          <> "}\n\n"
-          <> "frame \"hit\" {\n"
-          <> "  client -> api \"GET\"\n"
-          <> "  par {\n"
-          <> "    api -> cache  \"HIT\"\n"
-          <> "    api -> logger \"trace\"\n"
-          <> "  }\n"
-          <> "  client <- api \"200\"\n"
-          <> "}\n"
+        """seed 2
+
+frame setup {
+  +node client "Client"
+  +node api    "API"
+  +node cache  "Cache"
+  +node logger "Logger"
+  +edge client api
+  +edge api cache
+  +edge api logger
+}
+
+frame "hit" {
+  client -> api "GET"
+  par {
+    api -> cache  "HIT"
+    api -> logger "trace"
+  }
+  client <- api "200"
+}
+"""
     }
   , { name: "pub/sub"
     , source:
-        "seed 3\n\n"
-          <> "frame setup {\n"
-          <> "  +node pub  \"Publisher\"\n"
-          <> "  +node bus  \"Broker\"\n"
-          <> "  +node a    \"Worker A\"\n"
-          <> "  +node b    \"Worker B\"\n"
-          <> "  +node c    \"Worker C\"\n"
-          <> "  +edge pub bus\n"
-          <> "  +edge bus a\n"
-          <> "  +edge bus b\n"
-          <> "  +edge bus c\n"
-          <> "}\n\n"
-          <> "frame \"fanout\" {\n"
-          <> "  pub -> bus \"event\"\n"
-          <> "  par {\n"
-          <> "    bus -> a \"event\"\n"
-          <> "    bus -> b \"event\"\n"
-          <> "    bus -> c \"event\"\n"
-          <> "  }\n"
-          <> "}\n"
+        """seed 3
+
+frame setup {
+  +node pub  "Publisher"
+  +node bus  "Broker"
+  +node a    "Worker A"
+  +node b    "Worker B"
+  +node c    "Worker C"
+  +edge pub bus
+  +edge bus a
+  +edge bus b
+  +edge bus c
+}
+
+frame "fanout" {
+  pub -> bus "event"
+  par {
+    bus -> a "event"
+    bus -> b "event"
+    bus -> c "event"
+  }
+}
+"""
     }
   , { name: "auth"
     , source:
-        "seed 4\n\n"
-          <> "frame setup {\n"
-          <> "  +node user \"User\"\n"
-          <> "  +node app  \"App\"\n"
-          <> "  +node idp  \"IdP\"\n"
-          <> "  +edge user app\n"
-          <> "  +edge app idp\n"
-          <> "  +edge user idp\n"
-          <> "}\n\n"
-          <> "frame \"sign in\" {\n"
-          <> "  user -> app \"open\"\n"
-          <> "  app  -> user \"redirect\"\n"
-          <> "  user -> idp \"login\"\n"
-          <> "  user <- idp \"code\"\n"
-          <> "  user -> app \"code\"\n"
-          <> "  app  -> idp \"exchange\"\n"
-          <> "  app  <- idp \"token\"\n"
-          <> "  user <- app \"signed in\"\n"
-          <> "}\n"
+        """seed 4
+
+frame setup {
+  +node user "User"
+  +node app  "App"
+  +node idp  "IdP"
+  +edge user app
+  +edge app idp
+  +edge user idp
+}
+
+frame "sign in" {
+  user -> app "open"
+  app  -> user "redirect"
+  user -> idp "login"
+  user <- idp "code"
+  user -> app "code"
+  app  -> idp "exchange"
+  app  <- idp "token"
+  user <- app "signed in"
+}
+"""
     }
   , { name: "queue"
     , source:
-        "seed 5\n\n"
-          <> "frame setup {\n"
-          <> "  +node prod  \"Producer\"\n"
-          <> "  +node q     \"Queue\"\n"
-          <> "  +node w1    \"Worker 1\"\n"
-          <> "  +node w2    \"Worker 2\"\n"
-          <> "  +edge prod q\n"
-          <> "  +edge q w1\n"
-          <> "  +edge q w2\n"
-          <> "}\n\n"
-          <> "frame \"enqueue\" {\n"
-          <> "  prod -> q \"job 1\"\n"
-          <> "  prod -> q \"job 2\"\n"
-          <> "}\n\n"
-          <> "frame \"drain\" {\n"
-          <> "  par {\n"
-          <> "    q -> w1 \"job 1\"\n"
-          <> "    q -> w2 \"job 2\"\n"
-          <> "  }\n"
-          <> "}\n"
+        """seed 5
+
+frame setup {
+  +node prod  "Producer"
+  +node q     "Queue"
+  +node w1    "Worker 1"
+  +node w2    "Worker 2"
+  +edge prod q
+  +edge q w1
+  +edge q w2
+}
+
+frame "enqueue" {
+  prod -> q "job 1"
+  prod -> q "job 2"
+}
+
+frame "drain" {
+  par {
+    q -> w1 "job 1"
+    q -> w2 "job 2"
+  }
+}
+"""
     }
   ]
 
@@ -601,13 +615,13 @@ exampleStrip current setSrc =
               "font-mono text-[10px] tracking-[0.3em] transition-colors "
                 <> if current == ex.source then "text-[#ff3b1a]" else "text-[#5a6478] group-hover:text-[#8a94a8]"
           }
-          [ text (padIndex (i + 1)) ]
+          (padIndex (i + 1))
       , div
           { className:
               "font-mono text-sm sm:text-base leading-none tracking-[0.12em] uppercase transition-colors "
                 <> if current == ex.source then "text-[#f5f1e8]" else "text-[#5a6478] group-hover:text-[#c8cdd9]"
           }
-          [ text ex.name ]
+          ex.name
       ]
 
   padIndex n = if n < 10 then "0" <> show n else show n
@@ -634,7 +648,7 @@ codeIcon =
 paneTabs :: Pane -> (Pane -> Effect Unit) -> JSX
 paneTabs active setActive =
   div { className: "sm:hidden flex justify-end mb-3" }
-    [ button
+    [ codeIcon # button
         { type: "button"
         , onClick: handler_ (setActive (if active == SourcePane then RenderPane else SourcePane))
         , className:
@@ -643,7 +657,7 @@ paneTabs active setActive =
                 if active == SourcePane then "bg-[#ff3b1a] border-[#ff3b1a] text-[#0f0f0f]"
                 else "bg-transparent border-[#2a3142] text-[#8a94a8] hover:border-[#ff3b1a] hover:text-[#f5f1e8]"
         }
-        codeIcon
+
     ]
 
 -- The house spring. One feel everywhere the playground card morphs.
@@ -781,7 +795,7 @@ highlight source = renderTok <$> tokenize source
 
 renderTok :: { kind :: TokKind, text :: String } -> JSX
 renderTok tok =
-  span { style: css { color: tokColor tok.kind } } [ text tok.text ]
+  span { style: css { color: tokColor tok.kind } } tok.text
 
 data TokKind
   = TKeyword
@@ -961,13 +975,13 @@ isIdentChar c = isIdentStart c || isDigit c || c == '-'
 installPill :: JSX
 installPill =
   div { className: "inline-flex items-center gap-3 bg-[#11162280] backdrop-blur-md border border-[#2a3142] rounded-full pl-5 pr-2 py-2 font-mono text-[clamp(0.875rem,1.4vw,1.25rem)] pointer-events-auto" }
-    [ span { style: css { color: "#ff3b1a" } } [ text "$" ]
-    , span { className: "text-[#f5f1e8]" } [ text "brew install markgrafhq/tap/markgraf" ]
+    [ span { style: css { color: "#ff3b1a" } } "$"
+    , span { className: "text-[#f5f1e8]" } "brew install markgrafhq/tap/markgraf"
     , button
         { type: "button"
         , className: "ml-2 text-[10px] uppercase tracking-[0.2em] text-[#8a94a8] hover:text-[#f5f1e8] transition-colors px-3 py-1.5 rounded-full bg-[#0f0f0f] border border-[#2a3142] cursor-pointer"
         }
-        [ text "copy" ]
+        "copy"
     ]
 
 integrationsSection :: JSX
@@ -1118,13 +1132,13 @@ embedCard heading body =
 aiCommand :: String -> JSX
 aiCommand cmd =
   pre { className: "bg-[#11162280] backdrop-blur-sm border border-[#2a3142] rounded-lg px-5 py-4 text-sm leading-relaxed text-[#c8cdd9] font-mono overflow-x-auto" }
-    [ H.code {} cmd ]
+    (H.code {} cmd)
 
 inlineCode :: String -> JSX
 inlineCode source =
   H.code
     { className: "font-mono text-[#ff3b1a] bg-[#11162280] border border-[#2a3142] rounded px-1.5 py-0.5 text-[0.85em]" }
-    [ text source ]
+    source
 
 footerSection :: JSX
 footerSection =
@@ -1140,7 +1154,7 @@ footerSection =
                 , style: css { fontFamily: "'Sinistre', 'Sinistre Fallback', serif" }
                 }
                 "Install"
-            , div {} [ installPill ]
+            , div {} installPill
             ]
         , div { className: "flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#8a94a8] font-mono pt-8 border-t border-[#1a1f2e]" }
             [ footerLink "https://github.com/markgrafhq/homebrew-tap" "tap"
@@ -1149,7 +1163,7 @@ footerSection =
             , footerLink "https://discord.gg/tKfGrPYx" "discord"
             ]
         , div { className: "flex flex-wrap items-baseline gap-x-8 gap-y-3 text-sm text-[#8a94a8] font-mono" }
-            [ span { className: "text-[#5a6478] uppercase tracking-wider text-xs" } [ text "live demos" ]
+            [ span { className: "text-[#5a6478] uppercase tracking-wider text-xs" } "live demos"
             , footerLink "https://markgrafhq.github.io/markgraf-embed/" "embed"
             , footerLink "https://markgrafhq.github.io/markgraf-react/" "react · storybook"
             , footerLink "https://markgrafhq.github.io/mkdocs-markgraf/" "mkdocs"
@@ -1190,7 +1204,7 @@ sectionLabelComponent = unsafePerformEffect $ reactComponent "SectionLabel" \{ l
 
   pure $ div { className: eyebrowClass, ref: reactRef nodeRef }
     [ redRule inView lineDelay
-    , span { className: "text-brand" } [ text shown ]
+    , span { className: "text-brand" } shown
     ]
   where
   -- min-h reserves the row's full line height so the scramble's blank phase
@@ -1304,6 +1318,8 @@ ruleDrawDuration = 0.4
 
 diagramShapesComponent :: ReactComponent { postRef :: Ref (Maybe DiagramShapes.WorkerPost) }
 diagramShapesComponent = DiagramShapes.diagramShapesOffscreen
+
+diagramShapes = element diagramShapesComponent
 
 onElementResize
   :: String -> ({ w :: Number, h :: Number } -> Effect Unit) -> Effect (Effect Unit)
@@ -1428,7 +1444,7 @@ navArrows props =
           Just id -> scrollSectionIntoView id
           Nothing -> pure unit
       }
-      [ text label ]
+      label
 
 -- Picks the most-visible section from the ratios so far and, when it changes,
 -- posts its declared morph + camera arm to the worker.
