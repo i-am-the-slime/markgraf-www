@@ -2,12 +2,10 @@ module DiagramShapes.Offscreen (diagramShapesOffscreen, WorkerPost) where
 
 import Prelude
 
-import Data.Foldable (for_)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null)
 import Data.Number (sqrt)
-import Data.Options ((:=))
 import Effect (Effect)
 import Effect.Console (log)
 import Effect.Unsafe (unsafePerformEffect)
@@ -21,10 +19,10 @@ import Web.Event.Event (EventType(..))
 import Web.Event.EventTarget (addEventListener, eventListener, removeEventListener)
 import Web.HTML (window)
 import Web.HTML.HTMLCanvasElement (HTMLCanvasElement, toElement, toHTMLElement)
+import Web.HTML.HTMLDocument as HTMLDocument
+import Web.HTML.HTMLDocument.VisibilityState (VisibilityState(..))
 import Web.HTML.HTMLElement (offsetLeft, offsetTop)
 import Web.HTML.Window as Window
-import Web.Intersection.Observer as IO
-import Web.Intersection.Observer.Options as IO
 import Yoga.React.DOM.HTML.Canvas (canvas)
 import Yoga.React.DOM.Internal (css, noJSX)
 import Yoga.WebBoss (onErrorFromWorker, postMessageToWorker, postMessageToWorkerWithTransfer, terminate)
@@ -86,7 +84,7 @@ setupDiagramShapes postRef canvasEl = do
     initWorker worker offscreen
 
     stopResize <- onWindowResize (syncSize worker)
-    stopVisibility <- onVisibilityChange canvasEl \visible ->
+    stopVisibility <- onTabVisibilityChange \visible ->
       post worker "props" { frameloop: if visible then "always" else "never" }
     writeRef postRef (Just (post worker))
 
@@ -195,13 +193,17 @@ onWindowResize action = do
   addEventListener (EventType "resize") listener false target
   pure (removeEventListener (EventType "resize") listener false target)
 
--- Pause R3F's frameloop when the canvas scrolls off-screen — the worker
--- re-`root.configure`s on a `{ type: "props" }` message.
-onVisibilityChange :: HTMLCanvasElement -> (Boolean -> Effect Unit) -> Effect (Effect Unit)
-onVisibilityChange canvasEl onChange = do
-  obs <- IO.newIntersectionObserver onCross (IO.threshold := 0.0)
-  IO.observe obs el
-  pure (IO.unobserve obs el)
+-- Pause R3F's frameloop when the tab is hidden — switching to another tab or
+-- another program. The worker re-`root.configure`s on a `{ type: "props" }`
+-- message. Fires on `visibilitychange`, reading the document's visibility state.
+onTabVisibilityChange :: (Boolean -> Effect Unit) -> Effect (Effect Unit)
+onTabVisibilityChange onChange = do
+  doc <- window >>= Window.document
+  let target = HTMLDocument.toEventTarget doc
+  listener <- eventListener \_ -> onChange =<< visible doc
+  addEventListener (EventType "visibilitychange") listener false target
+  pure (removeEventListener (EventType "visibilitychange") listener false target)
   where
-  el = toElement canvasEl
-  onCross entries _ = for_ entries \e -> onChange e.isIntersecting
+  visible doc = HTMLDocument.visibilityState doc <#> case _ of
+    Visible -> true
+    Hidden -> false

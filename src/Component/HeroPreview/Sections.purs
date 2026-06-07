@@ -8,7 +8,9 @@ module Component.HeroPreview.Sections
   ) where
 
 import Component.HeroPreview.SectionLabel (sectionLabel, spreadFolio)
+import Data.Semigroup ((<>))
 import React.Basic (JSX)
+import Yoga.React.DOM.Attributes.Target (targetBlank)
 import Yoga.React.DOM.HTML.A (a)
 import Yoga.React.DOM.HTML.Button (button)
 import Yoga.React.DOM.HTML.Code (code) as H
@@ -51,14 +53,15 @@ integrationsSection =
             , text " block, every surface you work on — docs, code review, your editor, the command line."
             ]
         , div { className: "grid grid-cols-2 md:grid-cols-3 gap-4" }
-            [ embedCard "GitHub" "Chrome extension renders markgraf blocks inline on github.com."
-            , embedCard "MkDocs" "Python plugin — ```markgraf fences become live players."
-            , embedCard "Starlight" "Astro Starlight docs."
-            , embedCard "Astro" "Astro integration."
-            , embedCard "React" "@markgrafhq/markgraf-react — drop-in component."
-            , embedCard "macOS" "Native Metal player + CLI."
-            , embedCard "Linux" "CLI, statically linked."
-            , embedCard "Windows" "CLI."
+            [ embedCardLink "https://markgrafhq.github.io/markgraf-browser-extension/" "GitHub" "Chrome extension renders markgraf blocks inline on github.com."
+            , embedCardLink "https://markgrafhq.github.io/mkdocs-markgraf/" "MkDocs" "Python plugin — ```markgraf fences become live players."
+            , embedCardLink "https://markgrafhq.github.io/starlight-markgraf/" "Starlight" "Astro Starlight docs."
+            , embedCardLink "https://markgrafhq.github.io/starlight-markgraf/" "Astro" "Astro integration."
+            , embedCardLink "https://markgrafhq.github.io/markgraf-react/" "React" "@markgrafhq/markgraf-react — drop-in component."
+            , embedCardLink "https://github.com/markgrafhq/obsidian-markgraf" "Obsidian" "Plugin — ```markgraf fences render live in your notes."
+            , embedCardLink "https://github.com/markgrafhq/homebrew-tap" "macOS" "Native Metal player + CLI."
+            , embedCardLink "https://github.com/markgrafhq/homebrew-tap" "Linux" "CLI, statically linked."
+            , embedCardLink "https://github.com/markgrafhq/homebrew-tap" "Windows" "CLI."
             , embedCard "mp4" "Render to video — ffmpeg embedded, no deps."
             ]
         ]
@@ -144,8 +147,8 @@ embedSection =
             , text " block plays in your README and in your docs."
             ]
         , div { className: "grid grid-cols-1 md:grid-cols-2 gap-6" }
-            [ embedCard "GitHub integration" "Browser extension that renders markgraf code blocks inline on github.com."
-            , embedCard "Docs plugins" "Docusaurus, Astro Starlight, MkDocs."
+            [ embedCardLink "https://markgrafhq.github.io/markgraf-browser-extension/" "GitHub integration" "Browser extension that renders markgraf code blocks inline on github.com."
+            , embedCardLink "https://markgrafhq.github.io/mkdocs-markgraf/" "Docs plugins" "Docusaurus, Astro Starlight, MkDocs."
             ]
         ]
     , spreadFolio "05" "integrations"
@@ -170,12 +173,32 @@ playSection =
     , spreadFolio "06" "play"
     ]
 
+-- A plain, non-interactive integration card (used when there's no destination,
+-- e.g. mp4 output). `embedCardLink` is the clickable variant.
 embedCard :: String -> String -> JSX
 embedCard heading body =
-  div { className: "bg-[#11162260] backdrop-blur-sm border border-[#2a3142] rounded-lg p-6 hover:border-[#ff3b1a] hover:bg-[#1a1f2e] transition-colors cursor-default" }
-    [ div { className: "font-mono text-xs uppercase tracking-[0.2em] text-[#ff3b1a] mb-3" } heading
-    , p { className: "text-sm text-[#c8cdd9] leading-relaxed" } body
-    ]
+  div { className: cardClass <> " cursor-default" } (cardContent heading body)
+
+-- The same card as a link to its demo / repo, opening in a new tab so the
+-- landing page stays put.
+embedCardLink :: String -> String -> String -> JSX
+embedCardLink href heading body =
+  a
+    { href
+    , target: targetBlank
+    , rel: "noopener noreferrer"
+    , className: "block " <> cardClass <> " cursor-pointer"
+    }
+    (cardContent heading body)
+
+cardClass :: String
+cardClass = "bg-[#11162260] backdrop-blur-sm border border-[#2a3142] rounded-lg p-6 hover:border-[#ff3b1a] hover:bg-[#1a1f2e] transition-colors"
+
+cardContent :: String -> String -> Array JSX
+cardContent heading body =
+  [ div { className: "font-mono text-xs uppercase tracking-[0.2em] text-[#ff3b1a] mb-3" } heading
+  , p { className: "text-sm text-[#c8cdd9] leading-relaxed" } body
+  ]
 
 aiCommand :: String -> JSX
 aiCommand cmd =
@@ -218,6 +241,7 @@ footerSection =
             , footerLink "https://markgrafhq.github.io/docusaurus-plugin-markgraf/" "docusaurus"
             , footerLink "https://markgrafhq.github.io/starlight-markgraf/" "starlight"
             , footerLink "https://markgrafhq.github.io/markgraf-browser-extension/" "browser extension"
+            , footerLink "https://github.com/markgrafhq/obsidian-markgraf" "obsidian"
             ]
         ]
     , spreadFolio "07" "install"
@@ -225,4 +249,4 @@ footerSection =
 
 footerLink :: String -> String -> JSX
 footerLink href label =
-  a { href, className: "hover:text-[#f5f1e8] transition-colors" } label
+  a { href, target: targetBlank, rel: "noopener noreferrer", className: "hover:text-[#f5f1e8] transition-colors" } label
