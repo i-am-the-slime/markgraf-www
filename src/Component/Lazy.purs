@@ -9,6 +9,7 @@ module Component.Lazy
 import Prelude
 
 import CSS.Size (px)
+import Data.Either (Either(..))
 import Data.Foldable (for_)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, un)
@@ -16,11 +17,11 @@ import Data.Nullable (Nullable, null)
 import Data.Options ((:=))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (launchAff)
+import Effect.Aff (Milliseconds(..), delay, killFiber, launchAff, launchAff_)
 import Effect.Class (liftEffect)
+import Effect.Exception (error, try)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
-import Effect.Timer (clearTimeout, setTimeout)
 import Effect.Unsafe (unsafePerformEffect)
 import Promise (Promise)
 import Promise.Aff (toAffE)
@@ -30,7 +31,7 @@ import React.Basic.Hooks as React
 import React.Basic.Hooks.Suspense (Suspended(..), SuspenseResult(..), suspend, suspense)
 import Web.DOM.Element (Element)
 import Web.HTML (window)
-import Web.HTML.Window (Window, cancelIdleCallback, requestIdleCallback)
+import Web.HTML.Window (cancelIdleCallback, requestIdleCallback)
 import Web.Intersection.Observer as IO
 import Web.Intersection.Observer.Options (RootMargin, rm)
 import Web.Intersection.Observer.Options as IOpt
@@ -41,9 +42,10 @@ import Yoga.React.DOM.Internal (css)
 -- | When a lazy island is allowed to begin its dynamic import().
 -- |
 -- | `Eager` fires on first render — right for above-the-fold content whose
--- | chunk you want in flight immediately. `OnIdle` waits for a
--- | `requestIdleCallback` after first paint, so a heavy chunk stops competing
--- | with the hero's critical render. `OnVisible` holds the import until a
+-- | chunk you want in flight immediately. `OnIdle` waits for an idle callback
+-- | after first paint (a short delay on Safari, which lacks one), so a heavy
+-- | chunk stops competing with the hero's critical render. `OnVisible` holds
+-- | the import until a
 -- | sentinel approaches the viewport (the `RootMargin` arms it early), so a
 -- | below-the-fold chunk only loads as the reader scrolls toward it.
 data LazyGate = Eager | OnIdle | OnVisible RootMargin
@@ -109,23 +111,21 @@ idleGated loader fallback { render } = React.do
   pure (if armed then element loader { render } else fallback)
 
 -- Arm on the next idle period, deferring the chunk past the hero's first paint.
--- WebKit only shipped requestIdleCallback in Safari 17.4, and calling an absent
--- one throws — which here would blank the whole tree — so older engines fall
--- back to a short timeout. Either branch returns its own canceller.
+-- WebKit never shipped requestIdleCallback, and calling an absent one throws —
+-- which here would blank the whole tree — so we `try` it and let Safari fall
+-- back to a short Aff delay. Either branch returns its own canceller.
 armWhenIdle :: Effect Unit -> Effect (Effect Unit)
 armWhenIdle arm = do
   win <- window
-  supported <- hasRequestIdleCallback win
-  if supported then idleArm win else timeoutArm
+  try (requestIdleCallback { timeout: 2000 } arm win) >>= case _ of
+    Right id -> pure (cancelIdleCallback id win)
+    Left _ -> delayArm
   where
-  idleArm win = do
-    id <- requestIdleCallback { timeout: 2000 } arm win
-    pure (cancelIdleCallback id win)
-  timeoutArm = do
-    id <- setTimeout 200 arm
-    pure (clearTimeout id)
-
-foreign import hasRequestIdleCallback :: Window -> Effect Boolean
+  delayArm = do
+    fiber <- launchAff do
+      delay (Milliseconds 200.0)
+      arm # liftEffect
+    pure (launchAff_ (killFiber (error "arm cancelled") fiber))
 
 -- A loader held back until a zero-height sentinel crosses into the viewport's
 -- expanded margin. The sentinel sits in the scroll flow where the content will
