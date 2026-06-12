@@ -18,7 +18,7 @@ type NodeJson = { x :: Number, y :: Number, w :: Number, h :: Number, label :: S
 type EdgeJson = { points :: Array { x :: Number, y :: Number } }
 type TokenJson =
   { points :: Array { x :: Number, y :: Number }
-  , label :: String
+  , labels :: Array String
   , startT :: Number
   , endT :: Number
   , holdPre :: Number

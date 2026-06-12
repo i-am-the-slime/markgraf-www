@@ -3419,26 +3419,6 @@ var alter = function(dictOrd) {
   };
 };
 
-// ../markgraf/output/Data.String.Common/foreign.js
-var split = function(sep) {
-  return function(s) {
-    return s.split(sep);
-  };
-};
-var trim = function(s) {
-  return s.trim();
-};
-var joinWith = function(s) {
-  return function(xs) {
-    return xs.join(s);
-  };
-};
-
-// ../markgraf/output/Data.String.Common/index.js
-var $$null2 = function(s) {
-  return s === "";
-};
-
 // ../markgraf/output/Data.Int/foreign.js
 var fromNumberImpl = function(just) {
   return function(nothing) {
@@ -3734,6 +3714,26 @@ var stripPrefix = function(v) {
     ;
     return Nothing.value;
   };
+};
+
+// ../markgraf/output/Data.String.Common/foreign.js
+var split = function(sep) {
+  return function(s) {
+    return s.split(sep);
+  };
+};
+var trim = function(s) {
+  return s.trim();
+};
+var joinWith = function(s) {
+  return function(xs) {
+    return xs.join(s);
+  };
+};
+
+// ../markgraf/output/Data.String.Common/index.js
+var $$null2 = function(s) {
+  return s === "";
 };
 
 // ../markgraf/output/Control.Monad.Error.Class/index.js
@@ -24754,7 +24754,7 @@ var shapeId = function(v) {
     return 6;
   }
   ;
-  throw new Error("Failed pattern match at Markgraf.Animation.Layout.Export (line 132, column 11 - line 139, column 13): " + [v.constructor.name]);
+  throw new Error("Failed pattern match at Markgraf.Animation.Layout.Export (line 131, column 11 - line 138, column 13): " + [v.constructor.name]);
 };
 var toNode = function(np) {
   return {
@@ -24798,11 +24798,11 @@ var scheduleJson = function(src) {
               return reverse(path);
             }
             ;
-            throw new Error("Failed pattern match at Markgraf.Animation.Layout.Export (line 93, column 20 - line 95, column 35): " + [w.target.value2.constructor.name]);
+            throw new Error("Failed pattern match at Markgraf.Animation.Layout.Export (line 92, column 20 - line 94, column 35): " + [w.target.value2.constructor.name]);
           })();
           return pure8({
             points: append114(pre)(append114(oriented)(post)),
-            label: joinWith(" ")(map30(un12(Label))(w.target.value5)),
+            labels: map30(un12(Label))(w.target.value5),
             startT: w.startT,
             endT: w.endT,
             holdPre: w.target.value6,
@@ -24844,7 +24844,7 @@ var scheduleJson = function(src) {
     return build3.value0;
   }
   ;
-  throw new Error("Failed pattern match at Markgraf.Animation.Layout.Export (line 72, column 20 - line 74, column 15): " + [build3.constructor.name]);
+  throw new Error("Failed pattern match at Markgraf.Animation.Layout.Export (line 71, column 20 - line 73, column 15): " + [build3.constructor.name]);
 };
 var layoutJson = function(src) {
   var build3 = bind19(runSurfaceParser(src))(function(surface) {
@@ -24870,7 +24870,7 @@ var layoutJson = function(src) {
     };
   }
   ;
-  throw new Error("Failed pattern match at Markgraf.Animation.Layout.Export (line 52, column 18 - line 59, column 6): " + [build3.constructor.name]);
+  throw new Error("Failed pattern match at Markgraf.Animation.Layout.Export (line 51, column 18 - line 58, column 6): " + [build3.constructor.name]);
 };
 export {
   layoutJson,

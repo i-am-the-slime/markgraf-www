@@ -15,6 +15,7 @@ module Graphics.WebGL
   , uniform1fv
   , createTexture
   , uploadCanvas
+  , uploadCanvasUnit
   , resize
   , clear
   , drawQuad
@@ -97,9 +98,12 @@ createTexture = runEffectFn1 createTextureImpl
 foreign import createTextureImpl :: EffectFn1 GL Texture
 
 uploadCanvas :: GL -> Texture -> CanvasElement -> Effect Unit
-uploadCanvas = runEffectFn3 uploadCanvasImpl
+uploadCanvas gl texture canvas = runEffectFn4 uploadCanvasImpl gl texture canvas 0
 
-foreign import uploadCanvasImpl :: EffectFn3 GL Texture CanvasElement Unit
+uploadCanvasUnit :: GL -> Texture -> CanvasElement -> Int -> Effect Unit
+uploadCanvasUnit = runEffectFn4 uploadCanvasImpl
+
+foreign import uploadCanvasImpl :: EffectFn4 GL Texture CanvasElement Int Unit
 
 resize :: GL -> CanvasElement -> Int -> Int -> Effect Unit
 resize = runEffectFn4 resizeImpl

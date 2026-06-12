@@ -2,30 +2,32 @@ module Component.SdfDiagram (sdfDiagram) where
 
 import Prelude
 
-import Data.Array (concat, concatMap, drop, filter, foldl, last, length, snoc, take, uncons, unsnoc, zipWith)
+import Data.Array (catMaybes, concat, concatMap, drop, filter, foldl, last, length, range, snoc, take, uncons, unsnoc, zipWith, (!!))
 import Data.Array (null) as Array
-import Data.Foldable (traverse_)
+import Data.Char (fromCharCode, toCharCode)
+import Data.Foldable (sum, traverse_)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Newtype (class Newtype, un)
 import Data.Int (round, toNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (Nullable, null, toMaybe)
-import Data.Number (floor, sin, sqrt)
+import Data.Number (cos, floor, sin, sqrt)
+import Data.String.CodeUnits as SCU
+import Data.Traversable (for)
 import Data.Tuple.Nested (type (/\), (/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Graphics.Canvas (CanvasElement, TextAlign(..), TextBaseline(..), clearRect, fillText, getContext2D, setCanvasHeight, setCanvasWidth, setFillStyle, setFont, setTextAlign, setTextBaseline)
+import Effect.Unsafe (unsafePerformEffect)
+import Graphics.Canvas (CanvasElement, TextAlign(..), TextBaseline(..), clearRect, fillText, getContext2D, measureText, setCanvasHeight, setCanvasWidth, setFillStyle, setFont, setTextAlign, setTextBaseline)
 import Graphics.Canvas.Extra (LetterSpacing(..), createCanvasElement, kerningNormal, setFontKerning, setLetterSpacing)
 import Graphics.WebGL as GL
 import Markgraf.LayoutData (NodeJson, ScheduleJson, scheduleJson)
 import Page.Active (onActiveChange)
-import Web.Font.Loading (FontShorthand(..), loadFont)
 import React.Basic (JSX, ReactComponent, element)
-import React.Basic.Hooks (readRefMaybe, reactComponent, useRef, writeRef, readRef)
+import React.Basic.Hooks (Ref, reactComponent, readRef, readRefMaybe, useRef, writeRef)
 import React.Basic.Hooks as Hooks
-import Effect.Unsafe (unsafePerformEffect)
+import Web.Font.Loading (FontShorthand(..), loadFont)
 import Web.HTML (window)
 import Web.HTML.Window (RequestAnimationFrameId, cancelAnimationFrame, requestAnimationFrame)
 import Yoga.React.DOM.Attributes (reactRef)
@@ -35,13 +37,16 @@ import Yoga.React.DOM.Internal (css, noJSX)
 
 -- A markgraf diagram drawn as one fullscreen-quad SDF raymarcher: every node is
 -- an extruded SDF solid in its own markgraf shape, every edge an SDF capsule
--- capped with an SDF arrowhead. The whole scene is one fragment shader, tilted a
--- little so the slabs read as 3D — the same machinery as the install button,
--- generalised from one morphing shape to a laid-out graph.
+-- capped with an SDF arrowhead, every data-flow token a ball that genie-merges
+-- into the blocks it travels through. The whole scene is one fragment shader,
+-- tilted a little so the slabs read as 3D — the same machinery as the install
+-- button, generalised from one morphing shape to a laid-out, animated graph.
 --
--- The geometry is real: a markgraf source string is parsed and laid out by
--- markgraf itself (pure, synchronous — no DOM, no ELK), and everything below is
--- derived from that layout at module init.
+-- Token labels ride along as markgraf's own renderers draw them: a floating chip
+-- beside the travelling dot whose letters type in one at a time. Crucially the
+-- chip and its glyphs are drawn IN the raymarch shader too (a screen-space pill
+-- SDF + glyph-atlas samples), not in a second raster pass — so the whole renderer
+-- stays one shader and could move wholesale into an OffscreenCanvas worker.
 sdfDiagram :: JSX
 sdfDiagram = element diagramComponent {}
 
@@ -83,12 +88,8 @@ nodeList = scene.nodes
 
 type Point = { x :: Number, y :: Number }
 
--- A row in the label atlas. Node labels occupy the first rows, one token-flow
--- label each row after; a newtype so the shader's row index can't be mistaken
--- for any of the other bare floats it's fed.
-newtype AtlasRow = AtlasRow Number
-
-derive instance Newtype AtlasRow _
+clamp01 :: Number -> Number
+clamp01 x = max 0.0 (min 1.0 x)
 
 -- A node's half-height in world units, the characteristic scale the shader sizes
 -- depth, edges and arrowheads from, so proportions hold at any layout scale.
@@ -189,25 +190,28 @@ withTail pts f = do
 
 -- ---------------------------------------------------------------------------
 -- The data-flow tokens, straight off markgraf's schedule. Each is an edge
--- polyline (oriented in travel order) with absolute start/end times and the
--- source/target dwell fractions markgraf computed; par/seq timing is already in
--- those times, so concurrent flows simply overlap on the timeline.
+-- polyline (oriented in travel order) with absolute start/end times, the
+-- source/target dwell fractions, and the labels the chip cycles through.
 -- ---------------------------------------------------------------------------
 
 type Flow =
-  { path :: Array Point, labelRow :: AtlasRow, startT :: Number, endT :: Number, holdPre :: Number, holdPost :: Number }
+  { path :: Array Point
+  , labels :: Array String
+  , startT :: Number
+  , endT :: Number
+  , holdPre :: Number
+  , holdPost :: Number
+  }
 
 duration :: Number
 duration = scene.duration
 
--- Each flow keeps the atlas row its label was baked into: the token rows follow
--- the node rows, so flow i lives at row (nodeCount + i).
 tokenFlows :: Array Flow
-tokenFlows = mapWithIndex toFlow scene.tokens
+tokenFlows = toFlow <$> scene.tokens
   where
-  toFlow i tk =
+  toFlow tk =
     { path: toWorldPt <$> tk.points
-    , labelRow: AtlasRow (toNumber (length nodeList + i))
+    , labels: tk.labels
     , startT: tk.startT
     , endT: tk.endT
     , holdPre: tk.holdPre
@@ -222,25 +226,28 @@ ballRadius :: Number
 ballRadius = unitHalfH * 0.46
 
 -- A token's 0..1 travel progress within its window, honouring the dwell at the
--- source (holdPre) and the target (holdPost).
+-- source (holdPre) and the target (holdPost). Doubles as the carousel's
+-- motion-time, exactly as markgraf's tokenProgress drives both dot and label.
 flowProgress :: Flow -> Number -> Number
 flowProgress f u = if span <= 0.0 then (if u < 0.5 then 0.0 else 1.0) else clamp01 ((u - f.holdPre) / span)
   where
   span = 1.0 - f.holdPre - f.holdPost
-  clamp01 x = max 0.0 (min 1.0 x)
 
 -- The active flows at loop time t, each sampled to a world position, the overlap
--- glow of the block it's inside, and that block's centre (so the shader lights
--- only that one block, not every block). Capped to the shader's array size.
-type Sample = { x :: Number, y :: Number, glow :: Number, nx :: Number, ny :: Number, label :: AtlasRow }
+-- glow of the block it's inside, that block's centre (so the shader lights only
+-- that one block), and the carousel inputs the chip needs. Capped to the shader's
+-- array size.
+type Sample =
+  { x :: Number, y :: Number, glow :: Number, nx :: Number, ny :: Number, labels :: Array String, motionT :: Number }
 
 sampleFlows :: Number -> Array Sample
 sampleFlows t = sampleOne <$> take maxTokens (filter active tokenFlows)
   where
   active f = t >= f.startT && t < f.endT
-  sampleOne f = { x: p.x, y: p.y, glow: nn.glow, nx: nn.x, ny: nn.y, label: f.labelRow }
+  sampleOne f = { x: p.x, y: p.y, glow: nn.glow, nx: nn.x, ny: nn.y, labels: f.labels, motionT }
     where
-    p = pointAtPath f.path (flowProgress f ((t - f.startT) / (f.endT - f.startT)))
+    motionT = flowProgress f ((t - f.startT) / (f.endT - f.startT))
+    p = pointAtPath f.path motionT
     nn = nearestNodeGlow p
 
 -- The block a ball is most inside, with its overlap (1 at the centre, 0 a reach
@@ -257,7 +264,6 @@ pointAtPath path t = walk (clamp01 t * total) segs
   where
   segs = zipWith (/\) path (drop 1 path)
   total = foldl (\acc (a /\ b) -> acc + len a b) 0.0 segs
-  clamp01 x = max 0.0 (min 1.0 x)
   walk d arr = case uncons arr of
     Nothing -> fromMaybe { x: 0.0, y: 0.0 } (last path)
     Just { head: a /\ b, tail } ->
@@ -271,9 +277,9 @@ loopTime :: Number -> Number
 loopTime now = if duration > 0.0 then now - duration * floor (now / duration) else 0.0
 
 -- ---------------------------------------------------------------------------
--- The label atlas: every node's label baked into one offscreen canvas, one per
--- row, top to bottom in node order. Uploaded as a single texture the shader
--- samples per node — no DOM text, so this works just as well inside a worker.
+-- The node-label atlas: every node's label baked into one offscreen canvas, one
+-- per row, sampled per node onto its front face. No DOM text, so this works just
+-- as well inside a worker.
 -- ---------------------------------------------------------------------------
 
 atlasW :: Number
@@ -282,14 +288,8 @@ atlasW = 512.0
 atlasRow :: Number
 atlasRow = 160.0
 
--- Every label the shader can stamp, in row order: each node's label first, then
--- one per token flow. `tokenFlows` numbers its rows from `length nodeList`, so
--- this is the matching layout.
-atlasLabels :: Array String
-atlasLabels = (_.label <$> nodeList) <> (_.label <$> scene.tokens)
-
 atlasH :: Number
-atlasH = toNumber (length atlasLabels) * atlasRow
+atlasH = toNumber (length nodeList) * atlasRow
 
 labelFont :: String
 labelFont = "600 80px \"Ilisarniq\", \"Ilisarniq Fallback\", ui-sans-serif, system-ui, sans-serif"
@@ -312,24 +312,260 @@ drawAtlas el = do
   setTextBaseline ctx BaselineMiddle
   setFontKerning ctx kerningNormal
   setLetterSpacing ctx (LetterSpacing "1px")
-  forWithIndex_ atlasLabels \i label ->
-    fillText ctx label (atlasW / 2.0) (toNumber i * atlasRow + atlasRow / 2.0)
+  forWithIndex_ nodeList \i n ->
+    fillText ctx n.label (atlasW / 2.0) (toNumber i * atlasRow + atlasRow / 2.0)
 
--- Bake the atlas with whatever face is ready now, then re-bake and re-upload
--- once the brand font has loaded so the first paint's fallback is replaced.
+-- Bake the node atlas with whatever face is ready now, then re-bake and
+-- re-upload once the brand font has loaded so the first paint's fallback is
+-- replaced. Bound to texture unit 0 (uLabel).
 ensureAtlas :: GL.GL -> GL.Texture -> Effect Unit
 ensureAtlas gl texture = do
   atlas <- makeAtlas
-  GL.uploadCanvas gl texture atlas
+  GL.uploadCanvasUnit gl texture atlas 0
   launchAff_ do
     loadFont (FontShorthand labelFont)
     liftEffect do
       drawAtlas atlas
-      GL.uploadCanvas gl texture atlas
+      GL.uploadCanvasUnit gl texture atlas 0
+
+-- ---------------------------------------------------------------------------
+-- The glyph atlas: every printable ASCII glyph baked into its own cell of a
+-- grid (one per character, centred), plus the advance width of each so chip text
+-- can be laid out glyph-by-glyph for the typewriter. Bound to texture unit 1.
+-- ---------------------------------------------------------------------------
+
+glyphCols :: Int
+glyphCols = 16
+
+glyphLo :: Int
+glyphLo = 32
+
+glyphHi :: Int
+glyphHi = 126
+
+glyphChars :: Array Char
+glyphChars = catMaybes (fromCharCode <$> range glyphLo glyphHi)
+
+glyphRows :: Int
+glyphRows = (length glyphChars + glyphCols - 1) / glyphCols
+
+glyphBakeFont :: Number
+glyphBakeFont = 64.0
+
+glyphCellW :: Number
+glyphCellW = 76.0
+
+glyphCellH :: Number
+glyphCellH = 100.0
+
+glyphAtlasW :: Number
+glyphAtlasW = toNumber glyphCols * glyphCellW
+
+glyphAtlasH :: Number
+glyphAtlasH = toNumber glyphRows * glyphCellH
+
+glyphFont :: String
+glyphFont = "600 64px \"Ilisarniq\", \"Ilisarniq Fallback\", ui-sans-serif, system-ui, sans-serif"
+
+-- Draw every glyph into its cell and measure its advance (normalised to ems, so
+-- the layout is independent of the bake size). Returns the canvas to upload and
+-- the advances, indexed by character code minus glyphLo.
+makeGlyphAtlas :: Effect { canvas :: CanvasElement, advances :: Array Number }
+makeGlyphAtlas = do
+  el <- createCanvasElement
+  setCanvasWidth el glyphAtlasW
+  setCanvasHeight el glyphAtlasH
+  ctx <- getContext2D el
+  clearRect ctx { x: 0.0, y: 0.0, width: glyphAtlasW, height: glyphAtlasH }
+  setFillStyle ctx "#fff"
+  setFont ctx glyphFont
+  setTextAlign ctx AlignCenter
+  setTextBaseline ctx BaselineMiddle
+  setFontKerning ctx kerningNormal
+  advances <- for (mapWithIndex (/\) glyphChars) \(i /\ ch) -> do
+    let
+      s = SCU.singleton ch
+      col = toNumber (i `mod` glyphCols)
+      row = toNumber (i / glyphCols)
+    fillText ctx s (col * glyphCellW + glyphCellW / 2.0) (row * glyphCellH + glyphCellH / 2.0)
+    m <- measureText ctx s
+    pure (m.width / glyphBakeFont)
+  pure { canvas: el, advances }
+
+ensureGlyphAtlas :: GL.GL -> GL.Texture -> Ref (Array Number) -> Effect Unit
+ensureGlyphAtlas gl texture advRef = do
+  g <- makeGlyphAtlas
+  GL.uploadCanvasUnit gl texture g.canvas 1
+  writeRef advRef g.advances
+  launchAff_ do
+    loadFont (FontShorthand glyphFont)
+    liftEffect do
+      g' <- makeGlyphAtlas
+      GL.uploadCanvasUnit gl texture g'.canvas 1
+      writeRef advRef g'.advances
+
+-- The advance of a glyph in ems, falling back to a half-em for anything outside
+-- the baked range; and its cell index in the atlas.
+advanceEm :: Array Number -> Char -> Number
+advanceEm advances ch = fromMaybe 0.5 (advances !! (toCharCode ch - glyphLo))
+
+glyphCell :: Char -> Number
+glyphCell ch = toNumber (clamp 0 (length glyphChars - 1) (toCharCode ch - glyphLo))
+
+-- ---------------------------------------------------------------------------
+-- The travelling chip, ported from markgraf's drawTokenLabel/drawTypewriter:
+-- a floating pill beside the dot whose label types in one glyph at a time, and
+-- a carousel that gives each of a token's labels a slice of motion-time
+-- proportional to its length. All laid out in screen pixels here; the shader
+-- only composites the pill SDF and samples the glyph atlas per instance.
+-- ---------------------------------------------------------------------------
+
+-- One laid-out glyph: its centre and half-extents in screen px, the atlas cell
+-- to sample, and its current reveal alpha.
+type GlyphInst = { cx :: Number, cy :: Number, hw :: Number, hh :: Number, cell :: Number, alpha :: Number }
+
+-- One chip: the pill rect (centre + half-extents) and the dot it points at, all
+-- in screen px.
+type Chip = { cx :: Number, cy :: Number, hw :: Number, hh :: Number, dotX :: Number, dotY :: Number }
+
+-- The active label and its in-slice phase (0..1), motion-time sliced by
+-- character count so longer words stay on screen longer (markgraf pickActiveLabel).
+pickActiveLabel :: Number -> Array String -> { line :: String, phase :: Number }
+pickActiveLabel motionT labels = { line, phase }
+  where
+  ls = if Array.null labels then [ "" ] else labels
+  weights = (\s -> toNumber (max 1 (SCU.length s))) <$> ls
+  total = max 1.0 (sum weights)
+  target = motionT * total
+  walk i acc ws = case uncons ws of
+    Nothing -> length ls - 1
+    Just { head: w, tail } -> if acc + w >= target then i else walk (i + 1) (acc + w) tail
+  idx = walk 0 0.0 weights
+  line = fromMaybe "" (ls !! idx)
+  startWeight = sum (take idx weights)
+  weight = fromMaybe 1.0 (weights !! idx)
+  sliceStart = startWeight / total
+  sliceEnd = (startWeight + weight) / total
+  phase = if sliceEnd <= sliceStart then 1.0 else clamp01 ((motionT - sliceStart) / (sliceEnd - sliceStart))
+
+-- The smoothstep-eased reveal of glyph i at typewriter phase, staggered so each
+-- character eases in just after the one before (markgraf drawTypewriter).
+glyphEase :: Number -> Int -> Int -> Number
+glyphEase phase count i = charT * charT * (3.0 - 2.0 * charT)
+  where
+  charT = clamp01 ((phase * toNumber (count + 1) - toNumber i) / charOverlap)
+  charOverlap = 1.5
+
+-- Lay a token's chip out beside its projected dot: pick the active label, place
+-- the pill, and type the glyphs in. `fontPx` is the chip text height in px,
+-- `dotR` the dot's screen radius.
+layoutChip
+  :: Array Number
+  -> Number
+  -> { x :: Number, y :: Number, r :: Number }
+  -> Number
+  -> Array String
+  -> { chip :: Chip, glyphs :: Array GlyphInst }
+layoutChip advances fontPx dot motionT labels = { chip, glyphs }
+  where
+  active = pickActiveLabel motionT labels
+  chars = SCU.toCharArray active.line
+  count = length chars
+  advPx ch = fontPx * advanceEm advances ch
+  labelW = sum (advPx <$> chars)
+  padX = fontPx * 0.95
+  padY = fontPx * 0.42
+  gap = fontPx * 0.5
+  centerX = dot.x + dot.r + gap + labelW / 2.0
+  textLeft = centerX - labelW / 2.0
+  chip = { cx: centerX, cy: dot.y, hw: labelW / 2.0 + padX, hh: fontPx * 0.62 + padY, dotX: dot.x, dotY: dot.y }
+  gh = fontPx * (glyphCellH / glyphBakeFont)
+  gw = gh * (glyphCellW / glyphCellH)
+  glyphs = snd (foldl place (textLeft /\ []) (mapWithIndex (/\) chars))
+  place (cursor /\ acc) (i /\ ch) = (cursor + adv) /\ (if eased > 0.0 then snoc acc inst else acc)
+    where
+    adv = advPx ch
+    eased = glyphEase active.phase count i
+    -- letters fall down into place: start a little above the baseline, ease to it
+    inst = { cx: cursor + adv / 2.0, cy: dot.y + (1.0 - eased) * fontPx * 0.85, hw: gw / 2.0, hh: gh / 2.0, cell: glyphCell ch, alpha: eased }
+  snd (_ /\ b) = b
+
+-- How many glyph instances the shader's uniform arrays hold across all chips.
+maxGlyphs :: Int
+maxGlyphs = 40
+
+-- ---------------------------------------------------------------------------
+-- Chip collision resolution (markgraf resolveChain/slideRect):
+-- each chip slides diagonally up-right (in gl_FragCoord y-up space) to clear
+-- accumulated obstacles — nodes projected to screen, then previously-resolved
+-- chips added one by one so siblings don't all land on the same slide.
+-- ---------------------------------------------------------------------------
+
+type ChipObstacle = { cx :: Number, cy :: Number, hw :: Number, hh :: Number }
+
+invSqrt2 :: Number
+invSqrt2 = 0.7071067811865476
+
+-- Project a world-space node to an approximate screen-space obstacle rect.
+nodeScreenRect :: Number -> Number -> Number -> WorldNode -> ChipObstacle
+nodeScreenRect tilt resW resH n = { cx: sx, cy: sy, hw: shw, hh: shh }
+  where
+  denom = n.y * sin tilt + 12.0
+  sx = n.x / denom * resH + 0.5 * resW
+  sy = n.y * cos tilt / denom * resH + 0.5 * resH
+  shw = n.hw / denom * resH
+  shh = n.hh * cos tilt / denom * resH
+
+resolveCollisions
+  :: Array ChipObstacle
+  -> Array { chip :: Chip, glyphs :: Array GlyphInst }
+  -> Array { chip :: Chip, glyphs :: Array GlyphInst }
+resolveCollisions nodeObs layouts =
+  (foldl step { resolved: [], obstacles: nodeObs } layouts).resolved
+  where
+  step st item =
+    let
+      chip' = slideChip item.chip st.obstacles
+      dx = chip'.cx - item.chip.cx
+      dy = chip'.cy - item.chip.cy
+      glyphs' = (\g -> g { cx = g.cx + dx, cy = g.cy + dy }) <$> item.glyphs
+      obs = { cx: chip'.cx, cy: chip'.cy, hw: chip'.hw, hh: chip'.hh }
+    in
+      { resolved: snoc st.resolved { chip: chip', glyphs: glyphs' }
+      , obstacles: snoc st.obstacles obs
+      }
+
+slideChip :: Chip -> Array ChipObstacle -> Chip
+slideChip chip obstacles = chip { cx = chip.cx + s * invSqrt2, cy = chip.cy + s * invSqrt2 }
+  where
+  s = foldl max 0.0 (slideOne <$> obstacles)
+  slideOne o = if overlaps o then min (sRight o) (sUp o) else 0.0
+  pad = 12.0
+  margin = 10.0
+  overlaps o =
+    chip.cx - chip.hw - margin < o.cx + o.hw + pad
+      && chip.cx + chip.hw + margin > o.cx - o.hw - pad
+      && chip.cy - chip.hh - margin < o.cy + o.hh + pad
+      && chip.cy + chip.hh + margin > o.cy - o.hh - pad
+  sRight o = ((o.cx + o.hw + pad) - (chip.cx - chip.hw - margin)) / invSqrt2
+  sUp o = ((o.cy + o.hh + pad) - (chip.cy - chip.hh - margin)) / invSqrt2
+
+-- Project a world point to dpr-scaled screen px (y up, matching gl_FragCoord) by
+-- inverting the raymarch camera: tilt the point by -uTilt about x, then the
+-- pinhole at z = 12 looking down -z. `r` is the dot's apparent screen radius.
+project :: Number -> Number -> Number -> Point -> { x :: Number, y :: Number, r :: Number }
+project tilt resW resH g =
+  { x: g.x / denom * resH + 0.5 * resW
+  , y: g.y * cos tilt / denom * resH + 0.5 * resH
+  , r: ballRadius / denom * resH
+  }
+  where
+  denom = g.y * sin tilt + 12.0
 
 -- ---------------------------------------------------------------------------
 -- The component: bind a GL context to the canvas, push the static scene as
--- uniforms once, then drive uTime/uTilt on a paused-aware rAF loop.
+-- uniforms once, then drive uTime/uTilt and the per-frame token + chip uniforms
+-- on a paused-aware rAF loop.
 -- ---------------------------------------------------------------------------
 
 diagramComponent :: ReactComponent {}
@@ -339,6 +575,7 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
   lastWallRef <- useRef 0.0
   accRef <- useRef 0.0
   rafRef <- useRef (Nothing :: Maybe RequestAnimationFrameId)
+  advRef <- useRef ([] :: Array Number)
 
   Hooks.useEffectOnce $ readRefMaybe canvasRef >>= case _ of
     Nothing -> pure (pure unit)
@@ -364,14 +601,22 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
         uTokPos <- GL.uniformLocation gl program "uTokPos"
         uTokGlow <- GL.uniformLocation gl program "uTokGlow"
         uTokNode <- GL.uniformLocation gl program "uTokNode"
-        uTokLabel <- GL.uniformLocation gl program "uTokLabel"
-        uRowCount <- GL.uniformLocation gl program "uRowCount"
+        uGlyphAtlas <- GL.uniformLocation gl program "uGlyphAtlas"
+        uChipCount <- GL.uniformLocation gl program "uChipCount"
+        uChipRect <- GL.uniformLocation gl program "uChipRect"
+        uChipDot <- GL.uniformLocation gl program "uChipDot"
+        uGlyphCount <- GL.uniformLocation gl program "uGlyphCount"
+        uGlyphRect <- GL.uniformLocation gl program "uGlyphRect"
+        uGlyphCell <- GL.uniformLocation gl program "uGlyphCell"
+        uGlyphAlpha <- GL.uniformLocation gl program "uGlyphAlpha"
         GL.uniform1i gl uLabel 0
+        GL.uniform1i gl uGlyphAtlas 1
         GL.uniform1f gl uLabelAspect (atlasW / atlasRow)
-        GL.uniform1f gl uRowCount (toNumber (length atlasLabels))
         GL.uniform1f gl uUnit unitHalfH
-        texture <- GL.createTexture gl
-        ensureAtlas gl texture
+        labelTexture <- GL.createTexture gl
+        glyphTexture <- GL.createTexture gl
+        ensureAtlas gl labelTexture
+        ensureGlyphAtlas gl glyphTexture advRef
 
         GL.uniform1i gl uNodeCount (length nodeList)
         GL.uniform1i gl uEdgeCount (length edgeSegFlat / 4)
@@ -406,18 +651,33 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
             writeRef timeRef now'
             size <- GL.clientSize canvasEl
             dpr <- clampDpr <$> GL.devicePixelRatio
+            advances <- readRef advRef
             when (size.width > 0.0) do
-              GL.resize gl canvasEl (round (size.width * dpr)) (round (size.height * dpr))
+              let
+                resW = size.width * dpr
+                resH = size.height * dpr
+                tilt = idleTilt + sin (now' * 0.4) * 0.13
+                samples = sampleFlows (loopTime now')
+                fontPx = clamp 14.0 40.0 (resH * 0.02)
+                rawLayouts = (\s -> layoutChip advances fontPx (project tilt resW resH { x: s.x, y: s.y }) s.motionT s.labels) <$> samples
+                chips = resolveCollisions (nodeScreenRect tilt resW resH <$> worldNodes) rawLayouts
+                glyphs = take maxGlyphs (concatMap _.glyphs chips)
+              GL.resize gl canvasEl (round resW) (round resH)
               GL.clear gl
-              GL.uniform2f gl uRes (size.width * dpr) (size.height * dpr)
+              GL.uniform2f gl uRes resW resH
               GL.uniform1f gl uTime now'
-              GL.uniform1f gl uTilt (idleTilt + sin (now' * 0.4) * 0.13)
-              let samples = sampleFlows (loopTime now')
+              GL.uniform1f gl uTilt tilt
               GL.uniform1i gl uTokCount (length samples)
               GL.uniform2fv gl uTokPos (concatMap (\s -> [ s.x, s.y ]) samples)
               GL.uniform1fv gl uTokGlow (_.glow <$> samples)
               GL.uniform2fv gl uTokNode (concatMap (\s -> [ s.nx, s.ny ]) samples)
-              GL.uniform1fv gl uTokLabel (un AtlasRow <<< _.label <$> samples)
+              GL.uniform1i gl uChipCount (length chips)
+              GL.uniform4fv gl uChipRect (concatMap (\c -> [ c.chip.cx, c.chip.cy, c.chip.hw, c.chip.hh ]) chips)
+              GL.uniform2fv gl uChipDot (concatMap (\c -> [ c.chip.dotX, c.chip.dotY ]) chips)
+              GL.uniform1i gl uGlyphCount (length glyphs)
+              GL.uniform4fv gl uGlyphRect (concatMap (\g -> [ g.cx, g.cy, g.hw, g.hh ]) glyphs)
+              GL.uniform1fv gl uGlyphCell (_.cell <$> glyphs)
+              GL.uniform1fv gl uGlyphAlpha (_.alpha <$> glyphs)
               GL.drawQuad gl
 
           start = do
@@ -460,9 +720,11 @@ idleTilt = 0.34
 
 -- ---------------------------------------------------------------------------
 -- Shaders. The vertex stage is the bare quad; the fragment stage raymarches the
--- whole graph. All scene data arrives as uniform arrays, indexed only inside
--- bounded loops (WebGL1 forbids dynamic uniform-array indexing elsewhere — the
--- nearest node's shape is therefore carried out of the loop, not looked up).
+-- whole graph, then composites the screen-space chip overlay on top. All scene
+-- data arrives as uniform arrays, indexed only inside bounded loops (WebGL1
+-- forbids dynamic uniform-array indexing elsewhere — the nearest node's shape is
+-- carried out of the loop, not looked up; chip glyphs are absolute-positioned so
+-- the loop counter is the only index).
 -- ---------------------------------------------------------------------------
 
 vert :: String
@@ -482,7 +744,7 @@ frag =
   uniform float uNodeShape[24]; // markgraf Shape id
   uniform vec4 uEdge[48];       // (x1, y1, x2, y2) orthogonal route segments
   uniform vec4 uArrow[32];      // (tipX, tipY, dirX, dirY) one per edge
-  uniform sampler2D uLabel;     // baked label atlas, one node-label per row
+  uniform sampler2D uLabel;     // baked node-label atlas, one node-label per row
   uniform float uLabelAspect;   // atlas cell width/height, to keep glyphs square
   uniform float uUnit;          // a node's half-height in world units — the
                                 // characteristic scale everything else is sized by
@@ -490,26 +752,37 @@ frag =
   uniform vec2 uTokPos[8];      // their centres, in world space
   uniform float uTokGlow[8];    // each ball's 0..1 overlap with the block it's in
   uniform vec2 uTokNode[8];     // the centre of that block, to light only it
-  uniform float uTokLabel[8];   // each ball's atlas row, the word it carries
-  uniform float uRowCount;      // total atlas rows: node labels then token labels
+
+  uniform sampler2D uGlyphAtlas; // per-glyph atlas (one ASCII char per cell)
+  uniform int uChipCount;        // floating label chips this frame
+  uniform vec4 uChipRect[8];     // (cx, cy, hw, hh) in screen px
+  uniform vec2 uChipDot[8];      // the dot each chip points at, screen px
+  uniform int uGlyphCount;       // laid-out chip glyphs across all chips
+  uniform vec4 uGlyphRect[40];   // (cx, cy, hw, hh) in screen px
+  uniform float uGlyphCell[40];  // atlas cell index of each glyph
+  uniform float uGlyphAlpha[40]; // typewriter reveal alpha of each glyph
 
   const int MAXN = 24;
   const int MAXE = 48;
   const int MAXA = 32;
   const int MAXTOK = 8;
+  const int MAXG = 40;
+  const float GCOLS = 16.0;
+  const float GROWS = 6.0;
   // Sized from uUnit in main() so proportions hold for any diagram, whatever
   // scale the layout came back at.
   float DEPTH, EDGE_R, EDGE_HZ, ARROW_LEN, ARROW_HW;
 
   mat2 rot(float a){ float c=cos(a), s=sin(a); return mat2(c,-s,s,c); }
   // The texture v that samples atlas `row` (0-based, top to bottom) at within-cell
-  // height `ty` (0 bottom .. 1 top). Rows are stacked over the whole atlas height.
-  float rowV(float row, float ty){ return 1.0 - (row + 1.0 - ty)/uRowCount; }
-  float smin(float a,float b,float k){ float h=clamp(0.5+0.5*(b-a)/k,0.,1.); return mix(b,a,h)-k*h*(1.-h); }
+  // height `ty` (0 bottom .. 1 top), over `rows` rows. FLIP_Y on upload means
+  // canvas-top maps to v=1, hence the 1.0 - ... form.
+  float rowV(float row, float ty, float rows){ return 1.0 - (row + 1.0 - ty)/rows; }
 
   float sdSphere(vec3 p,float r){ return length(p)-r; }
   float sdRoundBox(vec3 p, vec3 b, float r){ vec3 q=abs(p)-b; return length(max(q,0.))+min(max(q.x,max(q.y,q.z)),0.)-r; }
   float sdBox2(vec2 p, vec2 b){ vec2 d=abs(p)-b; return length(max(d,0.))+min(max(d.x,d.y),0.); }
+  float sdRoundRect2(vec2 p, vec2 b, float r){ vec2 q=abs(p)-b+r; return min(max(q.x,q.y),0.)+length(max(q,0.))-r; }
   float sdEll2(vec2 p, vec2 r){ float k1=length(p/r); float k2=length(p/(r*r)); return k1*(k1-1.0)/k2; }
   float ndot(vec2 a, vec2 b){ return a.x*b.x - a.y*b.y; }
   float sdRhombus2(vec2 p, vec2 b){
@@ -520,6 +793,7 @@ frag =
   }
   // extrude a 2D distance d2 into a z-slab of half-thickness hz
   float extr(float d2, float pz, float hz){ vec2 w=vec2(d2, abs(pz)-hz); return min(max(w.x,w.y),0.)+length(max(w,0.)); }
+  float smin(float a,float b,float k){ float h=clamp(0.5+0.5*(b-a)/k,0.,1.); return mix(b,a,h)-k*h*(1.-h); }
 
   // A node's silhouette, by markgraf Shape id, centred at the origin with half
   // extents he. Anything unrecognised falls back to a rounded rectangle.
@@ -708,12 +982,12 @@ frag =
         vec2 tc = vec2(q.x/bandW + 0.5, q.y/bandH + 0.5);
         float inCell = step(0.0,tc.x)*step(tc.x,1.0)*step(0.0,tc.y)*step(tc.y,1.0);
         float front = smoothstep(-DEPTH*0.2, DEPTH*0.35, q.z);  // front / top-front faces
-        float a = texture2D(uLabel, vec2(tc.x, rowV(nidx, tc.y))).a * inCell * front;
+        float a = texture2D(uLabel, vec2(tc.x, rowV(nidx, tc.y, float(uNodeCount)))).a * inCell * front;
         col = mix(col, vec3(0.03,0.03,0.05), a);
       }
 
       // tokens: tint everything within a ball (and its bulge) warm orange, with
-      // an emissive lift — over the label, so the balls read on top.
+      // an emissive lift — so the balls read on top of the blocks.
       float ti = 0.0;
       for(int i=0;i<MAXTOK;i++){
         if(i>=uTokCount) break;
@@ -722,21 +996,41 @@ frag =
       vec3 tokCol = vec3(1.0, 0.55, 0.18);
       col = mix(col, tokCol, ti);
       col += tokCol * ti * 0.45;
+    }
 
-      // each ball carries its word, stamped across the front of the sphere so it
-      // rides along like markgraf's own travelling chip (dark ink on the orange).
-      for(int i=0;i<MAXTOK;i++){
-        if(i>=uTokCount) break;
-        float ballR = uUnit*0.46 * (1.0 + uTokGlow[i]*0.6);
-        vec3 q = pw - vec3(uTokPos[i], 0.0);
-        float bandW = ballR*2.4;
-        float bandH = bandW / uLabelAspect;
-        vec2 tc = vec2(q.x/bandW + 0.5, q.y/bandH + 0.5);
-        float inCell = step(0.0,tc.x)*step(tc.x,1.0)*step(0.0,tc.y)*step(tc.y,1.0);
-        float onBall = 1.0 - smoothstep(ballR*0.82, ballR*1.0, length(q.xy));
-        float front  = step(0.0, q.z);
-        float a = texture2D(uLabel, vec2(tc.x, rowV(uTokLabel[i], tc.y))).a * inCell * onBall * front;
-        col = mix(col, vec3(0.05,0.03,0.02), a);
+    // ---- screen-space chip overlay (pill + tail + typewriter glyphs) ----------
+    // Drawn after the 3D scene, in raw pixels, so the labels float on top of the
+    // diagram exactly like markgraf's drawTokenLabel. Glyphs carry absolute screen
+    // rects, so the loop counter is the only uniform-array index.
+    vec2 fc = gl_FragCoord.xy;
+    for(int i=0;i<MAXTOK;i++){
+      if(i>=uChipCount) break;
+      vec4 cr = uChipRect[i];
+      vec2 dotP = uChipDot[i];
+      float dPill = sdRoundRect2(fc - cr.xy, cr.zw, min(cr.z, cr.w)*0.45);
+      vec2 anchor = vec2(cr.x - cr.z, cr.y);                 // near (dot-side) edge
+      float dTail = sdSeg2(fc, anchor, dotP, max(2.0, cr.w*0.16));
+      float d = min(dPill, dTail);
+      float shadow = (1.0 - smoothstep(0.0, 10.0, dPill + 5.0)) * 0.22;
+      col = mix(col, vec3(0.0), shadow);
+      float fill = 1.0 - smoothstep(0.0, 1.5, d);
+      col = mix(col, vec3(0.99, 0.97, 0.92), fill);          // warm card
+      float border = (1.0 - smoothstep(0.5, 2.0, abs(dPill))) * fill;
+      col = mix(col, vec3(0.72, 0.69, 0.62), border*0.5);
+    }
+    for(int k=0;k<MAXG;k++){
+      if(k>=uGlyphCount) break;
+      vec4 gr = uGlyphRect[k];
+      vec2 loc = (fc - gr.xy)/gr.zw;                         // [-1,1] within the cell
+      if(abs(loc.x) <= 1.0 && abs(loc.y) <= 1.0){
+        vec2 cell = loc*0.5 + 0.5;                           // [0,1]
+        float idx = uGlyphCell[k];
+        float gcol = mod(idx, GCOLS);
+        float grow = floor(idx / GCOLS);
+        float u = (gcol + cell.x)/GCOLS;
+        float vv = rowV(grow, cell.y, GROWS);
+        float a = texture2D(uGlyphAtlas, vec2(u, vv)).a * uGlyphAlpha[k];
+        col = mix(col, vec3(0.10,0.08,0.06), a);             // dark ink
       }
     }
 
