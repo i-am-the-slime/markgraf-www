@@ -441,7 +441,7 @@ type GlyphInst = { cx :: Number, cy :: Number, hw :: Number, hh :: Number, cell 
 
 -- One chip: the pill rect (centre + half-extents) and the dot it points at, all
 -- in screen px.
-type Chip = { cx :: Number, cy :: Number, hw :: Number, hh :: Number, dotX :: Number, dotY :: Number }
+type Chip = { cx :: Number, cy :: Number, hw :: Number, hh :: Number, padX :: Number, padY :: Number, dotX :: Number, dotY :: Number }
 
 -- The active label and its in-slice phase (0..1), motion-time sliced by
 -- character count so longer words stay on screen longer (markgraf pickActiveLabel).
@@ -491,9 +491,11 @@ layoutChip advances fontPx dot motionT labels = { chip, glyphs }
   padX = fontPx * 1.25
   padY = fontPx * 0.62
   gap = fontPx * 0.5
+  hh = fontPx * 0.62 + padY
   centerX = dot.x + dot.r + gap + labelW / 2.0
+  centerY = dot.y + dot.r + gap - hh
   textLeft = centerX - labelW / 2.0
-  chip = { cx: centerX, cy: dot.y, hw: labelW / 2.0 + padX, hh: fontPx * 0.62 + padY, dotX: dot.x, dotY: dot.y }
+  chip = { cx: centerX, cy: centerY, hw: labelW / 2.0 + padX, hh, padX, padY, dotX: dot.x, dotY: dot.y }
   gh = fontPx * (glyphCellH / glyphBakeFont)
   gw = gh * (glyphCellW / glyphCellH)
   glyphs = snd (foldl place (textLeft /\ []) (mapWithIndex (/\) chars))
@@ -502,7 +504,7 @@ layoutChip advances fontPx dot motionT labels = { chip, glyphs }
     adv = advPx ch
     eased = glyphEase active.phase count i
     -- letters fall down into place: start a little above the baseline, ease to it
-    inst = { cx: cursor + adv / 2.0, cy: dot.y + (1.0 - eased) * fontPx * 0.85, hw: gw / 2.0, hh: gh / 2.0, cell: glyphCell ch, alpha: eased }
+    inst = { cx: cursor + adv / 2.0, cy: centerY + (1.0 - eased) * fontPx * 0.85, hw: gw / 2.0, hh: gh / 2.0, cell: glyphCell ch, alpha: eased }
   snd (_ /\ b) = b
 
 -- How many glyph instances the shader's uniform arrays hold across all chips.
@@ -554,13 +556,18 @@ slideChip chip obstacles = chip { cx = chip.cx + s * invSqrt2, cy = chip.cy + s 
   slideOne o = if overlaps o then min (sRight o) (sUp o) else 0.0
   pad = 12.0
   margin = 10.0
+  -- inset to label area (backing out pill padding) to match markgraf's slideRect
+  lx = chip.cx - chip.hw + chip.padX
+  rx = chip.cx + chip.hw - chip.padX
+  by = chip.cy - chip.hh + chip.padY
+  ty = chip.cy + chip.hh - chip.padY
   overlaps o =
-    chip.cx - chip.hw - margin < o.cx + o.hw + pad
-      && chip.cx + chip.hw + margin > o.cx - o.hw - pad
-      && chip.cy - chip.hh - margin < o.cy + o.hh + pad
-      && chip.cy + chip.hh + margin > o.cy - o.hh - pad
-  sRight o = ((o.cx + o.hw + pad) - (chip.cx - chip.hw - margin)) / invSqrt2
-  sUp o = ((o.cy + o.hh + pad) - (chip.cy - chip.hh - margin)) / invSqrt2
+    lx - margin < o.cx + o.hw + pad
+      && rx + margin > o.cx - o.hw - pad
+      && by - margin < o.cy + o.hh + pad
+      && ty + margin > o.cy - o.hh - pad
+  sRight o = ((o.cx + o.hw + pad) - (lx - margin)) / invSqrt2
+  sUp o = ((o.cy + o.hh + pad) - (by - margin)) / invSqrt2
 
 -- Shift a chip and all its glyphs by (dx, dy), used to apply a spring-smoothed
 -- collision offset so the chip follows its dot naturally and the slide eases in.
