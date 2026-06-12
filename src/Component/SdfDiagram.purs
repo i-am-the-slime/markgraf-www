@@ -2,7 +2,7 @@ module Component.SdfDiagram (sdfDiagram) where
 
 import Prelude
 
-import Data.Array (catMaybes, concat, concatMap, drop, filter, foldl, last, length, range, snoc, take, uncons, unsnoc, zipWith, (!!))
+import Data.Array (catMaybes, concat, concatMap, drop, filter, find, foldl, last, length, range, snoc, take, uncons, unsnoc, zipWith, (!!))
 import Data.Array (null) as Array
 import Data.Char (fromCharCode, toCharCode)
 import Data.Foldable (sum, traverse_)
@@ -238,13 +238,13 @@ flowProgress f u = if span <= 0.0 then (if u < 0.5 then 0.0 else 1.0) else clamp
 -- that one block), and the carousel inputs the chip needs. Capped to the shader's
 -- array size.
 type Sample =
-  { x :: Number, y :: Number, glow :: Number, nx :: Number, ny :: Number, labels :: Array String, motionT :: Number }
+  { x :: Number, y :: Number, glow :: Number, nx :: Number, ny :: Number, labels :: Array String, motionT :: Number, startT :: Number }
 
 sampleFlows :: Number -> Array Sample
 sampleFlows t = sampleOne <$> take maxTokens (filter active tokenFlows)
   where
   active f = t >= f.startT && t < f.endT
-  sampleOne f = { x: p.x, y: p.y, glow: nn.glow, nx: nn.x, ny: nn.y, labels: f.labels, motionT }
+  sampleOne f = { x: p.x, y: p.y, glow: nn.glow, nx: nn.x, ny: nn.y, labels: f.labels, motionT, startT: f.startT }
     where
     motionT = flowProgress f ((t - f.startT) / (f.endT - f.startT))
     p = pointAtPath f.path motionT
@@ -473,8 +473,8 @@ layoutChip advances fontPx dot motionT labels = { chip, glyphs }
   count = length chars
   advPx ch = fontPx * advanceEm advances ch
   labelW = sum (advPx <$> chars)
-  padX = fontPx * 0.95
-  padY = fontPx * 0.42
+  padX = fontPx * 1.25
+  padY = fontPx * 0.62
   gap = fontPx * 0.5
   centerX = dot.x + dot.r + gap + labelW / 2.0
   textLeft = centerX - labelW / 2.0
@@ -523,17 +523,14 @@ resolveCollisions
 resolveCollisions nodeObs layouts =
   (foldl step { resolved: [], obstacles: nodeObs } layouts).resolved
   where
-  step st item =
-    let
-      chip' = slideChip item.chip st.obstacles
-      dx = chip'.cx - item.chip.cx
-      dy = chip'.cy - item.chip.cy
-      glyphs' = (\g -> g { cx = g.cx + dx, cy = g.cy + dy }) <$> item.glyphs
-      obs = { cx: chip'.cx, cy: chip'.cy, hw: chip'.hw, hh: chip'.hh }
-    in
-      { resolved: snoc st.resolved { chip: chip', glyphs: glyphs' }
-      , obstacles: snoc st.obstacles obs
-      }
+  step st item = result
+    where
+    chip' = slideChip item.chip st.obstacles
+    dx = chip'.cx - item.chip.cx
+    dy = chip'.cy - item.chip.cy
+    glyphs' = (\g -> g { cx = g.cx + dx, cy = g.cy + dy }) <$> item.glyphs
+    obs = { cx: chip'.cx, cy: chip'.cy, hw: chip'.hw, hh: chip'.hh }
+    result = { resolved: snoc st.resolved { chip: chip', glyphs: glyphs' }, obstacles: snoc st.obstacles obs }
 
 slideChip :: Chip -> Array ChipObstacle -> Chip
 slideChip chip obstacles = chip { cx = chip.cx + s * invSqrt2, cy = chip.cy + s * invSqrt2 }
@@ -549,6 +546,48 @@ slideChip chip obstacles = chip { cx = chip.cx + s * invSqrt2, cy = chip.cy + s 
       && chip.cy + chip.hh + margin > o.cy - o.hh - pad
   sRight o = ((o.cx + o.hw + pad) - (chip.cx - chip.hw - margin)) / invSqrt2
   sUp o = ((o.cy + o.hh + pad) - (chip.cy - chip.hh - margin)) / invSqrt2
+
+-- Shift a chip and all its glyphs by (dx, dy), used to apply a spring-smoothed
+-- collision offset so the chip follows its dot naturally and the slide eases in.
+shiftLayout :: Number -> Number -> { chip :: Chip, glyphs :: Array GlyphInst } -> { chip :: Chip, glyphs :: Array GlyphInst }
+shiftLayout dx dy { chip, glyphs } =
+  { chip: chip { cx = chip.cx + dx, cy = chip.cy + dy }
+  , glyphs: (\g -> g { cx = g.cx + dx, cy = g.cy + dy }) <$> glyphs
+  }
+
+-- Per-chip spring state keyed by the token's startT (stable across loop cycles).
+type ChipSpring = { id :: Number, ox :: Number, oy :: Number, vx :: Number, vy :: Number }
+
+-- Semi-implicit Euler spring step (stiffness/damping matched to markgraf LabelSpring).
+springStep :: Number -> Number -> Number -> ChipSpring -> ChipSpring
+springStep dt tx ty s = s { ox = ox', oy = oy', vx = vx', vy = vy' }
+  where
+  stiffness = 180.0
+  damping = 22.0
+  ax = stiffness * (tx - s.ox) - damping * s.vx
+  ay = stiffness * (ty - s.oy) - damping * s.vy
+  vx' = s.vx + ax * dt
+  vy' = s.vy + ay * dt
+  ox' = s.ox + vx' * dt
+  oy' = s.oy + vy' * dt
+
+-- Integrate the spring for one chip slot: look up prior state by token id,
+-- advance it toward the collision-resolved target offset, return the smoothed
+-- layout and the new spring state for next frame.
+applyChipSpring
+  :: Number
+  -> Array ChipSpring
+  -> Array Sample
+  -> Int
+  -> { chip :: Chip, glyphs :: Array GlyphInst } /\ { chip :: Chip, glyphs :: Array GlyphInst }
+  -> { chip :: Chip, glyphs :: Array GlyphInst } /\ ChipSpring
+applyChipSpring dt prevSprings samples i (raw /\ resolved) = shiftLayout spr.ox spr.oy raw /\ spr
+  where
+  id = fromMaybe 0.0 (_.startT <$> (samples !! i))
+  tx = resolved.chip.cx - raw.chip.cx
+  ty = resolved.chip.cy - raw.chip.cy
+  prev = fromMaybe { id, ox: tx, oy: ty, vx: 0.0, vy: 0.0 } (find (\sp -> sp.id == id) prevSprings)
+  spr = springStep dt tx ty prev
 
 -- Project a world point to dpr-scaled screen px (y up, matching gl_FragCoord) by
 -- inverting the raymarch camera: tilt the point by -uTilt about x, then the
@@ -576,6 +615,7 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
   accRef <- useRef 0.0
   rafRef <- useRef (Nothing :: Maybe RequestAnimationFrameId)
   advRef <- useRef ([] :: Array Number)
+  springRef <- useRef ([] :: Array ChipSpring)
 
   Hooks.useEffectOnce $ readRefMaybe canvasRef >>= case _ of
     Nothing -> pure (pure unit)
@@ -652,6 +692,7 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
             size <- GL.clientSize canvasEl
             dpr <- clampDpr <$> GL.devicePixelRatio
             advances <- readRef advRef
+            springs <- readRef springRef
             when (size.width > 0.0) do
               let
                 resW = size.width * dpr
@@ -660,8 +701,12 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
                 samples = sampleFlows (loopTime now')
                 fontPx = clamp 14.0 40.0 (resH * 0.02)
                 rawLayouts = (\s -> layoutChip advances fontPx (project tilt resW resH { x: s.x, y: s.y }) s.motionT s.labels) <$> samples
-                chips = resolveCollisions (nodeScreenRect tilt resW resH <$> worldNodes) rawLayouts
+                resolvedLayouts = resolveCollisions (nodeScreenRect tilt resW resH <$> worldNodes) rawLayouts
+                sprung = mapWithIndex (applyChipSpring acc springs samples) (zipWith (/\) rawLayouts resolvedLayouts)
+                chips = (\(l /\ _) -> l) <$> sprung
+                newSprings = (\(_ /\ sp) -> sp) <$> sprung
                 glyphs = take maxGlyphs (concatMap _.glyphs chips)
+              writeRef springRef newSprings
               GL.resize gl canvasEl (round resW) (round resH)
               GL.clear gl
               GL.uniform2f gl uRes resW resH
@@ -1007,12 +1052,16 @@ frag =
       if(i>=uChipCount) break;
       vec4 cr = uChipRect[i];
       vec2 dotP = uChipDot[i];
-      float dPill = sdRoundRect2(fc - cr.xy, cr.zw, min(cr.z, cr.w)*0.45);
+      float dPill = sdRoundRect2(fc - cr.xy, cr.zw, min(cr.z, cr.w)*0.54);
       vec2 anchor = vec2(cr.x - cr.z, cr.y);                 // near (dot-side) edge
-      float dTail = sdSeg2(fc, anchor, dotP, max(2.0, cr.w*0.16));
+      float dTail = sdSeg2(fc, anchor, dotP, max(2.5, cr.w*0.22));
       float d = min(dPill, dTail);
-      float shadow = (1.0 - smoothstep(0.0, 10.0, dPill + 5.0)) * 0.22;
+      // soft drop-shadow gives the chip depth/lift
+      float shadow = (1.0 - smoothstep(0.0, 18.0, dPill + 8.0)) * 0.28;
       col = mix(col, vec3(0.0), shadow);
+      // subtle outer glow — makes the pill read as a raised object
+      float halo = (1.0 - smoothstep(0.0, max(cr.z, cr.w)*0.45, max(dPill, 0.0))) * 0.07;
+      col = mix(col, vec3(1.0), halo);
       float fill = 1.0 - smoothstep(0.0, 1.5, d);
       col = mix(col, vec3(0.99, 0.97, 0.92), fill);          // warm card
       float border = (1.0 - smoothstep(0.5, 2.0, abs(dPill))) * fill;
