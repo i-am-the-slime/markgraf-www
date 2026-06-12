@@ -5,7 +5,9 @@ import Prelude
 import Data.Array (catMaybes, concat, concatMap, drop, filter, find, foldl, last, length, range, snoc, take, uncons, unsnoc, zipWith, (!!))
 import Data.Array (null) as Array
 import Data.Char (fromCharCode, toCharCode)
-import Data.Foldable (sum, traverse_)
+import Data.Array (cons) as Array
+import Data.Foldable (minimumBy, sum, traverse_)
+import Data.Ord (comparing)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (round, toNumber)
@@ -151,9 +153,22 @@ nodeRectFlat = concatMap (\n -> [ n.x, n.y, n.hw * 2.0, n.hh * 2.0 ]) worldNodes
 nodeShapeFlat :: Array Number
 nodeShapeFlat = _.shape <$> worldNodes
 
+-- Extend an edge polyline to the centres of its nearest source and target nodes,
+-- so balls and capsules travel into/out of the node bodies rather than stopping
+-- at their surfaces.
+extendToCenters :: Array Point -> Array Point
+extendToCenters pts = fromMaybe pts do
+  { head: first } <- uncons pts
+  { last } <- unsnoc pts
+  src <- minimumBy (comparing (distSq first)) worldNodes
+  tgt <- minimumBy (comparing (distSq last)) worldNodes
+  pure $ Array.cons { x: src.x, y: src.y } (snoc pts { x: tgt.x, y: tgt.y })
+  where
+  distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
+
 -- markgraf's own routed, silhouette-trimmed edge polylines, mapped to world.
 worldEdges :: Array (Array Point)
-worldEdges = (\e -> toWorldPt <$> e.points) <$> scene.edges
+worldEdges = (extendToCenters <<< map toWorldPt <<< _.points) <$> scene.edges
 
 -- Each polyline's capsule segments, with the final point pulled back by arrowLen
 -- so the line stops where the arrowhead begins.
@@ -210,7 +225,7 @@ tokenFlows :: Array Flow
 tokenFlows = toFlow <$> scene.tokens
   where
   toFlow tk =
-    { path: toWorldPt <$> tk.points
+    { path: extendToCenters (toWorldPt <$> tk.points)
     , labels: tk.labels
     , startT: tk.startT
     , endT: tk.endT
@@ -612,7 +627,6 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
   canvasRef <- useRef (null :: Nullable CanvasElement)
   timeRef <- useRef 0.0
   lastWallRef <- useRef 0.0
-  accRef <- useRef 0.0
   rafRef <- useRef (Nothing :: Maybe RequestAnimationFrameId)
   advRef <- useRef ([] :: Array Number)
   springRef <- useRef ([] :: Array ChipSpring)
@@ -668,20 +682,12 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
 
         win <- window
         let
-          -- A fullscreen raymarcher at the display's native rate (often 120Hz)
-          -- burns the GPU for a barely-perceptible idle sway. Coalesce the rAF
-          -- ticks down to frameInterval, advancing sim-time by the whole
-          -- accumulated chunk so the motion stays speed-accurate, not slowed.
           renderFrame = do
             wall <- GL.now
             prev <- readRef lastWallRef
             writeRef lastWallRef wall
             let dt = min 0.05 ((wall - prev) / 1000.0)
-            acc <- (_ + dt) <$> readRef accRef
-            if acc < frameInterval then writeRef accRef acc
-            else do
-              writeRef accRef 0.0
-              drawScene acc
+            drawScene dt
             id <- requestAnimationFrame renderFrame win
             writeRef rafRef (Just id)
 
@@ -757,8 +763,6 @@ clampDpr d = max 1.0 (min 2.0 d)
 -- Cap the raymarcher at ~30fps. The idle sway and token drift are slow enough
 -- that the display's native 60/120Hz is invisible next to it, while halving or
 -- quartering the GPU's fragment-shader work — the dominant battery cost here.
-frameInterval :: Number
-frameInterval = 1.0 / 30.0
 
 idleTilt :: Number
 idleTilt = 0.34
@@ -778,6 +782,7 @@ vert = "attribute vec2 position; void main(){ gl_Position = vec4(position, 0.0, 
 frag :: String
 frag =
   """
+  #extension GL_OES_standard_derivatives : enable
   precision highp float;
   uniform vec2 uRes;
   uniform float uTime;
@@ -1062,9 +1067,11 @@ frag =
       // subtle outer glow — makes the pill read as a raised object
       float halo = (1.0 - smoothstep(0.0, max(cr.z, cr.w)*0.45, max(dPill, 0.0))) * 0.07;
       col = mix(col, vec3(1.0), halo);
-      float fill = 1.0 - smoothstep(0.0, 1.5, d);
+      float fw = fwidth(d);
+      float fill = 1.0 - smoothstep(-fw, fw, d);
       col = mix(col, vec3(0.99, 0.97, 0.92), fill);          // warm card
-      float border = (1.0 - smoothstep(0.5, 2.0, abs(dPill))) * fill;
+      float fwp = fwidth(dPill);
+      float border = (1.0 - smoothstep(-fwp, fwp, abs(dPill) - 1.0)) * fill;
       col = mix(col, vec3(0.72, 0.69, 0.62), border*0.5);
     }
     for(int k=0;k<MAXG;k++){

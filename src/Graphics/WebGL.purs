@@ -29,7 +29,7 @@ module Graphics.WebGL
 
 import Prelude
 
-import Data.Array.NonEmpty (NonEmptyArray, toArray)
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
 import Data.Maybe (maybe)
 import Data.Nullable (Nullable)
@@ -87,25 +87,25 @@ uniform4fv :: GL -> Uniform -> Array Number -> Effect Unit
 uniform4fv gl loc = maybe (pure unit) (uniform4fvNE gl loc) <<< NEA.fromArray
 
 uniform4fvNE :: GL -> Uniform -> NonEmptyArray Number -> Effect Unit
-uniform4fvNE gl loc = runEffectFn3 uniform4fvImpl gl loc <<< toArray
+uniform4fvNE = runEffectFn3 uniform4fvImpl
 
-foreign import uniform4fvImpl :: EffectFn3 GL Uniform (Array Number) Unit
+foreign import uniform4fvImpl :: EffectFn3 GL Uniform (NonEmptyArray Number) Unit
 
 uniform2fv :: GL -> Uniform -> Array Number -> Effect Unit
 uniform2fv gl loc = maybe (pure unit) (uniform2fvNE gl loc) <<< NEA.fromArray
 
 uniform2fvNE :: GL -> Uniform -> NonEmptyArray Number -> Effect Unit
-uniform2fvNE gl loc = runEffectFn3 uniform2fvImpl gl loc <<< toArray
+uniform2fvNE = runEffectFn3 uniform2fvImpl
 
-foreign import uniform2fvImpl :: EffectFn3 GL Uniform (Array Number) Unit
+foreign import uniform2fvImpl :: EffectFn3 GL Uniform (NonEmptyArray Number) Unit
 
 uniform1fv :: GL -> Uniform -> Array Number -> Effect Unit
 uniform1fv gl loc = maybe (pure unit) (uniform1fvNE gl loc) <<< NEA.fromArray
 
 uniform1fvNE :: GL -> Uniform -> NonEmptyArray Number -> Effect Unit
-uniform1fvNE gl loc = runEffectFn3 uniform1fvImpl gl loc <<< toArray
+uniform1fvNE = runEffectFn3 uniform1fvImpl
 
-foreign import uniform1fvImpl :: EffectFn3 GL Uniform (Array Number) Unit
+foreign import uniform1fvImpl :: EffectFn3 GL Uniform (NonEmptyArray Number) Unit
 
 createTexture :: GL -> Effect Texture
 createTexture = runEffectFn1 createTextureImpl
