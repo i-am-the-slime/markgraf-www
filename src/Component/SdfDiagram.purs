@@ -13,7 +13,8 @@ import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (round, toNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (Nullable, null, toMaybe)
-import Data.Number (cos, floor, sin, sqrt)
+import Control.Alternative (guard)
+import Data.Number (abs, cos, floor, sin, sqrt)
 import Data.String.CodeUnits as SCU
 import Data.Traversable (for)
 import Data.Tuple.Nested (type (/\), (/\))
@@ -177,12 +178,22 @@ edgeSegFlat = concatMap (segments <<< shortenLast) worldEdges
   where
   segments pts = concat (zipWith (\p q -> [ p.x, p.y, q.x, q.y ]) pts (drop 1 pts))
 
--- One arrowhead per edge: (tipX, tipY, dirX, dirY), the tip at the polyline's
--- true end and the direction taken from its final segment.
+-- One arrowhead per edge: (tipX, tipY, dirX, dirY).
+-- The tip is pulled back from the node centre to the node surface so the
+-- arrowhead lands flush rather than embedding itself inside the block.
 arrowFlat :: Array Number
 arrowFlat = concatMap arrow worldEdges
   where
-  arrow pts = fromMaybe [] (withTail pts \prev tip -> [ tip.x, tip.y, (tip.x - prev.x) / len prev tip, (tip.y - prev.y) / len prev tip ])
+  arrow pts = fromMaybe [] do
+    prev /\ tip <- withTail pts (/\)
+    let l = len prev tip
+    guard (l > 0.0001)
+    let dirX = (tip.x - prev.x) / l
+        dirY = (tip.y - prev.y) / l
+    tgt <- minimumBy (comparing (distSq tip)) worldNodes
+    let sd = min (tgt.hw / (abs dirX + 0.0001)) (tgt.hh / (abs dirY + 0.0001))
+    pure [ tip.x - dirX * sd, tip.y - dirY * sd, dirX, dirY ]
+  distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
 
 shortenLast :: Array Point -> Array Point
 shortenLast pts = fromMaybe pts (withTail pts \prev tip -> snoc (fromMaybe [] (_.init <$> unsnoc pts)) (pullBack prev tip))
