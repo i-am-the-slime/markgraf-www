@@ -191,11 +191,15 @@ export const frag = `
     vec3 bg = mix(vec3(0.05,0.05,0.06), vec3(0.10,0.10,0.12), uv.y*0.5+0.5);
     bg *= 1.0 - 0.25*dot(uv,uv);
     vec3 col = bg;
+    // z of the hit point in the tilted world frame — front faces have z > 0 and
+    // should occlude chip labels; background / back faces leave chips visible.
+    float hitZ = -1e9;
 
     if(hit){
       vec3 n = calcNormal(p);
       // classify the hit (node vs edge) and recover the winning node
       vec3 pw = p; pw.yz = rot(uTilt) * pw.yz;
+      hitZ = pw.z;
       float nshape, nidx; vec4 nrect;
       float dn = mapNodeFull(pw, nshape, nidx, nrect); float de = mapEdge(pw);
       bool isNode = dn <= de;
@@ -268,6 +272,8 @@ export const frag = `
     }
 
     // ---- screen-space chip overlay (pill + typewriter glyphs) ----------
+    // Chips sit at the z=0 midplane; front-facing 3D surfaces (hitZ > 0) occlude them.
+    if(hitZ <= 0.0){
     vec2 fc = gl_FragCoord.xy;
     for(int i=0;i<MAXTOK;i++){
       if(i>=uChipCount) break;
@@ -302,6 +308,7 @@ export const frag = `
         col = mix(col, vec3(0.10,0.08,0.06), a);             // dark ink
       }
     }
+    } // hitZ <= 0.0
 
     gl_FragColor = vec4(col, 1.0);
   }
