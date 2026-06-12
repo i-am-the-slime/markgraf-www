@@ -10,6 +10,7 @@ module Graphics.WebGL
   , uniform1f
   , uniform2f
   , uniform1i
+  , getExtension
   , uniform4fv
   , uniform4fvNE
   , uniform2fv
@@ -60,6 +61,11 @@ setupQuad :: GL -> Program -> Effect Unit
 setupQuad = runEffectFn2 setupQuadImpl
 
 foreign import setupQuadImpl :: EffectFn2 GL Program Unit
+
+getExtension :: GL -> String -> Effect Unit
+getExtension = runEffectFn2 getExtensionImpl
+
+foreign import getExtensionImpl :: EffectFn2 GL String Unit
 
 uniformLocation :: GL -> Program -> String -> Effect Uniform
 uniformLocation = runEffectFn3 uniformLocationImpl

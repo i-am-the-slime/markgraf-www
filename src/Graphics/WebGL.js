@@ -32,6 +32,8 @@ export const setupQuadImpl = (gl, program) => {
   gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0)
 }
 
+export const getExtensionImpl = (gl, name) => gl.getExtension(name)
+
 export const uniformLocationImpl = (gl, program, name) => gl.getUniformLocation(program, name)
 export const uniform1fImpl = (gl, location, x) => gl.uniform1f(location, x)
 export const uniform2fImpl = (gl, location, x, y) => gl.uniform2f(location, x, y)

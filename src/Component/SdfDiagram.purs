@@ -636,6 +636,7 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
     Just canvasEl -> GL.getContext canvasEl >>= toMaybe >>> case _ of
       Nothing -> pure (pure unit)
       Just gl -> do
+        GL.getExtension gl "OES_standard_derivatives"
         program <- GL.buildProgram gl { vertex: vert, fragment: frag }
         GL.setupQuad gl program
         uRes <- GL.uniformLocation gl program "uRes"
