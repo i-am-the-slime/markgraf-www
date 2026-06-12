@@ -10,6 +10,8 @@ module Graphics.WebGL
   , uniform1f
   , uniform2f
   , uniform1i
+  , uniform4fv
+  , uniform1fv
   , createTexture
   , uploadCanvas
   , resize
@@ -70,6 +72,18 @@ uniform1i :: GL -> Uniform -> Int -> Effect Unit
 uniform1i = runEffectFn3 uniform1iImpl
 
 foreign import uniform1iImpl :: EffectFn3 GL Uniform Int Unit
+
+-- Array uniforms. The Array Number is the flattened payload — for uniform4fv it
+-- is groups of four (vec4[]), for uniform1fv one scalar per element (float[]).
+uniform4fv :: GL -> Uniform -> Array Number -> Effect Unit
+uniform4fv = runEffectFn3 uniform4fvImpl
+
+foreign import uniform4fvImpl :: EffectFn3 GL Uniform (Array Number) Unit
+
+uniform1fv :: GL -> Uniform -> Array Number -> Effect Unit
+uniform1fv = runEffectFn3 uniform1fvImpl
+
+foreign import uniform1fvImpl :: EffectFn3 GL Uniform (Array Number) Unit
 
 createTexture :: GL -> Effect Texture
 createTexture = runEffectFn1 createTextureImpl

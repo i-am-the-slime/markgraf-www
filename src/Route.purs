@@ -4,7 +4,7 @@ module Route where
 import Prelude
 import Next.Route (class IsRoute)
 
-data Route = Home | Privacy
+data Route = Home | Privacy | SdfLab
 
 derive instance Eq Route
 derive instance Ord Route
@@ -13,3 +13,4 @@ instance IsRoute Route where
   toPath = case _ of
     Home -> "/"
     Privacy -> "/privacy"
+    SdfLab -> "/sdf-lab"
