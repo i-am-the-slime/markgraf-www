@@ -11,6 +11,7 @@ module Graphics.WebGL
   , uniform2f
   , uniform1i
   , uniform4fv
+  , uniform2fv
   , uniform1fv
   , createTexture
   , uploadCanvas
@@ -79,6 +80,11 @@ uniform4fv :: GL -> Uniform -> Array Number -> Effect Unit
 uniform4fv = runEffectFn3 uniform4fvImpl
 
 foreign import uniform4fvImpl :: EffectFn3 GL Uniform (Array Number) Unit
+
+uniform2fv :: GL -> Uniform -> Array Number -> Effect Unit
+uniform2fv = runEffectFn3 uniform2fvImpl
+
+foreign import uniform2fvImpl :: EffectFn3 GL Uniform (Array Number) Unit
 
 uniform1fv :: GL -> Uniform -> Array Number -> Effect Unit
 uniform1fv = runEffectFn3 uniform1fvImpl

@@ -37,6 +37,7 @@ export const uniform1fImpl = (gl, location, x) => gl.uniform1f(location, x)
 export const uniform2fImpl = (gl, location, x, y) => gl.uniform2f(location, x, y)
 export const uniform1iImpl = (gl, location, x) => gl.uniform1i(location, x)
 export const uniform4fvImpl = (gl, location, data) => gl.uniform4fv(location, new Float32Array(data))
+export const uniform2fvImpl = (gl, location, data) => gl.uniform2fv(location, new Float32Array(data))
 export const uniform1fvImpl = (gl, location, data) => gl.uniform1fv(location, new Float32Array(data))
 
 export const createTextureImpl = (gl) => gl.createTexture()
