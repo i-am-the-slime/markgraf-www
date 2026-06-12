@@ -11,8 +11,11 @@ module Graphics.WebGL
   , uniform2f
   , uniform1i
   , uniform4fv
+  , uniform4fvNE
   , uniform2fv
+  , uniform2fvNE
   , uniform1fv
+  , uniform1fvNE
   , createTexture
   , uploadCanvas
   , uploadCanvasUnit
@@ -26,6 +29,9 @@ module Graphics.WebGL
 
 import Prelude
 
+import Data.Array.NonEmpty (NonEmptyArray, toArray)
+import Data.Array.NonEmpty as NEA
+import Data.Maybe (maybe)
 import Data.Nullable (Nullable)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, EffectFn4, runEffectFn1, runEffectFn2, runEffectFn3, runEffectFn4)
@@ -75,20 +81,29 @@ uniform1i = runEffectFn3 uniform1iImpl
 
 foreign import uniform1iImpl :: EffectFn3 GL Uniform Int Unit
 
--- Array uniforms. The Array Number is the flattened payload — for uniform4fv it
--- is groups of four (vec4[]), for uniform1fv one scalar per element (float[]).
+-- Array uniforms. Public API takes Array and skips when empty; the Impl takes
+-- NonEmptyArray so the FFI can't receive an empty payload.
 uniform4fv :: GL -> Uniform -> Array Number -> Effect Unit
-uniform4fv = runEffectFn3 uniform4fvImpl
+uniform4fv gl loc = maybe (pure unit) (uniform4fvNE gl loc) <<< NEA.fromArray
+
+uniform4fvNE :: GL -> Uniform -> NonEmptyArray Number -> Effect Unit
+uniform4fvNE gl loc = runEffectFn3 uniform4fvImpl gl loc <<< toArray
 
 foreign import uniform4fvImpl :: EffectFn3 GL Uniform (Array Number) Unit
 
 uniform2fv :: GL -> Uniform -> Array Number -> Effect Unit
-uniform2fv = runEffectFn3 uniform2fvImpl
+uniform2fv gl loc = maybe (pure unit) (uniform2fvNE gl loc) <<< NEA.fromArray
+
+uniform2fvNE :: GL -> Uniform -> NonEmptyArray Number -> Effect Unit
+uniform2fvNE gl loc = runEffectFn3 uniform2fvImpl gl loc <<< toArray
 
 foreign import uniform2fvImpl :: EffectFn3 GL Uniform (Array Number) Unit
 
 uniform1fv :: GL -> Uniform -> Array Number -> Effect Unit
-uniform1fv = runEffectFn3 uniform1fvImpl
+uniform1fv gl loc = maybe (pure unit) (uniform1fvNE gl loc) <<< NEA.fromArray
+
+uniform1fvNE :: GL -> Uniform -> NonEmptyArray Number -> Effect Unit
+uniform1fvNE gl loc = runEffectFn3 uniform1fvImpl gl loc <<< toArray
 
 foreign import uniform1fvImpl :: EffectFn3 GL Uniform (Array Number) Unit
 
