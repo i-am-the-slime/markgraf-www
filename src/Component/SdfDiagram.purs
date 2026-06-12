@@ -1059,9 +1059,7 @@ frag =
       vec4 cr = uChipRect[i];
       vec2 dotP = uChipDot[i];
       float dPill = sdRoundRect2(fc - cr.xy, cr.zw, min(cr.z, cr.w)*0.54);
-      vec2 anchor = vec2(cr.x - cr.z, cr.y);                 // near (dot-side) edge
-      float dTail = sdSeg2(fc, anchor, dotP, max(2.5, cr.w*0.22));
-      float d = min(dPill, dTail);
+      float d = dPill;
       // soft drop-shadow gives the chip depth/lift
       float shadow = (1.0 - smoothstep(0.0, 18.0, dPill + 8.0)) * 0.28;
       col = mix(col, vec3(0.0), shadow);
