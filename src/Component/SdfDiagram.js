@@ -255,7 +255,10 @@ export const frag = `
       // in world units (a fixed height, width = height*cellAspect) and centred on
       // the node, so a texel stays square whatever the node's own aspect is.
       if(isNode){
-        vec3 q = pw - vec3(nrect.x, nrect.y, 0.0);
+        vec3 nc = vec3(nrect.x, nrect.y, 0.0);
+        nc.xz = rot(uRotY) * nc.xz;
+        nc.yz = rot(uTilt) * nc.yz;
+        vec3 q = pw - nc;
         float bandH = uUnit*1.5;
         float bandW = bandH * uLabelAspect;
         vec2 tc = vec2(q.x/bandW + 0.5, q.y/bandH + 0.5);
