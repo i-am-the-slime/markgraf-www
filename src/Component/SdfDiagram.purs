@@ -452,7 +452,7 @@ type GlyphInst = { cx :: Number, cy :: Number, hw :: Number, hh :: Number, cell 
 
 -- One chip: the pill rect (centre + half-extents) and the dot it points at, all
 -- in screen px.
-type Chip = { cx :: Number, cy :: Number, hw :: Number, hh :: Number, padX :: Number, padY :: Number, dotX :: Number, dotY :: Number }
+type Chip = { cx :: Number, cy :: Number, hw :: Number, hh :: Number, dotX :: Number, dotY :: Number }
 
 -- The active label and its in-slice phase (0..1), motion-time sliced by
 -- character count so longer words stay on screen longer (markgraf pickActiveLabel).
@@ -506,7 +506,7 @@ layoutChip advances fontPx dot motionT labels = { chip, glyphs }
   centerX = dot.x + dot.r + gap + labelW / 2.0
   centerY = dot.y + dot.r + gap - hh
   textLeft = centerX - labelW / 2.0
-  chip = { cx: centerX, cy: centerY, hw: labelW / 2.0 + padX, hh, padX, padY, dotX: dot.x, dotY: dot.y }
+  chip = { cx: centerX, cy: centerY, hw: labelW / 2.0 + padX, hh, dotX: dot.x, dotY: dot.y }
   gh = fontPx * (glyphCellH / glyphBakeFont)
   gw = gh * (glyphCellW / glyphCellH)
   glyphs = snd (foldl place (textLeft /\ []) (mapWithIndex (/\) chars))
@@ -565,20 +565,14 @@ slideChip chip obstacles = chip { cx = chip.cx + s * invSqrt2, cy = chip.cy + s 
   where
   s = foldl max 0.0 (slideOne <$> obstacles)
   slideOne o = if overlaps o then min (sRight o) (sUp o) else 0.0
-  pad = 12.0
-  margin = 10.0
-  -- inset to label area (backing out pill padding) to match markgraf's slideRect
-  lx = chip.cx - chip.hw + chip.padX
-  rx = chip.cx + chip.hw - chip.padX
-  by = chip.cy - chip.hh + chip.padY
-  ty = chip.cy + chip.hh - chip.padY
+  pad = 16.0
   overlaps o =
-    lx - margin < o.cx + o.hw + pad
-      && rx + margin > o.cx - o.hw - pad
-      && by - margin < o.cy + o.hh + pad
-      && ty + margin > o.cy - o.hh - pad
-  sRight o = ((o.cx + o.hw + pad) - (lx - margin)) / invSqrt2
-  sUp o = ((o.cy + o.hh + pad) - (by - margin)) / invSqrt2
+    chip.cx - chip.hw < o.cx + o.hw + pad
+      && chip.cx + chip.hw > o.cx - o.hw - pad
+      && chip.cy - chip.hh < o.cy + o.hh + pad
+      && chip.cy + chip.hh > o.cy - o.hh - pad
+  sRight o = ((o.cx + o.hw + pad) - (chip.cx - chip.hw)) / invSqrt2
+  sUp o = ((o.cy + o.hh + pad) - (chip.cy - chip.hh)) / invSqrt2
 
 -- Shift a chip and all its glyphs by (dx, dy), used to apply a spring-smoothed
 -- collision offset so the chip follows its dot naturally and the slide eases in.
