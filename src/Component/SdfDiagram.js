@@ -22,6 +22,10 @@ export const frag = `
   uniform float uTokGlow[8];    // each ball's 0..1 overlap with the block it's in
   uniform vec2 uTokNode[8];     // the centre of that block, to light only it
 
+  uniform float uCamZ;           // camera distance from scene (default 12)
+  uniform float uCamPanX;        // world-space pan offset X
+  uniform float uCamPanY;        // world-space pan offset Y
+
   uniform sampler2D uGlyphAtlas; // per-glyph atlas (one ASCII char per cell)
   uniform int uChipCount;        // floating label chips this frame
   uniform vec4 uChipRect[8];     // (cx, cy, hw, hh) in screen px
@@ -175,7 +179,7 @@ export const frag = `
     ARROW_LEN = uUnit*0.55; ARROW_HW = uUnit*0.34;
 
     vec2 uv = (gl_FragCoord.xy - 0.5*uRes)/uRes.y;
-    vec3 ro = vec3(0.0, 0.0, 12.0);
+    vec3 ro = vec3(uCamPanX, uCamPanY, uCamZ);
     vec3 rd = normalize(vec3(uv*1.5, -1.5));
 
     float t = 0.0; bool hit = false; vec3 p;
@@ -313,3 +317,22 @@ export const frag = `
     gl_FragColor = vec4(col, 1.0);
   }
 `
+
+// Attach wheel + pointer listeners to a canvas element; returns a cleanup thunk.
+// Logic stays in PureScript — this only plumbs raw event data to PS callbacks.
+export const setupCameraListenersImpl = (el, onWheel, onDown, onMove, onUp) => {
+  const wheel = e => { e.preventDefault(); onWheel(e.deltaY)() }
+  const down  = e => { e.preventDefault(); onDown(e.clientX)(e.clientY)() }
+  const move  = e => onMove(e.clientX)(e.clientY)(e.buttons)(e.shiftKey ? 1.0 : 0.0)()
+  const up    = e => onUp(e.clientX)(e.clientY)()
+  el.addEventListener('wheel', wheel, { passive: false })
+  el.addEventListener('pointerdown', down)
+  window.addEventListener('pointermove', move)
+  window.addEventListener('pointerup', up)
+  return () => {
+    el.removeEventListener('wheel', wheel)
+    el.removeEventListener('pointerdown', down)
+    window.removeEventListener('pointermove', move)
+    window.removeEventListener('pointerup', up)
+  }
+}
