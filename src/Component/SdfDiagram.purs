@@ -565,7 +565,7 @@ slideChip chip obstacles = chip { cx = chip.cx + s * invSqrt2, cy = chip.cy + s 
   where
   s = foldl max 0.0 (slideOne <$> obstacles)
   slideOne o = if overlaps o then min (sRight o) (sUp o) else 0.0
-  pad = 40.0
+  pad = 80.0
   overlaps o =
     chip.cx - chip.hw < o.cx + o.hw + pad
       && chip.cx + chip.hw > o.cx - o.hw - pad
