@@ -804,19 +804,17 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
                 writeRef dragRef (Just { x, y })
                 camZ <- readRef camZRef
                 { resW, resH } <- readRef sizeRef
-                if shift > 0.5
+                if _buttons >= 1.5
                   then do
-                    tiltOff <- readRef tiltOffRef
-                    writeRef tiltOffRef (clamp (-0.8) 0.8 (tiltOff + dy * 0.005))
-                  else if _buttons >= 1.5
-                  then do
-                    rotY <- readRef rotYRef
-                    writeRef rotYRef (rotY + dx * 0.005)
-                  else do
                     panX <- readRef panXRef
                     panY <- readRef panYRef
                     writeRef panXRef (panX - dx * camZ / resH)
-                    writeRef panYRef (panY + dy * camZ / resH))
+                    writeRef panYRef (panY + dy * camZ / resH)
+                  else do
+                    rotY <- readRef rotYRef
+                    tiltOff <- readRef tiltOffRef
+                    writeRef rotYRef (rotY + dx * 0.005)
+                    writeRef tiltOffRef (clamp (-0.8) 0.8 (tiltOff + dy * 0.005)))
           (\_ _ -> writeRef dragRef Nothing)
         pure (stop *> stopActive *> cleanupListeners)
 
