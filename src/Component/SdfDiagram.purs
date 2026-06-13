@@ -192,7 +192,8 @@ arrowFlat = concatMap arrow worldEdges
     let dirX = (tip.x - prev.x) / l
         dirY = (tip.y - prev.y) / l
     tgt <- minimumBy (comparing (distSq tip)) worldNodes
-    let sd = min (tgt.hw / (abs dirX + 0.0001)) (tgt.hh / (abs dirY + 0.0001))
+    let surf = min (tgt.hw / (abs dirX + 0.0001)) (tgt.hh / (abs dirY + 0.0001))
+        sd = surf + arrowLen + unitHalfH * 0.3
     pure [ tip.x - dirX * sd, tip.y - dirY * sd, dirX, dirY ]
   distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
 
