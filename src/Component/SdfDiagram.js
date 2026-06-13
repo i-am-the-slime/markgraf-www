@@ -273,7 +273,7 @@ export const frag = `
 
     // ---- screen-space chip overlay (pill + typewriter glyphs) ----------
     // Chips sit in front of edges (EDGE_HZ) but behind block front faces (DEPTH).
-    if(hitZ <= EDGE_HZ){
+    if(hitZ <= DEPTH){
     vec2 fc = gl_FragCoord.xy;
     for(int i=0;i<MAXTOK;i++){
       if(i>=uChipCount) break;
