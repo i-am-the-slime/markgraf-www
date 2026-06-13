@@ -784,9 +784,16 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
           false, Just _ -> stop
           _, _ -> pure unit
         cleanupListeners <- setupCameraListeners canvasEl
-          (\deltaY -> do
+          (\deltaX deltaY ctrlKey -> do
             camZ <- readRef camZRef
-            writeRef camZRef (clamp 2.0 20.0 (camZ * pow 1.001 deltaY)))
+            { resW, resH } <- readRef sizeRef
+            if ctrlKey > 0.5
+              then writeRef camZRef (clamp 2.0 20.0 (camZ * pow 1.001 deltaY))
+              else do
+                panX <- readRef panXRef
+                panY <- readRef panYRef
+                writeRef panXRef (panX + deltaX * camZ / resH)
+                writeRef panYRef (panY - deltaY * camZ / resH))
           (\x y -> writeRef dragRef (Just { x, y }))
           (\x y _buttons shift -> do
             readRef dragRef >>= case _ of
@@ -847,7 +854,7 @@ foreign import frag :: String
 
 setupCameraListeners
   :: CanvasElement
-  -> (Number -> Effect Unit)
+  -> (Number -> Number -> Number -> Effect Unit)
   -> (Number -> Number -> Effect Unit)
   -> (Number -> Number -> Number -> Number -> Effect Unit)
   -> (Number -> Number -> Effect Unit)
@@ -857,7 +864,7 @@ setupCameraListeners = runEffectFn5 setupCameraListenersImpl
 foreign import setupCameraListenersImpl
   :: EffectFn5
        CanvasElement
-       (Number -> Effect Unit)
+       (Number -> Number -> Number -> Effect Unit)
        (Number -> Number -> Effect Unit)
        (Number -> Number -> Number -> Number -> Effect Unit)
        (Number -> Number -> Effect Unit)

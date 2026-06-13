@@ -323,7 +323,7 @@ export const frag = `
 // Attach wheel + pointer listeners to a canvas element; returns a cleanup thunk.
 // Logic stays in PureScript — this only plumbs raw event data to PS callbacks.
 export const setupCameraListenersImpl = (el, onWheel, onDown, onMove, onUp) => {
-  const wheel = e => { e.preventDefault(); onWheel(e.deltaY)() }
+  const wheel = e => { e.preventDefault(); onWheel(e.deltaX)(e.deltaY)(e.ctrlKey ? 1.0 : 0.0)() }
   const down  = e => { e.preventDefault(); onDown(e.clientX)(e.clientY)() }
   const move  = e => onMove(e.clientX)(e.clientY)(e.buttons)(e.shiftKey ? 1.0 : 0.0)()
   const up    = e => onUp(e.clientX)(e.clientY)()
