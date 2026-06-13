@@ -260,7 +260,12 @@ export const frag = `
         float bandW = bandH * uLabelAspect;
         vec2 tc = vec2(q.x/bandW + 0.5, q.y/bandH + 0.5);
         float inCell = step(0.0,tc.x)*step(tc.x,1.0)*step(0.0,tc.y)*step(tc.y,1.0);
-        float front = smoothstep(-DEPTH*0.2, DEPTH*0.35, q.z);  // front / top-front faces
+        // Gate on the surface normal in the rotated frame so the label only
+        // appears where the face genuinely points toward the camera.
+        vec3 n_pw = n;
+        n_pw.xz = rot(uRotY) * n_pw.xz;
+        n_pw.yz = rot(uTilt) * n_pw.yz;
+        float front = pow(max(0.0, n_pw.z), 2.0);
         float a = texture2D(uLabel, vec2(tc.x, rowV(nidx, tc.y, float(uNodeCount)))).a * inCell * front;
         col = mix(col, vec3(0.03,0.03,0.05), a);
       }
