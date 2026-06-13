@@ -25,6 +25,7 @@ export const frag = `
   uniform float uCamZ;           // camera distance from scene (default 12)
   uniform float uCamPanX;        // world-space pan offset X
   uniform float uCamPanY;        // world-space pan offset Y
+  uniform float uRotY;           // Y-axis orbit angle (right-drag)
 
   uniform sampler2D uGlyphAtlas; // per-glyph atlas (one ASCII char per cell)
   uniform int uChipCount;        // floating label chips this frame
@@ -149,6 +150,7 @@ export const frag = `
   // Each ball genie-merges with the nearest block (a generous blend that stretches
   // into a thinning, pinching neck) and fuses with the edge it rides.
   float map(vec3 p){
+    p.xz = rot(uRotY) * p.xz;
     p.yz = rot(uTilt) * p.yz;
     float nodes = mapNode(p);
     float edges = mapEdge(p);
@@ -202,7 +204,7 @@ export const frag = `
     if(hit){
       vec3 n = calcNormal(p);
       // classify the hit (node vs edge) and recover the winning node
-      vec3 pw = p; pw.yz = rot(uTilt) * pw.yz;
+      vec3 pw = p; pw.xz = rot(uRotY) * pw.xz; pw.yz = rot(uTilt) * pw.yz;
       hitZ = pw.z;
       float nshape, nidx; vec4 nrect;
       float dn = mapNodeFull(pw, nshape, nidx, nrect); float de = mapEdge(pw);

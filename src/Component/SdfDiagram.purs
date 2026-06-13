@@ -536,14 +536,14 @@ invSqrt2 :: Number
 invSqrt2 = 0.7071067811865476
 
 -- Project a world-space node to an approximate screen-space obstacle rect.
-nodeScreenRect :: Number -> Number -> Number -> Number -> Number -> Number -> WorldNode -> ChipObstacle
-nodeScreenRect tilt camZ panX panY resW resH n = { cx: sx, cy: sy, hw: shw, hh: shh }
+nodeScreenRect :: Camera -> Number -> Number -> WorldNode -> ChipObstacle
+nodeScreenRect cam resW resH n = { cx: sx, cy: sy, hw: shw, hh: shh }
   where
-  denom = n.y * sin tilt + camZ
-  sx = (n.x - panX) / denom * resH + 0.5 * resW
-  sy = (n.y * cos tilt - panY) / denom * resH + 0.5 * resH
+  denom = cam.camZ + n.y * sin cam.tilt + n.x * sin cam.rotY * cos cam.tilt
+  sx = (n.x * cos cam.rotY - cam.panX) / denom * resH + 0.5 * resW
+  sy = (n.y * cos cam.tilt - n.x * sin cam.rotY * sin cam.tilt - cam.panY) / denom * resH + 0.5 * resH
   shw = n.hw / denom * resH
-  shh = n.hh * cos tilt / denom * resH
+  shh = n.hh * cos cam.tilt / denom * resH
 
 resolveCollisions
   :: Array ChipObstacle
@@ -617,15 +617,18 @@ applyChipSpring dt prevSprings samples i (raw /\ resolved) = shiftLayout spr.ox 
   prev = fromMaybe { id, ox: tx, oy: ty, vx: 0.0, vy: 0.0 } (find (\sp -> sp.id == id) prevSprings)
   spr = springStep dt tx ty prev
 
+type Camera = { tilt :: Number, rotY :: Number, camZ :: Number, panX :: Number, panY :: Number }
+
 -- Project a world point to dpr-scaled screen px (y up, matching gl_FragCoord).
-project :: Number -> Number -> Number -> Number -> Number -> Number -> Point -> { x :: Number, y :: Number, r :: Number }
-project tilt camZ panX panY resW resH g =
-  { x: (g.x - panX) / denom * resH + 0.5 * resW
-  , y: (g.y * cos tilt - panY) / denom * resH + 0.5 * resH
+-- Applies Y rotation (xz plane) then X tilt (yz plane) to match the shader.
+project :: Camera -> Number -> Number -> Point -> { x :: Number, y :: Number, r :: Number }
+project cam resW resH g =
+  { x: (g.x * cos cam.rotY - cam.panX) / denom * resH + 0.5 * resW
+  , y: (g.y * cos cam.tilt - g.x * sin cam.rotY * sin cam.tilt - cam.panY) / denom * resH + 0.5 * resH
   , r: ballRadius / denom * resH
   }
   where
-  denom = g.y * sin tilt + camZ
+  denom = cam.camZ + g.y * sin cam.tilt + g.x * sin cam.rotY * cos cam.tilt
 
 -- ---------------------------------------------------------------------------
 -- The component: bind a GL context to the canvas, push the static scene as
@@ -644,6 +647,7 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
   camZRef <- useRef 12.0
   panXRef <- useRef 0.0
   panYRef <- useRef 0.0
+  rotYRef <- useRef 0.0
   tiltOffRef <- useRef 0.0
   dragRef <- useRef (Nothing :: Maybe { x :: Number, y :: Number })
   sizeRef <- useRef { resW: 0.0, resH: 0.0 }
@@ -684,6 +688,7 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
         uCamZ <- GL.uniformLocation gl program "uCamZ"
         uCamPanX <- GL.uniformLocation gl program "uCamPanX"
         uCamPanY <- GL.uniformLocation gl program "uCamPanY"
+        uRotY <- GL.uniformLocation gl program "uRotY"
         GL.uniform1i gl uLabel 0
         GL.uniform1i gl uGlyphAtlas 1
         GL.uniform1f gl uLabelAspect (atlasW / atlasRow)
@@ -723,17 +728,19 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
             camZ <- readRef camZRef
             panX <- readRef panXRef
             panY <- readRef panYRef
+            rotY <- readRef rotYRef
             tiltOff <- readRef tiltOffRef
             when (size.width > 0.0) do
               let
                 resW = size.width * dpr
                 resH = size.height * dpr
                 tilt = idleTilt + sin (now' * 0.4) * 0.13 + tiltOff
+                cam = { tilt, rotY, camZ, panX, panY }
                 samples = sampleFlows (loopTime now')
                 fontPx = clamp 14.0 40.0 (resH * 0.02)
-                proj s = project tilt camZ panX panY resW resH { x: s.x, y: s.y }
+                proj s = project cam resW resH { x: s.x, y: s.y }
                 rawLayouts = (\s -> layoutChip advances fontPx (proj s) s.motionT s.labels) <$> samples
-                resolvedLayouts = resolveCollisions (nodeScreenRect tilt camZ panX panY resW resH <$> worldNodes) rawLayouts
+                resolvedLayouts = resolveCollisions (nodeScreenRect cam resW resH <$> worldNodes) rawLayouts
                 sprung = mapWithIndex (applyChipSpring acc springs samples) (zipWith (/\) rawLayouts resolvedLayouts)
                 chips = (\(l /\ _) -> l) <$> sprung
                 newSprings = (\(_ /\ sp) -> sp) <$> sprung
@@ -748,6 +755,7 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
               GL.uniform1f gl uCamZ camZ
               GL.uniform1f gl uCamPanX panX
               GL.uniform1f gl uCamPanY panY
+              GL.uniform1f gl uRotY rotY
               GL.uniform1i gl uTokCount (length samples)
               GL.uniform2fv gl uTokPos (concatMap (\s -> [ s.x, s.y ]) samples)
               GL.uniform1fv gl uTokGlow (_.glow <$> samples)
@@ -793,6 +801,10 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
                   then do
                     tiltOff <- readRef tiltOffRef
                     writeRef tiltOffRef (clamp (-0.8) 0.8 (tiltOff + dy * 0.005))
+                  else if _buttons >= 1.5
+                  then do
+                    rotY <- readRef rotYRef
+                    writeRef rotYRef (rotY + dx * 0.005)
                   else do
                     panX <- readRef panXRef
                     panY <- readRef panYRef
