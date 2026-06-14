@@ -13,7 +13,8 @@ import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (round, toNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (Nullable, null, toMaybe)
-import Data.Number (cos, floor, pow, sin, sqrt)
+import Control.Alternative (guard)
+import Data.Number (abs, cos, floor, pow, sin, sqrt)
 import Effect.Uncurried (EffectFn5, runEffectFn5)
 import Data.String.CodeUnits as SCU
 import Data.Traversable (for)
@@ -167,37 +168,50 @@ extendToCenters pts = fromMaybe pts do
   where
   distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
 
--- markgraf's own routed, silhouette-trimmed edge polylines, mapped to world.
--- These already stop at the node surfaces (unlike the token paths, which extend
--- to the centres), so the arrowhead lands on the surface and the line stops a
--- full arrowLen short of it.
+-- markgraf's own routed edge polylines, mapped to world. The endpoints land at
+-- the node centres, so both the arrow and the drawn line are placed relative to
+-- the target node's surface below (see edgeApproach).
 worldEdges :: Array (Array Point)
 worldEdges = (map toWorldPt <<< _.points) <$> scene.edges
 
--- Each polyline's capsule segments, with the final point pulled back by arrowLen
--- so the line stops where the arrowhead begins.
+-- The target end of an edge: the node it arrives at, the unit direction of its
+-- final segment, and surf — the centre-to-surface distance along that direction.
+type Approach = { cx :: Number, cy :: Number, dirX :: Number, dirY :: Number, surf :: Number }
+
+edgeApproach :: Array Point -> Maybe Approach
+edgeApproach pts = do
+  prev /\ tip <- withTail pts (/\)
+  let l = len prev tip
+  guard (l > 0.0001)
+  tgt <- minimumBy (comparing (distSq tip)) worldNodes
+  let dirX = (tip.x - prev.x) / l
+      dirY = (tip.y - prev.y) / l
+  pure { cx: tgt.x, cy: tgt.y, dirX, dirY, surf: min (tgt.hw / da dirX) (tgt.hh / da dirY) }
+  where
+  da v = abs v + 0.0001
+  distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
+
+-- Each polyline's capsule segments. The final point is moved to the arrowhead's
+-- base — surf + arrowLen back from the target centre along the approach.
 edgeSegFlat :: Array Number
 edgeSegFlat = concatMap (segments <<< shortenLast) worldEdges
   where
   segments pts = concat (zipWith (\p q -> [ p.x, p.y, q.x, q.y ]) pts (drop 1 pts))
 
--- One arrowhead per edge: (tipX, tipY, dirX, dirY). The tip sits at the polyline's
--- end (already on the node surface) and points along its final segment.
+-- One arrowhead per edge: (tipX, tipY, dirX, dirY), tip on the node surface.
 arrowFlat :: Array Number
 arrowFlat = concatMap arrow worldEdges
   where
-  arrow pts = fromMaybe [] (withTail pts \prev tip -> [ tip.x, tip.y, (tip.x - prev.x) / len prev tip, (tip.y - prev.y) / len prev tip ])
+  arrow pts = fromMaybe [] (place <$> edgeApproach pts)
+  place a = [ a.cx - a.dirX * a.surf, a.cy - a.dirY * a.surf, a.dirX, a.dirY ]
 
--- Pull the final point back by a full arrowLen so the line stops at the
--- arrowhead's base rather than running on under it to the tip.
+-- Move the final point to the arrowhead base: surf + arrowLen back from centre.
 shortenLast :: Array Point -> Array Point
-shortenLast pts = fromMaybe pts (withTail pts \prev tip -> snoc (fromMaybe [] (_.init <$> unsnoc pts)) (pullBack prev tip))
-  where
-  pullBack prev tip =
-    { x: prev.x + (tip.x - prev.x) * k prev tip
-    , y: prev.y + (tip.y - prev.y) * k prev tip
-    }
-  k prev tip = max 0.0 (len prev tip - arrowLen) / len prev tip
+shortenLast pts = fromMaybe pts do
+  a <- edgeApproach pts
+  { init } <- unsnoc pts
+  let back = a.surf + arrowLen
+  pure (snoc init { x: a.cx - a.dirX * back, y: a.cy - a.dirY * back })
 
 len :: Point -> Point -> Number
 len p q = sqrt ((q.x - p.x) * (q.x - p.x) + (q.y - p.y) * (q.y - p.y))
