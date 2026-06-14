@@ -139,13 +139,17 @@ export const frag = `
     float d2 = max(max(side - ARROW_HW*tFrac, along), -along - ARROW_LEN) - uUnit*0.05;
     return extr(d2, p.z, uUnit*0.28);
   }
-  float mapEdge(vec3 p){
+  float mapLines(vec3 p){
     float d = 1e9;
     for(int i=0;i<MAXE;i++){
       if(i>=uEdgeCount) break;
       vec4 e = uEdge[i];
       d = min(d, extr(sdSeg2(p.xy, e.xy, e.zw, EDGE_R), p.z, EDGE_HZ));
     }
+    return d;
+  }
+  float mapArrows(vec3 p){
+    float d = 1e9;
     for(int i=0;i<MAXA;i++){
       if(i>=uArrowCount) break;
       vec4 ar = uArrow[i];
@@ -153,6 +157,7 @@ export const frag = `
     }
     return d;
   }
+  float mapEdge(vec3 p){ return min(mapLines(p), mapArrows(p)); }
 
   // A travelling ball centred at q's origin, swollen a little by its overlap. As
   // it straddles a node surface (glow ~0.5) it stretches into a teardrop reaching
@@ -175,13 +180,19 @@ export const frag = `
     p.xz = rot(uRotY) * p.xz;
     p.yz = rot(uTilt) * p.yz;
     float nodes = mapNode(p);
-    float edges = mapEdge(p);
-    float d = min(nodes, edges);
+    float lines = mapLines(p);
+    float arrows = mapArrows(p);
+    float d = min(nodes, min(lines, arrows));
     for(int i=0;i<MAXTOK;i++){
       if(i>=uTokCount) break;
-      float tok = tokenBall(p - vec3(uTokPos[i], 0.0), uTokGlow[i], uTokNode[i] - uTokPos[i]);
+      vec3 c = p - vec3(uTokPos[i], 0.0);
+      float tok = tokenBall(c, uTokGlow[i], uTokNode[i] - uTokPos[i]);
       d = min(d, smin(nodes, tok, uUnit*1.4));
-      d = min(d, smin(edges, tok, uUnit*0.7));
+      d = min(d, smin(lines, tok, uUnit*0.7));
+      // the arrowhead is inflated by the ball's nearness, so instead of being
+      // overrun it swells into a bulgy blob and merges with the ball.
+      float prox = 1.0 - smoothstep(0.0, uUnit*1.9, length(c));
+      d = min(d, smin(arrows - uUnit*0.55*prox, tok, uUnit*1.1));
     }
     return d;
   }
