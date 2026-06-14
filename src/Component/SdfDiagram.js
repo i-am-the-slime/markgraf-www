@@ -166,7 +166,7 @@ export const frag = `
   // The uniform-array indexing must happen at the call site (a loop symbol), never
   // via a passed-in index — WebGL1 forbids the latter.
   float tokenBall(vec3 q, float glow, vec2 toNode){
-    float r = uUnit*0.46 * (1.0 + glow*0.6);
+    float r = uUnit*0.38 * (1.0 + glow*0.6);
     float s = 4.0*glow*(1.0 - glow);            // 0 at the ends, 1 mid-crossing
     if(s < 0.02) return sdSphere(q, r);
     vec3 dir = vec3(normalize(toNode + vec2(1e-5, 0.0)), 0.0);
