@@ -198,19 +198,25 @@ edgeSegFlat = concatMap (segments <<< shortenLast) worldEdges
   where
   segments pts = concat (zipWith (\p q -> [ p.x, p.y, q.x, q.y ]) pts (drop 1 pts))
 
--- One arrowhead per edge: (tipX, tipY, dirX, dirY), tip on the node surface.
+-- A little gap between the node surface and the arrow tip so the head reads as
+-- pointing AT the block rather than embedded in it.
+arrowClear :: Number
+arrowClear = unitHalfH * 0.22
+
+-- One arrowhead per edge: (tipX, tipY, dirX, dirY), tip just off the surface.
 arrowFlat :: Array Number
 arrowFlat = concatMap arrow worldEdges
   where
   arrow pts = fromMaybe [] (place <$> edgeApproach pts)
-  place a = [ a.cx - a.dirX * a.surf, a.cy - a.dirY * a.surf, a.dirX, a.dirY ]
+  place a = [ a.cx - a.dirX * back, a.cy - a.dirY * back, a.dirX, a.dirY ]
+    where back = a.surf + arrowClear
 
--- Move the final point to the arrowhead base: surf + arrowLen back from centre.
+-- Move the final point to the arrowhead base: surf + clearance + arrowLen.
 shortenLast :: Array Point -> Array Point
 shortenLast pts = fromMaybe pts do
   a <- edgeApproach pts
   { init } <- unsnoc pts
-  let back = a.surf + arrowLen
+  let back = a.surf + arrowClear + arrowLen
   pure (snoc init { x: a.cx - a.dirX * back, y: a.cy - a.dirY * back })
 
 len :: Point -> Point -> Number
