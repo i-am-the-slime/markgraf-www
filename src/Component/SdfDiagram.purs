@@ -191,13 +191,13 @@ edgeApproach pts = do
   where
   da v = abs v + 0.0001
   distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
-  -- A rounded rectangle's sdRoundBox surface sits its rounding radius OUTSIDE the
-  -- box face; cylinder/diamond/ellipse touch the box at the face midpoints, so 0.
+  -- Only the rounded rectangle (and cloud's rounded base) sit their rounding radius
+  -- OUTSIDE the box face; cylinder/parallelogram/diamond/ellipse/document touch the
+  -- box at the face midpoints, so no extra offset.
   rounding n = case n.shape of
-    1.0 -> 0.0
-    3.0 -> 0.0
-    4.0 -> 0.0
-    _ -> min n.hw n.hh * 0.18
+    0.0 -> min n.hw n.hh * 0.18
+    6.0 -> min n.hw n.hh * 0.18
+    _ -> 0.0
 
 -- Each polyline's capsule segments. The final point is moved to the arrowhead's
 -- base — surf + arrowLen back from the target centre along the approach.

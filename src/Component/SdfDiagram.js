@@ -65,6 +65,25 @@ export const frag = `
     float d = length(p - 0.5*b*vec2(1.0-h, 1.0+h));
     return d * sign(p.x*b.y + p.y*b.x - b.x*b.y);
   }
+  // Parallelogram: a box of half-size (wi,he) sheared horizontally by sk. (IQ.)
+  float sdParallelogram2(vec2 p, float wi, float he, float sk){
+    vec2 e = vec2(sk, he);
+    p = (p.y < 0.0) ? -p : p;
+    vec2 w = p - e; w.x -= clamp(w.x, -wi, wi);
+    vec2 d = vec2(dot(w,w), -w.y);
+    float s = p.x*e.y - p.y*e.x;
+    p = (s < 0.0) ? -p : p;
+    vec2 v = p - vec2(wi, 0.0); v -= e*clamp(dot(v,e)/dot(e,e), -1.0, 1.0);
+    d = min(d, vec2(dot(v,v), wi*he - abs(s)));
+    return sqrt(d.x)*sign(-d.y);
+  }
+  // Document: a rectangle whose bottom edge droops in a single wave (a page).
+  float sdDocument2(vec2 p, vec2 he){
+    float amp = he.y*0.16;
+    float waveY = -he.y + amp + amp*cos(p.x/he.x*3.14159265);
+    float box = sdBox2(p, he);
+    return max(box, waveY - p.y);   // carve everything below the wave
+  }
   // extrude a 2D distance d2 into a z-slab of half-thickness hz
   float extr(float d2, float pz, float hz){ vec2 w=vec2(d2, abs(pz)-hz); return min(max(w.x,w.y),0.)+length(max(w,0.)); }
   float smin(float a,float b,float k){ float h=clamp(0.5+0.5*(b-a)/k,0.,1.); return mix(b,a,h)-k*h*(1.-h); }
@@ -79,8 +98,10 @@ export const frag = `
       float bot  = sdEll2(q.xy - vec2(0.0, -bodyH), vec2(he.x, capH));
       return extr(min(min(body, top), bot), q.z, DEPTH);
     }
+    if(sh==2) return extr(sdParallelogram2(q.xy, he.x*0.78, he.y, he.y*0.5), q.z, DEPTH); // Parallelogram
     if(sh==3) return extr(sdRhombus2(q.xy, he), q.z, DEPTH);       // Diamond
     if(sh==4) return extr(sdEll2(q.xy, he), q.z, DEPTH);            // Ellipse
+    if(sh==5) return extr(sdDocument2(q.xy, he), q.z, DEPTH);       // Document
     if(sh==6){ // Cloud: a smooth union of lobes over a flat base
       float r = he.y;
       float d = sdSphere(q - vec3(-he.x*0.55, 0.0, 0.0), r*0.78);
@@ -210,6 +231,8 @@ export const frag = `
     if(sh==6) return vec3(0.62,0.63,0.66);  // cloud
     if(sh==3) return vec3(0.55,0.54,0.53);  // diamond
     if(sh==4) return vec3(0.52,0.56,0.55);  // ellipse
+    if(sh==2) return vec3(0.58,0.55,0.60);  // parallelogram
+    if(sh==5) return vec3(0.60,0.58,0.54);  // document
     return vec3(0.56,0.56,0.59);            // rectangle
   }
 
