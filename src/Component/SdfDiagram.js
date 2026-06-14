@@ -187,9 +187,14 @@ export const frag = `
       if(i>=uTokCount) break;
       vec3 c = p - vec3(uTokPos[i], 0.0);
       float tok = tokenBall(c, uTokGlow[i], uTokNode[i] - uTokPos[i]);
-      // The node and arrow simply bulge outward where the ball is near it.
+      // Local proximity to the ball (drives the arrowhead bulge at the entry).
       float prox = 1.0 - smoothstep(0.0, uUnit*2.2, length(c));
-      d = min(d, smin(nodes - uUnit*0.4*prox, tok, uUnit*0.6));
+      // The whole node the ball is inside puffs up by its overlap (glow), so every
+      // face swells — including the x faces the ball never gets near, since edges
+      // arrive top/bottom. Spread across the node, not just the entry point.
+      float nodeProx = 1.0 - smoothstep(uUnit*1.5, uUnit*4.0, length(p - vec3(uTokNode[i], 0.0)));
+      float nodeBulge = uUnit*0.4 * max(prox, uTokGlow[i]*nodeProx);
+      d = min(d, smin(nodes - nodeBulge, tok, uUnit*0.6));
       d = min(d, smin(lines, tok, uUnit*0.7));
       d = min(d, smin(arrows - uUnit*0.55*prox, tok, uUnit*1.1));
     }
