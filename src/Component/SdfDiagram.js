@@ -193,7 +193,7 @@ export const frag = `
       // face swells — including the x faces the ball never gets near, since edges
       // arrive top/bottom. Spread across the node, not just the entry point.
       float nodeProx = 1.0 - smoothstep(uUnit*1.5, uUnit*4.0, length(p - vec3(uTokNode[i], 0.0)));
-      float nodeBulge = uUnit*0.4 * max(prox, uTokGlow[i]*nodeProx);
+      float nodeBulge = uUnit*0.2 * max(prox, uTokGlow[i]*nodeProx);
       d = min(d, smin(nodes - nodeBulge, tok, uUnit*0.6));
       d = min(d, smin(lines, tok, uUnit*0.7));
       d = min(d, smin(arrows - uUnit*0.55*prox, tok, uUnit*1.1));
