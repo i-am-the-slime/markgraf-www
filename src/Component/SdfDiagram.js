@@ -191,8 +191,8 @@ export const frag = `
       // outward a little in x/y where it enters — as if air were blown in. The
       // proximity is gated hard in z so the bulge stays a thin band at the ball's
       // midplane rather than ballooning the full-depth box toward the camera.
-      float proxXY = 1.0 - smoothstep(0.0, uUnit*1.9, length(vec3(c.xy, c.z*5.0)));
-      d = min(d, smin(nodes - uUnit*0.28*proxXY, tok, uUnit*0.6));
+      float proxXY = 1.0 - smoothstep(0.0, uUnit*1.9, length(vec3(c.xy, c.z*2.3)));
+      d = min(d, smin(nodes - uUnit*0.34*proxXY, tok, uUnit*0.6));
       d = min(d, smin(lines, tok, uUnit*0.7));
       // The small arrowhead swells more, bulgy, as the ball passes through.
       float prox = 1.0 - smoothstep(0.0, uUnit*1.9, length(vec3(c.xy, c.z*3.0)));
