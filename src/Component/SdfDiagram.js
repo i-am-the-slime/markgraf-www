@@ -189,7 +189,10 @@ export const frag = `
       float tok = tokenBall(c, uTokGlow[i], uTokNode[i] - uTokPos[i]);
       // proximity to this ball, so nodes and arrows both swell to meet it rather
       // than being overrun — a bulgy blob that merges with the ball as it's eaten.
-      float prox = 1.0 - smoothstep(0.0, uUnit*1.9, length(c));
+      // z is weighted up so the swell stays in the plane the ball travels, rather
+      // than ballooning the full-depth box toward the camera.
+      vec3 cz = vec3(c.xy, c.z*3.0);
+      float prox = 1.0 - smoothstep(0.0, uUnit*1.9, length(cz));
       d = min(d, smin(nodes - uUnit*0.45*prox, tok, uUnit*1.4));
       d = min(d, smin(lines, tok, uUnit*0.7));
       d = min(d, smin(arrows - uUnit*0.55*prox, tok, uUnit*1.1));
