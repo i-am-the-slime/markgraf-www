@@ -186,10 +186,18 @@ edgeApproach pts = do
   tgt <- minimumBy (comparing (distSq tip)) worldNodes
   let dirX = (tip.x - prev.x) / l
       dirY = (tip.y - prev.y) / l
-  pure { cx: tgt.x, cy: tgt.y, dirX, dirY, surf: min (tgt.hw / da dirX) (tgt.hh / da dirY) }
+      box = min (tgt.hw / da dirX) (tgt.hh / da dirY)
+  pure { cx: tgt.x, cy: tgt.y, dirX, dirY, surf: box + rounding tgt }
   where
   da v = abs v + 0.0001
   distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
+  -- A rounded rectangle's sdRoundBox surface sits its rounding radius OUTSIDE the
+  -- box face; cylinder/diamond/ellipse touch the box at the face midpoints, so 0.
+  rounding n = case n.shape of
+    1.0 -> 0.0
+    3.0 -> 0.0
+    4.0 -> 0.0
+    _ -> min n.hw n.hh * 0.18
 
 -- Each polyline's capsule segments. The final point is moved to the arrowhead's
 -- base — surf + arrowLen back from the target centre along the approach.
