@@ -2,7 +2,7 @@ module Component.SdfDiagram (sdfDiagram) where
 
 import Prelude
 
-import Data.Array (catMaybes, concat, concatMap, drop, filter, find, foldl, last, length, range, snoc, take, uncons, unsnoc, zipWith, (!!))
+import Data.Array (catMaybes, concat, concatMap, drop, filter, find, foldl, last, length, mapMaybe, range, snoc, take, uncons, unsnoc, zipWith, (!!))
 import Data.Array (null) as Array
 import Data.Char (fromCharCode, toCharCode)
 import Data.Array (cons) as Array
@@ -212,13 +212,27 @@ edgeSegFlat = concatMap (segments <<< shortenLast) worldEdges
 arrowClear :: Number
 arrowClear = unitHalfH * 0.05
 
--- One arrowhead per edge: (tipX, tipY, dirX, dirY), tip just off the surface.
-arrowFlat :: Array Number
-arrowFlat = concatMap arrow worldEdges
+-- One arrowhead per edge: its resting tip (just off the surface), direction, and
+-- the target node centre — kept so the tip can ride that node's bulge each frame.
+type ArrowGeom = { tipX :: Number, tipY :: Number, dirX :: Number, dirY :: Number, cx :: Number, cy :: Number }
+
+arrowData :: Array ArrowGeom
+arrowData = mapMaybe (map geom <<< edgeApproach) worldEdges
   where
-  arrow pts = fromMaybe [] (place <$> edgeApproach pts)
-  place a = [ a.cx - a.dirX * back, a.cy - a.dirY * back, a.dirX, a.dirY ]
+  geom a = { tipX: a.cx - a.dirX * back, tipY: a.cy - a.dirY * back, dirX: a.dirX, dirY: a.dirY, cx: a.cx, cy: a.cy }
     where back = a.surf + arrowClear
+
+-- The flat (tipX, tipY, dirX, dirY) uniform for this frame: each arrow is pushed
+-- further out along its approach by its target node's bulge, so as the node swells
+-- to swallow a ball the arrowhead rides outward with the surface.
+arrowFlatFor :: Array Sample -> Array Number
+arrowFlatFor samples = concatMap one arrowData
+  where
+  one a = [ a.tipX - a.dirX * push a, a.tipY - a.dirY * push a, a.dirX, a.dirY ]
+  push a = unitHalfH * 0.2 * glowAt a
+  glowAt a = foldl (\acc s -> if inNode s a then max acc s.glow else acc) 0.0 samples
+  inNode s a = sq (s.nx - a.cx) + sq (s.ny - a.cy) < sq (unitHalfH * 0.6)
+  sq x = x * x
 
 -- Move the final point to the arrowhead base: surf + clearance + arrowLen.
 shortenLast :: Array Point -> Array Point
@@ -723,11 +737,11 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
 
         GL.uniform1i gl uNodeCount (length nodeList)
         GL.uniform1i gl uEdgeCount (length edgeSegFlat / 4)
-        GL.uniform1i gl uArrowCount (length arrowFlat / 4)
+        GL.uniform1i gl uArrowCount (length arrowData)
         GL.uniform4fv gl uNodeRect nodeRectFlat
         GL.uniform1fv gl uNodeShape nodeShapeFlat
         GL.uniform4fv gl uEdge edgeSegFlat
-        GL.uniform4fv gl uArrow arrowFlat
+        -- uArrow is uploaded per frame in drawScene so arrows can ride node bulges.
 
         win <- window
         let
@@ -783,6 +797,7 @@ diagramComponent = unsafePerformEffect $ reactComponent "SdfDiagram" \_ -> Hooks
               GL.uniform2fv gl uTokPos (concatMap (\s -> [ s.x, s.y ]) samples)
               GL.uniform1fv gl uTokGlow (_.glow <$> samples)
               GL.uniform2fv gl uTokNode (concatMap (\s -> [ s.nx, s.ny ]) samples)
+              GL.uniform4fv gl uArrow (arrowFlatFor samples)
               GL.uniform1i gl uChipCount (length chips)
               GL.uniform4fv gl uChipRect (concatMap (\c -> [ c.chip.cx, c.chip.cy, c.chip.hw, c.chip.hh ]) chips)
               GL.uniform2fv gl uChipDot (concatMap (\c -> [ c.chip.dotX, c.chip.dotY ]) chips)
