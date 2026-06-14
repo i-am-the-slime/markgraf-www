@@ -187,15 +187,10 @@ export const frag = `
       if(i>=uTokCount) break;
       vec3 c = p - vec3(uTokPos[i], 0.0);
       float tok = tokenBall(c, uTokGlow[i], uTokNode[i] - uTokPos[i]);
-      // The ball is squashed into the node (tight smin), but the face still swells
-      // outward a little in x/y where it enters — as if air were blown in. The
-      // proximity is gated hard in z so the bulge stays a thin band at the ball's
-      // midplane rather than ballooning the full-depth box toward the camera.
-      float proxXY = 1.0 - smoothstep(0.0, uUnit*1.9, length(vec3(c.xy, c.z*2.3)));
-      d = min(d, smin(nodes - uUnit*0.34*proxXY, tok, uUnit*0.6));
+      // The node and arrow simply bulge outward where the ball is near it.
+      float prox = 1.0 - smoothstep(0.0, uUnit*2.2, length(c));
+      d = min(d, smin(nodes - uUnit*0.4*prox, tok, uUnit*0.6));
       d = min(d, smin(lines, tok, uUnit*0.7));
-      // The small arrowhead swells more, bulgy, as the ball passes through.
-      float prox = 1.0 - smoothstep(0.0, uUnit*1.9, length(vec3(c.xy, c.z*3.0)));
       d = min(d, smin(arrows - uUnit*0.55*prox, tok, uUnit*1.1));
     }
     return d;
