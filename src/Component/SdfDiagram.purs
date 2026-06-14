@@ -198,10 +198,11 @@ edgeSegFlat = concatMap (segments <<< shortenLast) worldEdges
   where
   segments pts = concat (zipWith (\p q -> [ p.x, p.y, q.x, q.y ]) pts (drop 1 pts))
 
--- A little gap between the node surface and the arrow tip so the head reads as
--- pointing AT the block rather than embedded in it.
+-- The shader rounds the arrowhead by uUnit*0.05, so its visible apex sticks out
+-- that far past the tip point. Offsetting the tip by exactly that lands the
+-- visible apex right on the node surface — touching, with no floating gap.
 arrowClear :: Number
-arrowClear = unitHalfH * 0.22
+arrowClear = unitHalfH * 0.05
 
 -- One arrowhead per edge: (tipX, tipY, dirX, dirY), tip just off the surface.
 arrowFlat :: Array Number
