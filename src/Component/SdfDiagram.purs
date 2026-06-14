@@ -13,8 +13,7 @@ import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (round, toNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (Nullable, null, toMaybe)
-import Control.Alternative (guard)
-import Data.Number (abs, cos, floor, pow, sin, sqrt)
+import Data.Number (cos, floor, pow, sin, sqrt)
 import Effect.Uncurried (EffectFn5, runEffectFn5)
 import Data.String.CodeUnits as SCU
 import Data.Traversable (for)
@@ -169,8 +168,11 @@ extendToCenters pts = fromMaybe pts do
   distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
 
 -- markgraf's own routed, silhouette-trimmed edge polylines, mapped to world.
+-- These already stop at the node surfaces (unlike the token paths, which extend
+-- to the centres), so the arrowhead lands on the surface and the line stops a
+-- full arrowLen short of it.
 worldEdges :: Array (Array Point)
-worldEdges = (extendToCenters <<< map toWorldPt <<< _.points) <$> scene.edges
+worldEdges = (map toWorldPt <<< _.points) <$> scene.edges
 
 -- Each polyline's capsule segments, with the final point pulled back by arrowLen
 -- so the line stops where the arrowhead begins.
@@ -179,27 +181,15 @@ edgeSegFlat = concatMap (segments <<< shortenLast) worldEdges
   where
   segments pts = concat (zipWith (\p q -> [ p.x, p.y, q.x, q.y ]) pts (drop 1 pts))
 
--- One arrowhead per edge: (tipX, tipY, dirX, dirY).
--- The tip is pulled back from the node centre to the node surface so the
--- arrowhead lands flush rather than embedding itself inside the block.
+-- One arrowhead per edge: (tipX, tipY, dirX, dirY). The tip sits at the polyline's
+-- end (already on the node surface) and points along its final segment.
 arrowFlat :: Array Number
 arrowFlat = concatMap arrow worldEdges
   where
-  arrow pts = fromMaybe [] do
-    prev /\ tip <- withTail pts (/\)
-    let l = len prev tip
-    guard (l > 0.0001)
-    let dirX = (tip.x - prev.x) / l
-        dirY = (tip.y - prev.y) / l
-    tgt <- minimumBy (comparing (distSq tip)) worldNodes
-    let surf = min (tgt.hw / (abs dirX + 0.0001)) (tgt.hh / (abs dirY + 0.0001))
-        sd = surf + unitHalfH * 0.22
-    pure [ tip.x - dirX * sd, tip.y - dirY * sd, dirX, dirY ]
-  distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
+  arrow pts = fromMaybe [] (withTail pts \prev tip -> [ tip.x, tip.y, (tip.x - prev.x) / len prev tip, (tip.y - prev.y) / len prev tip ])
 
--- Pull the final point back so the line stops at the arrowhead's base, not its
--- tip: that's the node surface (+ the same clearance arrowFlat uses) plus a full
--- arrowLen for the head itself.
+-- Pull the final point back by a full arrowLen so the line stops at the
+-- arrowhead's base rather than running on under it to the tip.
 shortenLast :: Array Point -> Array Point
 shortenLast pts = fromMaybe pts (withTail pts \prev tip -> snoc (fromMaybe [] (_.init <$> unsnoc pts)) (pullBack prev tip))
   where
@@ -207,16 +197,7 @@ shortenLast pts = fromMaybe pts (withTail pts \prev tip -> snoc (fromMaybe [] (_
     { x: prev.x + (tip.x - prev.x) * k prev tip
     , y: prev.y + (tip.y - prev.y) * k prev tip
     }
-  k prev tip = max 0.0 (len prev tip - backOff prev tip) / len prev tip
-  backOff prev tip = surf prev tip + unitHalfH * 0.22 + arrowLen
-  surf prev tip = fromMaybe arrowLen do
-    let l = len prev tip
-    guard (l > 0.0001)
-    let dirX = (tip.x - prev.x) / l
-        dirY = (tip.y - prev.y) / l
-    tgt <- minimumBy (comparing (distSq tip)) worldNodes
-    pure (min (tgt.hw / (abs dirX + 0.0001)) (tgt.hh / (abs dirY + 0.0001)))
-  distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
+  k prev tip = max 0.0 (len prev tip - arrowLen) / len prev tip
 
 len :: Point -> Point -> Number
 len p q = sqrt ((q.x - p.x) * (q.x - p.x) + (q.y - p.y) * (q.y - p.y))
