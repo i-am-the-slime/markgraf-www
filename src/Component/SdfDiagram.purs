@@ -197,6 +197,9 @@ arrowFlat = concatMap arrow worldEdges
     pure [ tip.x - dirX * sd, tip.y - dirY * sd, dirX, dirY ]
   distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
 
+-- Pull the final point back so the line stops at the arrowhead's base, not its
+-- tip: that's the node surface (+ the same clearance arrowFlat uses) plus a full
+-- arrowLen for the head itself.
 shortenLast :: Array Point -> Array Point
 shortenLast pts = fromMaybe pts (withTail pts \prev tip -> snoc (fromMaybe [] (_.init <$> unsnoc pts)) (pullBack prev tip))
   where
@@ -204,7 +207,16 @@ shortenLast pts = fromMaybe pts (withTail pts \prev tip -> snoc (fromMaybe [] (_
     { x: prev.x + (tip.x - prev.x) * k prev tip
     , y: prev.y + (tip.y - prev.y) * k prev tip
     }
-  k prev tip = max 0.0 (len prev tip - arrowLen) / len prev tip
+  k prev tip = max 0.0 (len prev tip - backOff prev tip) / len prev tip
+  backOff prev tip = surf prev tip + unitHalfH * 0.22 + arrowLen
+  surf prev tip = fromMaybe arrowLen do
+    let l = len prev tip
+    guard (l > 0.0001)
+    let dirX = (tip.x - prev.x) / l
+        dirY = (tip.y - prev.y) / l
+    tgt <- minimumBy (comparing (distSq tip)) worldNodes
+    pure (min (tgt.hw / (abs dirX + 0.0001)) (tgt.hh / (abs dirY + 0.0001)))
+  distSq p n = (p.x - n.x) * (p.x - n.x) + (p.y - n.y) * (p.y - n.y)
 
 len :: Point -> Point -> Number
 len p q = sqrt ((q.x - p.x) * (q.x - p.x) + (q.y - p.y) * (q.y - p.y))
