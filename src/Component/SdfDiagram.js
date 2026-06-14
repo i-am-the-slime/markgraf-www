@@ -187,11 +187,11 @@ export const frag = `
       if(i>=uTokCount) break;
       vec3 c = p - vec3(uTokPos[i], 0.0);
       float tok = tokenBall(c, uTokGlow[i], uTokNode[i] - uTokPos[i]);
-      d = min(d, smin(nodes, tok, uUnit*1.4));
-      d = min(d, smin(lines, tok, uUnit*0.7));
-      // the arrowhead is inflated by the ball's nearness, so instead of being
-      // overrun it swells into a bulgy blob and merges with the ball.
+      // proximity to this ball, so nodes and arrows both swell to meet it rather
+      // than being overrun — a bulgy blob that merges with the ball as it's eaten.
       float prox = 1.0 - smoothstep(0.0, uUnit*1.9, length(c));
+      d = min(d, smin(nodes - uUnit*0.45*prox, tok, uUnit*1.4));
+      d = min(d, smin(lines, tok, uUnit*0.7));
       d = min(d, smin(arrows - uUnit*0.55*prox, tok, uUnit*1.1));
     }
     return d;
