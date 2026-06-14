@@ -156,7 +156,7 @@ export const frag = `
 
   // A travelling ball centred at q's origin, swollen a little by its overlap. As
   // it straddles a node surface (glow ~0.5) it stretches into a teardrop reaching
-  // toward the node centre `toNode` — as if the block were swallowing it through
+  // toward the node centre (toNode) — as if the block were swallowing it through
   // the arrow tip — then rounds back to a sphere once fully inside (glow ~1).
   // The uniform-array indexing must happen at the call site (a loop symbol), never
   // via a passed-in index — WebGL1 forbids the latter.
