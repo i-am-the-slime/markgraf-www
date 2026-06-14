@@ -113,6 +113,20 @@ export const frag = `
     vec2 pa=p-a, ba=b-a; float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.);
     return length(pa-ba*h)-r;
   }
+  // Exact round-cone SDF (a capsule with a different radius at each end). Used to
+  // stretch a travelling ball into a teardrop without breaking the distance field
+  // the way a scaled sphere would. (Inigo Quilez.)
+  float sdRoundCone(vec3 p, vec3 a, vec3 b, float r1, float r2){
+    vec3 ba = b - a; float l2 = dot(ba,ba); float rr = r1 - r2;
+    float a2 = l2 - rr*rr; float il2 = 1.0/l2;
+    vec3 pa = p - a; float y = dot(pa,ba); float z = y - l2;
+    vec3 xp = pa*l2 - ba*y; float x2 = dot(xp,xp);
+    float y2 = y*y*l2; float z2 = z*z*l2;
+    float k = sign(rr)*rr*rr*x2;
+    if(sign(z)*a2*z2 > k) return sqrt(x2+z2)*il2 - r2;
+    if(sign(y)*a2*y2 < k) return sqrt(x2+y2)*il2 - r1;
+    return (sqrt(x2*a2*il2)+y*rr)*il2 - r1;
+  }
   // Extruded triangular arrowhead, tip at tip, pointing along unit dir.
   // Rounded and given real z-depth so it reads as a little volume that the ball
   // smooth-unions with cleanly, rather than a thin flat sliver.
@@ -140,11 +154,19 @@ export const frag = `
     return d;
   }
 
-  // A travelling ball centred at q's origin, swollen a little by its overlap. The
-  // uniform-array indexing must happen at the call site (a loop symbol), never via
-  // a passed-in index — WebGL1 forbids the latter.
-  float tokenBall(vec3 q, float glow){
-    return sdSphere(q, uUnit*0.46 * (1.0 + glow*0.6));
+  // A travelling ball centred at q's origin, swollen a little by its overlap. As
+  // it straddles a node surface (glow ~0.5) it stretches into a teardrop reaching
+  // toward the node centre `toNode` — as if the block were swallowing it through
+  // the arrow tip — then rounds back to a sphere once fully inside (glow ~1).
+  // The uniform-array indexing must happen at the call site (a loop symbol), never
+  // via a passed-in index — WebGL1 forbids the latter.
+  float tokenBall(vec3 q, float glow, vec2 toNode){
+    float r = uUnit*0.46 * (1.0 + glow*0.6);
+    float s = 4.0*glow*(1.0 - glow);            // 0 at the ends, 1 mid-crossing
+    if(s < 0.02) return sdSphere(q, r);
+    vec3 dir = vec3(normalize(toNode + vec2(1e-5, 0.0)), 0.0);
+    vec3 tipEnd = dir * (uUnit * 1.1 * s);      // far end reaches into the block
+    return sdRoundCone(q, vec3(0.0), tipEnd, r, r*0.32);
   }
   // The whole scene, after tilting the world about x so the slabs show depth.
   // Each ball genie-merges with the nearest block (a generous blend that stretches
@@ -157,7 +179,7 @@ export const frag = `
     float d = min(nodes, edges);
     for(int i=0;i<MAXTOK;i++){
       if(i>=uTokCount) break;
-      float tok = tokenBall(p - vec3(uTokPos[i], 0.0), uTokGlow[i]);
+      float tok = tokenBall(p - vec3(uTokPos[i], 0.0), uTokGlow[i], uTokNode[i] - uTokPos[i]);
       d = min(d, smin(nodes, tok, uUnit*1.4));
       d = min(d, smin(edges, tok, uUnit*0.7));
     }
@@ -275,7 +297,7 @@ export const frag = `
       float ti = 0.0;
       for(int i=0;i<MAXTOK;i++){
         if(i>=uTokCount) break;
-        ti = max(ti, 1.0 - smoothstep(-uUnit*0.2, uUnit*0.85, tokenBall(pw - vec3(uTokPos[i], 0.0), uTokGlow[i])));
+        ti = max(ti, 1.0 - smoothstep(-uUnit*0.2, uUnit*0.85, tokenBall(pw - vec3(uTokPos[i], 0.0), uTokGlow[i], uTokNode[i] - uTokPos[i])));
       }
       vec3 tokCol = vec3(1.0, 0.55, 0.18);
       col = mix(col, tokCol, ti);
