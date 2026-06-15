@@ -287,7 +287,7 @@ maxTokens :: Int
 maxTokens = 8
 
 ballRadius :: Number
-ballRadius = unitHalfH * 0.38
+ballRadius = unitHalfH * 0.30
 
 -- A token's 0..1 travel progress within its window, honouring the dwell at the
 -- source (holdPre) and the target (holdPost). Doubles as the carousel's
