@@ -217,7 +217,7 @@ export const frag = `
       float nodeBulge = uUnit*0.2 * max(prox, uTokGlow[i]*nodeProx);
       d = min(d, smin(nodes - nodeBulge, tok, uUnit*0.6));
       d = min(d, smin(lines, tok, uUnit*0.7));
-      d = min(d, smin(arrows - uUnit*0.28*prox, tok, uUnit*1.1));
+      d = min(d, smin(arrows - uUnit*0.12*prox, tok, uUnit*0.8));
     }
     return d;
   }
