@@ -43,115 +43,89 @@ type Example = { name :: String, source :: String }
 
 examples :: Array Example
 examples =
-  [ { name: "request"
+  [ { name: "dive"
+    , source:
+        """keyframe "system context" {
+  +node customer "Customer"
+  +node shop "Shop"
+  +node payments "Payments"
+  +edge customer shop
+  +edge shop payments
+  customer -> shop "places an order"
+  shop -> payments "takes payment"
+}
+
+keyframe "zoom into Shop" {
+  enter shop
+  exit
+}
+
+inside shop {
+  keyframe "the containers" {
+    +node web "Web App"
+    +node api "API"
+    +node db "Postgres"
+    +edge web api
+    +edge api db
+    web -> api "POST /orders"
+    api -> db "INSERT"
+  }
+
+  keyframe "zoom into the API" {
+    enter api
+    exit
+  }
+
+  inside api {
+    keyframe "the components" {
+      +node ctrl "Controller"
+      +node svc "Order Service"
+      +node repo "Repository"
+      +edge ctrl svc
+      +edge svc repo
+      ctrl -> svc "handle"
+      svc -> repo "save"
+    }
+  }
+}
+"""
+    }
+  , { name: "cache"
     , source:
         """keyframe setup {
-  +node client "Client"
-  +node api    "API"
-  +node db     "Database"
-  +edge client api
+  +node customer "Customer"
+  +node api      "API"
+  +node cache    "Redis"
+  +node db       "Postgres"
+  +edge customer api
+  +edge api cache
   +edge api db
 }
 
-keyframe "request" {
-  client -> api "GET /user/42"
-  api    -> db  "SELECT *"
-  api    <- db  "row"
-  client <- api "200 OK"
-}
-"""
-    }
-  , { name: "cache hit"
-    , source:
-        """keyframe setup {
-  +node client "Client"
-  +node api    "API"
-  +node cache  "Cache"
-  +node logger "Logger"
-  +edge client api
-  +edge api cache
-  +edge api logger
+keyframe "ship the order" {
+  customer -> api "mark shipped"
+  api -> db "UPDATE status"
 }
 
-keyframe "hit" {
-  client -> api "GET"
-  par {
-    api -> cache  "HIT"
-    api -> logger "trace"
-  }
-  client <- api "200"
-}
-"""
-    }
-  , { name: "pub/sub"
-    , source:
-        """keyframe setup {
-  +node pub  "Publisher"
-  +node bus  "Broker"
-  +node a    "Worker A"
-  +node b    "Worker B"
-  +node c    "Worker C"
-  +edge pub bus
-  +edge bus a
-  +edge bus b
-  +edge bus c
+keyframe "the stale read" {
+  customer -> api "get status"
+  api -> cache "HIT"
+  customer <- api "still pending?!"
 }
 
-keyframe "fanout" {
-  pub -> bus "event"
+keyframe "fix: clear on write" {
+  customer -> api "mark shipped"
   par {
-    bus -> a "event"
-    bus -> b "event"
-    bus -> c "event"
+    api -> db "UPDATE status"
+    api -> cache "DEL"
   }
 }
-"""
-    }
-  , { name: "auth"
-    , source:
-        """keyframe setup {
-  +node user "User"
-  +node app  "App"
-  +node idp  "IdP"
-  +edge user app
-  +edge app idp
-  +edge user idp
-}
 
-keyframe "sign in" {
-  user -> app "open"
-  app  -> user "redirect"
-  user -> idp "login"
-  user <- idp "code"
-  user -> app "code"
-  app  -> idp "exchange"
-  app  <- idp "token"
-  user <- app "signed in"
-}
-"""
-    }
-  , { name: "queue"
-    , source:
-        """keyframe setup {
-  +node prod  "Producer"
-  +node q     "Queue"
-  +node w1    "Worker 1"
-  +node w2    "Worker 2"
-  +edge prod q
-  +edge q w1
-  +edge q w2
-}
-
-keyframe "enqueue" {
-  prod -> q "job 1"
-  prod -> q "job 2"
-}
-
-keyframe "drain" {
-  par {
-    q -> w1 "job 1"
-    q -> w2 "job 2"
-  }
+keyframe "fresh again" {
+  customer -> api "get status"
+  api -> cache "miss"
+  api -> db "SELECT"
+  customer <- api "shipped!"
 }
 """
     }
