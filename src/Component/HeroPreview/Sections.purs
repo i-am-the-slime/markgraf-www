@@ -59,7 +59,7 @@ integrationsSection =
             , embedCardLink "https://markgrafhq.github.io/starlight-markgraf/" "Astro" "Astro integration."
             , embedCardLink "https://markgrafhq.github.io/markgraf-react/" "React" "@markgrafhq/markgraf-react — drop-in component."
             , embedCardLink "https://github.com/markgrafhq/obsidian-markgraf" "Obsidian" "Plugin — ```markgraf fences render live in your notes."
-            , embedCardLink "https://github.com/markgrafhq/markgraf-vscode/releases/tag/v0.0.1" "VS Code" ".markgraf syntax, diagnostics, and live preview."
+            , embedCardLink "https://github.com/markgrafhq/markgraf-vscode/releases/tag/v0.0.1" "VS Code" ".markgraf syntax, diagnostics, live preview, and Markdown fences."
             , embedCardLink "https://github.com/markgrafhq/homebrew-tap" "macOS" "Native Metal player + CLI."
             , embedCardLink "https://github.com/markgrafhq/homebrew-tap" "Linux" "CLI, statically linked."
             , embedCardLink "https://github.com/markgrafhq/homebrew-tap" "Windows" "CLI."
