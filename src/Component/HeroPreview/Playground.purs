@@ -45,88 +45,73 @@ examples :: Array Example
 examples =
   [ { name: "dive"
     , source:
-        """keyframe "system context" {
-  +node customer "Customer"
-  +node shop "Shop"
-  +node payments "Payments"
-  +edge customer shop
-  +edge shop payments
-  customer -> shop "places an order"
-  shop -> payments "takes payment"
-}
+        """seed 7
 
-keyframe "zoom into Shop" {
-  enter shop
-  exit
-}
++ customer "Customer"
++ shop "Shop"
++ payments "Payments"
++ customer -> shop
++ shop -> payments
+
+customer ~> shop "places order"
+shop ~> payments "takes payment"
+
+into shop
+out
 
 inside shop {
-  keyframe "the containers" {
-    +node web "Web App"
-    +node api "API"
-    +node db "Postgres"
-    +edge web api
-    +edge api db
-    web -> api "POST /orders"
-    api -> db "INSERT"
-  }
+  + web "Web app"
+  + api "API"
+  + db "Postgres"
+  + web -> api
+  + api -> db
 
-  keyframe "zoom into the API" {
-    enter api
-    exit
-  }
+  web ~> api "POST /orders"
+  api ~> db "INSERT"
+
+  into api
+  out
 
   inside api {
-    keyframe "the components" {
-      +node ctrl "Controller"
-      +node svc "Order Service"
-      +node repo "Repository"
-      +edge ctrl svc
-      +edge svc repo
-      ctrl -> svc "handle"
-      svc -> repo "save"
-    }
+    + controller "Controller"
+    + service "Order service"
+    + repository "Repository"
+    + controller -> service
+    + service -> repository
+
+    controller ~> service "handle"
+    service ~> repository "save"
   }
 }
 """
     }
   , { name: "cache"
     , source:
-        """keyframe setup {
-  +node customer "Customer"
-  +node api      "API"
-  +node cache    "Redis"
-  +node db       "Postgres"
-  +edge customer api
-  +edge api cache
-  +edge api db
+        """+ customer "Customer"
++ api "API"
++ cache "Redis"
++ db "Postgres"
++ customer -> api
++ api -> cache
++ api -> db
+
+customer ~> api "mark shipped"
+api ~> db "UPDATE status"
+
+customer ~> api "get status"
+api ~> cache "HIT: pending"
+customer <~ api "still pending?"
+
+customer ~> api "mark shipped"
+par {
+  api ~> db "UPDATE status"
+  api ~> cache "DEL user:42"
 }
 
-keyframe "ship the order" {
-  customer -> api "mark shipped"
-  api -> db "UPDATE status"
-}
-
-keyframe "the stale read" {
-  customer -> api "get status"
-  api -> cache "HIT"
-  customer <- api "still pending?!"
-}
-
-keyframe "fix: clear on write" {
-  customer -> api "mark shipped"
-  par {
-    api -> db "UPDATE status"
-    api -> cache "DEL"
-  }
-}
-
-keyframe "fresh again" {
-  customer -> api "get status"
-  api -> cache "miss"
-  api -> db "SELECT"
-  customer <- api "shipped!"
-}
+customer ~> api "get status"
+api ~> cache "miss"
+api ~> db "SELECT status"
+customer <~ api "shipped"
 """
     }
   ]
@@ -379,13 +364,20 @@ previewPane src size visible gen activeOnMobile paused =
         { id: "markgraf-preview"
         , style: css
             { flex: "1"
-            , minHeight: "0"
+            , minHeight: "320px"
             , position: "relative"
             , overflow: "hidden"
             }
         }
-        playerReveal
+        [ div
+            { className: "absolute top-4 left-5 z-20 font-mono text-[10px] uppercase tracking-[0.3em] text-[#ff3b1a] pointer-events-none"
+            }
+            "live markgraf"
+        , playerReveal
+        ]
   where
+  playerWidth = if size.w > zero then size.w else 640.0
+  playerHeight = if size.h > zero then size.h else 520.0
   player =
     markgrafPlayerLazy
       { src
@@ -393,12 +385,10 @@ previewPane src size visible gen activeOnMobile paused =
       , theme: "dark"
       , transparent: true
       , paused
-      , width: size.w
-      , height: size.h
+      , width: playerWidth
+      , height: playerHeight
       }
-      # Monoid.guard (visible && size.w > zero && size.h > zero)
-  -- The graph holds back until the wordmark has settled, then fades in cleanly
-  -- (.player-reveal). No flicker, no overlay — just a late reveal.
+      # Monoid.guard visible
   playerReveal = div
     { className: "player-reveal pointer-events-none"
     , style: css { position: "absolute", inset: "0" }

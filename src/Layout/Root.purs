@@ -202,21 +202,19 @@ retro =
 </table>
 
 <div class="nsf-card nsf-demo">
-  <font color="#ff8a5c" face="Commit Mono" size="2"><b>Demo</b> &mdash; this source compiles to this animation.</font>
+  <font color="#ff8a5c" face="Commit Mono" size="2"><b>Demo</b> &mdash; valid Markgraf source beside a rendered animation.</font>
   <table class="nsf-sbs"><tr>
     <td>
-<pre class="nsf-src"><span class="k">frame</span> <span class="s">""</span> {
-  <span class="d">+node</span> client <span class="s">"Client"</span>
-  <span class="d">+node</span> api    <span class="s">"API"</span>
-  <span class="d">+node</span> db     <span class="s">"Database"</span>
-  <span class="d">+edge</span> client api
-  <span class="d">+edge</span> api db
+<pre class="nsf-src"><span class="d">+</span> client <span class="s">"Client"</span>
+<span class="d">+</span> api <span class="s">"API"</span>
+<span class="d">+</span> db <span class="s">"Database"</span>
+<span class="d">+</span> client <span class="a">-&gt;</span> api
+<span class="d">+</span> api <span class="a">-&gt;</span> db
 
-  client <span class="a">-&gt;</span> api <span class="l">|GET /user/42|</span>
-  api    <span class="a">-&gt;</span> db  <span class="l">|SELECT|</span>
-  api    <span class="a">&lt;-</span> db  <span class="l">|one row|</span>
-  client <span class="a">&lt;-</span> api <span class="l">|200 OK|</span>
-}</pre>
+client <span class="a">~&gt;</span> api <span class="l">"GET /user/42"</span>
+api <span class="a">~&gt;</span> db <span class="l">"SELECT"</span>
+api <span class="a">&lt;~</span> db <span class="l">"one row"</span>
+client <span class="a">&lt;~</span> api <span class="l">"200 OK"</span></pre>
     </td>
     <td>
       <video width="440" autoplay loop muted playsinline preload="auto" disablepictureinpicture disableremoteplayback
@@ -231,7 +229,7 @@ retro =
 
 <div class="nsf-card">
   <font color="#ff8a5c" face="Commit Mono" size="4"><b>Install</b></font>
-  <pre class="nsf-term-body">brew install markgrafhq/tap/markgraf</pre>
+  <pre class="nsf-term-body">brew install --cask markgrafhq/tap/markgraf</pre>
   <font color="#8a94a8" face="Commit Mono" size="2">
     &hellip; or, inside Claude Code: <span class="nsf-inline">/plugin install markgraf@i-am-the-slime</span>
   </font>

@@ -2,7 +2,7 @@ module Component.HeroPreview (mkHeroPreview) where
 
 import Prelude
 
-import Component.HeroPreview.DOM (installVhsBurst, onWordmarkLit, scrollSectionIntoView)
+import Component.HeroPreview.DOM (installVhsBurst, scrollSectionIntoView)
 import Component.HeroPreview.Playground (playground)
 import Component.HeroPreview.Scene (diagramShapesBackground, dispatchActive, mostVisible, observeRatios, sectionStates)
 import Component.HeroPreview.SectionLabel (sectionLabel, spreadFolio)
@@ -28,7 +28,7 @@ import Yoga.React.DOM.HTML.Nav (nav)
 import Yoga.React.DOM.HTML.P (p)
 import Yoga.React.DOM.HTML.Section (section) as H
 import Yoga.React.DOM.HTML.Span (span)
-import Yoga.React.DOM.Internal (css, noJSX, text)
+import Yoga.React.DOM.Internal (css, noJSX)
 
 mkHeroPreview :: Component {}
 mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
@@ -36,10 +36,9 @@ mkHeroPreview = component "HeroPreview" \_ -> Hooks.do
   activeRef <- useRef ""
   postRef <- useRef (Nothing :: Maybe DiagramShapes.WorkerPost)
   activeSection /\ setActiveSection <- useState' "page-hero"
-  sceneLit /\ setSceneLit <- useState' false
+  let sceneLit = true
   pageActive /\ setPageActive <- useState' true
   useEffectOnce $ installVhsBurst "vhs-text-wrap"
-  useEffectOnce $ onWordmarkLit (setSceneLit true)
   useEffectOnce $ onActiveChange setPageActive
   useEffectOnce $
     observeRatios "magazine" (_.id <$> sectionStates) \id ratio -> do
@@ -113,11 +112,7 @@ heroLockup =
 heroInstallCta :: JSX
 heroInstallCta = installButtonLazy
 
--- The tagline types itself in once the wordmark has caught: each word is its own
--- inline-block carrying a staggered animation-delay, so the line resolves left to
--- right rather than appearing whole. Delays start past the wordmark's settle and
--- step per word; the CSS (.hero-tagline-word) and reduced-motion fallback live in
--- globals.css.
+-- Product promise is present on first paint; animation never gates core copy.
 heroTagline :: JSX
 heroTagline =
   p
@@ -127,17 +122,7 @@ heroTagline =
         , textShadow: "0 1px 2px rgba(10,14,26,0.95), 0 0 18px rgba(10,14,26,0.92), 0 0 44px rgba(10,14,26,0.75)"
         }
     }
-    (Array.concat (Array.mapWithIndex reveal words))
-  where
-  words = [ "A", "few", "words", "are", "worth", "a", "thousand", "pictures." ]
-  reveal i w =
-    [ span
-        { className: "hero-tagline-word"
-        , style: css { animationDelay: show (2700 + i * 120) <> "ms" }
-        }
-        w
-    , text " "
-    ]
+    "A few words are worth a thousand pictures."
 
 -- ---------------------------------------------------------------------------
 -- Fixed chrome: top bar with brand + nav, side rail with page dots.
@@ -161,11 +146,11 @@ sideNav { active } =
   where
   sections =
     [ "playground" /\ "playground"
-    , "integrations" /\ "integrations"
-    , "render" /\ "render"
-    , "ai" /\ "ai"
+    , "integrations" /\ "language"
+    , "render" /\ "renderers"
+    , "ai" /\ "hierarchy"
     , "embed" /\ "integrations"
-    , "play" /\ "play"
+    , "play" /\ "authoring"
     , "install" /\ "install"
     ]
 

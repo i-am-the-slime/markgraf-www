@@ -4,7 +4,6 @@ module Component.HeroPreview.DOM
   , onElementResize
   , installScrollSync
   , installVhsBurst
-  , onWordmarkLit
   , passiveOpts
   , scrollSectionIntoView
   , onMagazineScroll
@@ -103,25 +102,6 @@ installVhsBurst className = do
   targets = do
     d <- window >>= document
     hc <- Document.getElementsByClassName (ClassName className) (HTMLDocument.toDocument d)
-    HTMLCollection.toArray hc
-
--- Fire `done` the moment the title's neon-in animation finishes — the beat the
--- wordmark holds steady, "the light is on". Listening for animationend on the
--- .hero-wordmark-in element keeps this locked to the CSS timing, and the name
--- guard accepts the reduced-motion fade variant too. Returns a teardown.
-onWordmarkLit :: Effect Unit -> Effect (Effect Unit)
-onWordmarkLit done = do
-  els <- targets
-  listener <- eventListener \ev ->
-    when (lit (unsafeCoerce ev).animationName) done
-  for_ els \el -> addEventListenerWithOptions animationEnd listener passiveOpts (Element.toEventTarget el)
-  pure $ for_ els \el -> removeEventListener animationEnd listener false (Element.toEventTarget el)
-  where
-  animationEnd = EventType "animationend"
-  lit name = name == "hero-wordmark-in" || name == "hero-wordmark-fade"
-  targets = do
-    d <- window >>= document
-    hc <- Document.getElementsByClassName (ClassName "hero-wordmark-in") (HTMLDocument.toDocument d)
     HTMLCollection.toArray hc
 
 passiveOpts :: { capture :: Boolean, once :: Boolean, passive :: Boolean }
