@@ -43,7 +43,92 @@ type Example = { name :: String, source :: String }
 
 examples :: Array Example
 examples =
-  [ { name: "dive"
+  [ { name: "latency"
+    , source:
+        """seed 12
+min-font-size 12
+
+scene "Filter noisy latency" {
+  + samples |md
+    p90 samples
+    [{{v0: ==100==}}, {{v1: 140}}, {{v2: 110}}, {{v3: 180}}, {{v4: 130}}]
+  | {shape: parallelogram, width: 340}
+  + window |md
+    Neighbour window
+    {{values: waiting}}
+  | {shape: parallelogram, width: 240}
+  + median "Median: {{value: ___}}" {width: 200}
+  + filtered |md
+    Median-filtered
+    [{{m0: ___}}, {{m1: ___}}, {{m2: ___}}, {{m3: ___}}, {{m4: ___}}]
+  | {shape: parallelogram, width: 340}
+  + samples -> window
+  + window -> median
+  + median -> filtered
+}
+
+scene "Use the first sample and its neighbour" {
+  samples ~> window "100"
+  ~ window.values: [100, 140]
+  window ~> median "take both"
+  ~ median.value: 120
+  median ~> filtered "120"
+  ~ filtered.m0: 120
+}
+
+scene "Move the window" {
+  ~ samples.v0: 100
+  ~ samples.v1: ==140==
+  ~ median.value: ___
+  samples ~> window "140"
+  ~ window.values: [100, 140, 110]
+  window ~> median "take the middle"
+  ~ median.value: 110
+  median ~> filtered "110"
+  ~ filtered.m1: 110
+}
+
+scene "Switch to exponential smoothing" {
+  par {
+    - samples -> window
+    - window -> median
+    - median -> filtered
+    - samples
+    - window
+    - median
+  }
+  + first "First value?" {shape: diamond, width: 200}
+  + blend |50% previous
+    + 50% next| {width: 190}
+  + result |md
+    Smoothed latency
+    {{current: ___}} ms
+  | {shape: parallelogram, width: 220}
+  + filtered -> first
+  + first -> blend
+  + first -> result
+  + blend -> result
+}
+
+scene "The first value seeds the result" {
+  ~ filtered.m0: ==120==
+  filtered ~> first "120"
+  first ~> result "start here"
+  ~ result.current: 120
+}
+
+scene "Blend in the next value" {
+  ~ filtered.m0: 120
+  ~ filtered.m1: ==110==
+  filtered ~> first "110"
+  first ~> blend |no
+    50% of 120 + 50% of 110|
+  blend ~> result "115"
+  ~ result.current: ==115==
+}
+"""
+    }
+  , { name: "dive"
     , source:
         """seed 7
 
