@@ -64,13 +64,11 @@ tokenize input = fuse (go 0 [])
           Just t -> { tok: Just t, next: i + CU.length t.text }
           Nothing -> case tryBrace i of
             Just t -> { tok: Just t, next: i + CU.length t.text }
-            Nothing -> case tryPlusKw i of
+            Nothing -> case tryNumber i of
               Just t -> { tok: Just t, next: i + CU.length t.text }
-              Nothing -> case tryNumber i of
+              Nothing -> case tryIdent i of
                 Just t -> { tok: Just t, next: i + CU.length t.text }
-                Nothing -> case tryIdent i of
-                  Just t -> { tok: Just t, next: i + CU.length t.text }
-                  Nothing -> { tok: Nothing, next: i + 1 }
+                Nothing -> { tok: Nothing, next: i + 1 }
 
   -- Slices the suffix starting at i. Used by all matchers.
   suffix i = CU.drop i input
@@ -105,8 +103,18 @@ tokenize input = fuse (go 0 [])
     if startsWith "<-->" s then Just { kind: TOperator, text: "<-->" }
     else if startsWith "<->" s then Just { kind: TOperator, text: "<->" }
     else if startsWith "-->" s then Just { kind: TOperator, text: "-->" }
+    else if startsWith "==" s then Just { kind: TOperator, text: "==" }
+    else if startsWith "=>" s then Just { kind: TOperator, text: "=>" }
+    else if startsWith "~>" s then Just { kind: TOperator, text: "~>" }
+    else if startsWith "<~" s then Just { kind: TOperator, text: "<~" }
     else if startsWith "->" s then Just { kind: TOperator, text: "->" }
     else if startsWith "<-" s then Just { kind: TOperator, text: "<-" }
+    else if startsWith "--" s then Just { kind: TOperator, text: "--" }
+    else if startsWith "|md" s then Just { kind: TOperator, text: "|md" }
+    else if startsWith "~" s then Just { kind: TOperator, text: "~" }
+    else if startsWith "+" s then Just { kind: TOperator, text: "+" }
+    else if startsWith "-" s then Just { kind: TOperator, text: "-" }
+    else if startsWith "|" s then Just { kind: TOperator, text: "|" }
     else Nothing
     where
     s = suffix i
@@ -115,15 +123,6 @@ tokenize input = fuse (go 0 [])
     Just '{' -> Just { kind: TBrace, text: "{" }
     Just '}' -> Just { kind: TBrace, text: "}" }
     _ -> Nothing
-
-  tryPlusKw i = do
-    let s = suffix i
-    _ <- if startsWith "+" s then Just unit else Nothing
-    let
-      rest = takeWhileStr isIdentChar (CU.drop 1 s)
-      full = "+" <> rest
-    if rest == "node" || rest == "edge" || rest == "group" then Just { kind: TKeyword, text: full }
-    else Nothing
 
   tryNumber i = do
     let s = suffix i
@@ -149,10 +148,18 @@ tokenize input = fuse (go 0 [])
     pure { kind, text: word }
 
   isKeyword w =
-    w == "seed" || w == "frame" || w == "par"
-      || w == "chain"
-      || w == "group"
-      || w == "layout"
+    w == "seed" || w == "min-font-size" || w == "stretch-nodes"
+      || w == "scene"
+      || w == "still"
+      || w == "title"
+      || w == "step"
+      || w == "par"
+      || w == "seq"
+      || w == "inside"
+      || w == "into"
+      || w == "out"
+      || w == "diagram"
+      || w == "sequence"
 
   fuse arr = fuseGo arr []
   fuseGo xs acc = case Array.uncons xs of
