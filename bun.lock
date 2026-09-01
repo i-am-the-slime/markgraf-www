@@ -6,8 +6,8 @@
       "name": "markgraf-www",
       "dependencies": {
         "@codemirror/theme-one-dark": "^6.1.3",
-        "@markgrafhq/markgraf-embed": "0.1.25",
-        "@markgrafhq/markgraf-react": "0.1.22",
+        "@markgrafhq/markgraf-embed": "0.1.26",
+        "@markgrafhq/markgraf-react": "0.1.23",
         "@react-three/drei": "^10.7.7",
         "@react-three/fiber": "^9.6.1",
         "@react-three/offscreen": "^0.0.8",
@@ -185,9 +185,9 @@
 
     "@marijn/find-cluster-break": ["@marijn/find-cluster-break@1.0.2", "", {}, "sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g=="],
 
-    "@markgrafhq/markgraf-embed": ["@markgrafhq/markgraf-embed@0.1.25", "", {}, "sha512-7N3o8epKDgt/EC5V9wdzotoxNyhaaUiPnHon5WxVRYMiCK0bSDDRydLQfSYJOc1GiznhbXizNPvhyWuXaxg//g=="],
+    "@markgrafhq/markgraf-embed": ["@markgrafhq/markgraf-embed@0.1.26", "", {}, "sha512-WFvqFs0Krm8UFdEIY/1A58ASRA0lLYzgFX0uV42jVfOMxKj1ste90EYnHGlNJvpe5NgzCmLkkAkkyOQ4Au61tg=="],
 
-    "@markgrafhq/markgraf-react": ["@markgrafhq/markgraf-react@0.1.22", "", { "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }, "sha512-SZVgfLpNirIxB6mTno2t6C0mjKV1tCkvf4EmmpjGcDGjjlVrvI6vxSdTr/M9CvfaanVcAfYiPVZzyUsHIgVlnw=="],
+    "@markgrafhq/markgraf-react": ["@markgrafhq/markgraf-react@0.1.23", "", { "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }, "sha512-xb3d67Y8r9iWuf7CDKgDpEQ3Kk2YNn/hKCPPYRh2BYRZ181NUg8H/gVs6snxl+adGoDuHdb0PzFwLBtU2trCww=="],
 
     "@mediapipe/tasks-vision": ["@mediapipe/tasks-vision@0.10.17", "", {}, "sha512-CZWV/q6TTe8ta61cZXjfnnHsfWIdFhms03M9T7Cnd5y2mdpylJM0rF1qRq+wsQVRMLz1OYPVEBU9ph2Bx8cxrg=="],
 
